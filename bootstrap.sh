@@ -12,7 +12,6 @@ function doIt() {
 
 	# If running OSX install homebrew, cask, and system tweaks
 	if [[ "$(uname)" == "Darwin" ]]; then
-		chflags hidden ~/bin
 		source brew.sh
 		source cask.sh
 		source osx.sh

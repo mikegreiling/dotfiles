@@ -340,6 +340,12 @@ defaults write com.apple.finder FXInfoPanesExpanded -dict \
 	OpenWith -bool true \
 	Privileges -bool true
 
+# Hide user binaries directory in Finder
+sudo chflags hidden ~/bin
+
+# Hide cask-created 'opt' directory in Finder
+sudo chflags hidden /opt
+
 ###############################################################################
 # Dock, Dashboard, and hot corners                                            #
 ###############################################################################
