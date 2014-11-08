@@ -62,6 +62,31 @@ Once this is all in place, there are a few other items which must be done manual
 2. [Generate your ssh key](https://help.github.com/articles/generating-ssh-keys/) and install it on GitHub.
 3. Enter any license keys necessary for installed apps (Things, Kaleidoscope, Transmit, et al)
 
+## Prompt Reference
+
+Included is a prompt which I shamelessly stole from [Nicolas Gallagher](https://github.com/necolas/dotfiles/).  Here is his descroption:
+
+> ### Custom bash prompt
+>
+> I use a custom bash prompt based on the Solarized color palette and influenced by @gf3's and @cowboy's custom prompts.
+>
+> When your current working directory is a Git repository, the prompt will display the checked-out branch's name (and failing that, the commit SHA that HEAD is pointing to). The state of the working tree is reflected in the following way:
+>
+> Sym | Key
+> ----|---------------------------------
+> `+` | Uncommitted changes in the index
+> `!` | Unstaged changes
+> `?` | Untracked files
+> `$` | Stashed files
+>
+> Further details are in the `bash_prompt` file.
+>
+> Screenshot:
+>
+> ![](http://i.imgur.com/DSJ1G.png)
+>
+
+
 ## Author(s)
 
 | [![twitter/mikegreiling](http://gravatar.com/avatar/33f90637d77f8d4da67faafd3af6597e?s=70)](http://twitter.com/mikegreiling "Follow @mikegreiling on Twitter") |
