@@ -728,6 +728,13 @@ defaults write org.m0k.transmission WarningLegal -bool false
 # defaults write com.twitter.twitter-mac HideInBackground -bool true
 
 ###############################################################################
+# Adobe Creative Cloud                                                        #
+###############################################################################
+
+# Remove Creative Cloud from the menu bar
+launchctl unload -w /Library/LaunchAgents/com.adobe.AdobeCreativeCloud.plist
+
+###############################################################################
 # Kill affected applications                                                  #
 ###############################################################################
 
