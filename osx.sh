@@ -732,7 +732,9 @@ defaults write org.m0k.transmission WarningLegal -bool false
 ###############################################################################
 
 # Remove Creative Cloud from the menu bar
-launchctl unload -w /Library/LaunchAgents/com.adobe.AdobeCreativeCloud.plist
+if [ -f /Library/LaunchAgents/com.adobe.AdobeCreativeCloud.plist ]; then
+	launchctl unload -w /Library/LaunchAgents/com.adobe.AdobeCreativeCloud.plist
+fi
 
 ###############################################################################
 # Kill affected applications                                                  #
