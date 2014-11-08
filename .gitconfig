@@ -12,6 +12,9 @@
 	# `git di $number` shows the diff between the state `$number` revisions ago and the current state
 	di = !"d() { git diff --patch-with-stat HEAD~$1; }; git diff-index --quiet HEAD -- || clear; d"
 
+	# Utilize difftool
+	dt = difftool
+
 	# Pull in remote changes for the current repository and all its submodules
 	p = !"git pull; git submodule foreach git pull origin master"
 
@@ -116,18 +119,37 @@
 
 [diff]
 
+	tool = Kaleidoscope
 	# Detect copies as well as renames
 	renames = copies
+
+[difftool "Kaleidoscope"]
+
+	cmd = ksdiff --partial-changeset --relative-path \"$MERGED\" -- \"$LOCAL\" \"$REMOTE\"
+
+[difftool]
+
+	prompt = false
+
+[merge]
+
+	tool = Kaleidoscope
+	# Include summaries of merged commits in newly created merge commit messages
+	log = true
+
+[mergetool "Kaleidoscope"]
+
+	cmd = ksdiff --merge --output \"$MERGED\" --base \"$BASE\" -- \"$LOCAL\" --snapshot \"$REMOTE\" --snapshot
+	trustexitcode = true
+
+[mergetool]
+
+	prompt = false
 
 [help]
 
 	# Automatically correct and execute mistyped commands
 	autocorrect = 1
-
-[merge]
-
-	# Include summaries of merged commits in newly created merge commit messages
-	log = true
 
 [push]
 
