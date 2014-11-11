@@ -12,6 +12,7 @@ brew install brew-cask
 
 # Apps
 apps=(
+	arq
 	asepsis
 	atom
 	caffeine
@@ -19,6 +20,7 @@ apps=(
 	flash
 	google-chrome
 	kaleidoscope
+	moom
 	things
 	transmission
 	transmit
