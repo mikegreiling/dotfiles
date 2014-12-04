@@ -15,6 +15,7 @@ apps=(
 	arq
 	asepsis
 	atom
+	bettertouchtool
 	caffeine
 	firefox
 	flash
