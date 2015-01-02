@@ -19,6 +19,7 @@ apps=(
 	caffeine
 	firefox
 	flash
+	flux
 	google-chrome
 	kaleidoscope
 	moom
