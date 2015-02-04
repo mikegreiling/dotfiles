@@ -23,6 +23,7 @@ apps=(
 	google-chrome
 	kaleidoscope
 	moom
+  packer
 	things
 	transmission
 	transmit
