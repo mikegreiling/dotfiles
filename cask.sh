@@ -44,6 +44,8 @@ atom_pkgs=(
 	codebug
 	editorconfig
 	minimap
+  graphite-ui
+	sublime-tabs
 )
 
 apm install ${atom_pkgs[@]}
