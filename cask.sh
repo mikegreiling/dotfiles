@@ -23,7 +23,7 @@ apps=(
 	google-chrome
 	kaleidoscope
 	moom
-  packer
+	packer
 	things
 	transmission
 	transmit
@@ -44,7 +44,7 @@ atom_pkgs=(
 	codebug
 	editorconfig
 	minimap
-  graphite-ui
+	graphite-ui
 	sublime-tabs
 )
 
