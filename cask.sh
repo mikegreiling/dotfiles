@@ -42,10 +42,11 @@ brew cask install --appdir="/Applications" ${apps[@]}
 # Atom packages
 atom_pkgs=(
 	codebug
+	dash
 	editorconfig
 	minimap
+	term2
 	graphite-ui
-	sublime-tabs
 )
 
 apm install ${atom_pkgs[@]}
