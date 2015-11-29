@@ -17,6 +17,7 @@ apps=(
 	atom
 	bettertouchtool
 	caffeine
+	fantastical
 	firefox
 	flash
 	flux
