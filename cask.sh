@@ -15,6 +15,7 @@ apps=(
 	arq
 	asepsis
 	atom
+	beardedspice
 	bettertouchtool
 	bitbar
 	caffeine
