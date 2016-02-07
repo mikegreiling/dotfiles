@@ -16,6 +16,7 @@ apps=(
 	asepsis
 	atom
 	bettertouchtool
+	bitbar
 	caffeine
 	fantastical
 	firefox
