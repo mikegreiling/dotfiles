@@ -41,6 +41,9 @@ alias nscp='scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
 # Enable aliases to be sudo’ed
 alias sudo='sudo '
 
+# Bundle exec shorthand
+alias be='bundle exec '
+
 # Get week number
 alias week='date +%V'
 
