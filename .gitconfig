@@ -155,6 +155,11 @@
 	# Automatically correct and execute mistyped commands
 	autocorrect = 1
 
+[pull]
+
+	# Fail if the branch can not be fast-forwarded
+	ff = only
+
 [push]
 
 	# Use the Git 1.x.x default to avoid errors on machines with old Git
