@@ -10,9 +10,12 @@ alias -- -="cd -"
 alias dl="cd ~/Downloads"
 alias dt="cd ~/Desktop"
 alias p="cd ~/Projects"
-alias g="git"
+#alias g="git"
 alias h="history"
 alias j="jobs"
+
+# Git Shortcuts
+g() { if [[ $@ == "-" ]]; then command git checkout -; else command git "$@"; fi; }
 
 # Detect which `ls` flavor is in use
 if ls --color > /dev/null 2>&1; then # GNU `ls`
