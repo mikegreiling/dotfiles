@@ -17,6 +17,10 @@ alias j="jobs"
 # Git Shortcuts
 g() { if [[ $@ == "-" ]]; then command git checkout -; else command git "$@"; fi; }
 
+# Work Shortcuts
+alias ce="cd ~/Projects/gitlab-development-kit/gitlab"
+alias ee="cd ~/Projects/gitlab-ee/gitlab"
+
 # Detect which `ls` flavor is in use
 if ls --color > /dev/null 2>&1; then # GNU `ls`
 	colorflag="--color"
