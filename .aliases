@@ -20,7 +20,7 @@ alias git=hub
 g() { if [[ $@ == "-" ]]; then command git checkout -; else command git "$@"; fi; }
 
 # Work Shortcuts
-alias ce="cd ~/Projects/gitlab-development-kit/gitlab"
+alias ce="cd ~/Projects/gitlab-ce/gitlab"
 alias ee="cd ~/Projects/gitlab-ee/gitlab"
 
 # Detect which `ls` flavor is in use
