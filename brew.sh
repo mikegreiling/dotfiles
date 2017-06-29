@@ -57,6 +57,7 @@ recipes=(
 	ffmpeg
 	git
 	httpie
+	hub
 	jpeg
 	jpeginfo
 	lame
