@@ -17,7 +17,7 @@ function doIt() {
 		-avh --no-perms . ~;
 	source ~/.bash_profile;
 
-	# If running OSX install homebrew, cask, and system tweaks
+	# If running macOS install homebrew, cask, and system tweaks
 	if [[ "$(uname)" == "Darwin" ]]; then
 		source brew.sh
 		source cask.sh
