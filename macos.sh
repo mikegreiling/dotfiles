@@ -830,13 +830,6 @@ defaults write com.google.Chrome.canary PMPrintingExpandedStateForPrint2 -bool t
 # cp -r init/Preferences.sublime-settings ~/Library/Application\ Support/Sublime\ Text*/Packages/User/Preferences.sublime-settings 2> /dev/null
 
 ###############################################################################
-# Spectacle.app                                                               #
-###############################################################################
-
-# Set up my preferred keyboard shortcuts
-# cp -r init/spectacle.json ~/Library/Application\ Support/Spectacle/Shortcuts.json 2> /dev/null
-
-###############################################################################
 # Transmission.app                                                            #
 ###############################################################################
 
@@ -922,7 +915,6 @@ for app in "Activity Monitor" \
 	"Photos" \
 	"Safari" \
 	"SizeUp" \
-	"Spectacle" \
 	"SystemUIServer" \
 	"Transmission" \
 	"Tweetbot" \
