@@ -17,7 +17,6 @@ function doIt() {
 	# If running macOS install homebrew, cask, and system tweaks
 	if [[ "$(uname)" == "Darwin" ]]; then
 		source brew.sh
-		source cask.sh
 		source macos.sh
 	fi;
 }
