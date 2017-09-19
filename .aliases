@@ -16,8 +16,8 @@ alias p="cd ~/Projects"
 # Use hub in place of git
 alias git=hub
 
-# Git Shortcuts
-g() { if [[ $@ == "-" ]]; then command git checkout -; else command git "$@"; fi; }
+# Git Shortcuts (enable `g -` in place of `git checkout -`)
+g() { if [[ $@ == "-" ]]; then git checkout -; else git "$@"; fi; }
 
 # Work Shortcuts
 alias ce="cd ~/Projects/gitlab-ce/gitlab"
