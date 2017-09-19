@@ -1,26 +1,11 @@
 #!/usr/bin/env bash
 
-# Install command-line tools using Homebrew.
-
-# Ask for the administrator password upfront.
-sudo -v
-
-# Keep-alive: update existing `sudo` time stamp until `.osx` has finished.
-while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
-
-# Install Homebrew.
+# Install Homebrew and ensure it is up-to-date.
 if [[ ! "$(type -P brew)" ]]; then
 	true | ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 fi
 
-# Exit if, for some reason, Homebrew is not installed.
-[[ ! "$(type -P brew)" ]] && echo "Homebrew failed to install." && return 1
-
-# Make sure we’re using the latest Homebrew.
-brew doctor
 brew update
-
-# Upgrade any already-installed formulae.
 brew upgrade --all
 
 # Install GNU core utilities (those that come with macOS are outdated).
@@ -45,50 +30,11 @@ if ! fgrep -q '/usr/local/bin/bash' /etc/shells; then
   chsh -s /usr/local/bin/bash;
 fi;
 
-# Install `wget` with IRI support.
-brew install wget --with-iri
-
-# Install GnuPG to enable PGP-signing commits.
-brew install gnupg
-
 # Install more recent versions of some macOS tools.
 brew install vim --with-override-system-vi
 brew install grep
 brew install openssh
 brew install screen
-# brew install homebrew/php/php56 --with-gmp
-
-# Install font tools.
-# brew tap bramstein/webfonttools
-# brew install sfnt2woff
-# brew install sfnt2woff-zopfli
-# brew install woff2
-
-# Install some CTF tools; see https://github.com/ctfs/write-ups.
-# brew install aircrack-ng
-# brew install bfg
-# brew install binutils
-# brew install binwalk
-# brew install cifer
-# brew install dex2jar
-# brew install dns2tcp
-# brew install fcrackzip
-# brew install foremost
-# brew install hashpump
-# brew install hydra
-# brew install john
-# brew install knock
-# brew install netpbm
-# brew install nmap
-# brew install pngcheck
-# brew install socat
-# brew install sqlmap
-# brew install tcpflow
-# brew install tcpreplay
-# brew install tcptrace
-# brew install ucspi-tcp # `tcpserver` etc.
-# brew install xpdf
-# brew install xz
 
 # Install other useful binaries.
 brew install ack
@@ -98,11 +44,11 @@ brew install faac
 brew install ffmpeg
 brew install git
 brew install git-lfs
+brew install gnupg
 brew install httpie
 brew install hub
 brew install imagemagick --with-webp
 brew install lua
-# brew install lynx
 brew install mcrypt
 brew install node
 brew install p7zip
@@ -114,10 +60,8 @@ brew install rename
 brew install rlwrap
 brew install siege
 brew install sqlite
-brew install ssh-copy-id
 brew install tree
-brew install vbindiff
-brew install webkit2png
+brew install wget --with-iri
 brew install yarn
 brew install zopfli
 
