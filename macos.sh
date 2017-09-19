@@ -677,6 +677,13 @@ defaults write org.m0k.transmission RandomPort -bool true
 defaults write com.tapbots.TweetbotMac OpenURLsDirectly -bool true
 
 ###############################################################################
+# KeepingYouAwake.app                                                         #
+###############################################################################
+
+# Prevent ugly highlight color when clicking
+defaults write info.marcel-dierkes.KeepingYouAwake info.marcel-dierkes.KeepingYouAwake.MenuBarIconHighlightDisabled -bool YES
+
+###############################################################################
 # Kill affected applications                                                  #
 ###############################################################################
 

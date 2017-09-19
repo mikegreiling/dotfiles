@@ -18,13 +18,13 @@ apps=(
 	beardedspice
 	bettertouchtool
 	bitbar
-	caffeine
 	fantastical
 	firefox
 	flash
 	flux
 	google-chrome
 	kaleidoscope
+	keepingyouawake
 	moom
 	packer
 	things
