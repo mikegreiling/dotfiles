@@ -28,6 +28,9 @@ while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 # Set standby delay to 3 hours (default is 1 hour)
 sudo pmset -a standbydelay 10800
 
+# Show battery percentage
+defaults write com.apple.menuextra.battery ShowPercent -bool true
+
 # Always show scrollbars
 defaults write NSGlobalDomain AppleShowScrollBars -string "WhenScrolling"
 # Possible values: `WhenScrolling`, `Automatic` and `Always`
