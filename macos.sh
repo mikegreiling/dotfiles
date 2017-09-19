@@ -824,6 +824,9 @@ defaults write com.tapbots.TweetbotMac OpenURLsDirectly -bool true
 # Kill affected applications                                                  #
 ###############################################################################
 
+# Stop echoing commands before execution
+set +x
+
 for app in "Activity Monitor" \
 	"Address Book" \
 	"Calendar" \
@@ -846,5 +849,3 @@ for app in "Activity Monitor" \
 done
 echo "Done. Note that some of these changes require a logout/restart to take effect."
 
-# Stop echoing commands before execution
-set +x
