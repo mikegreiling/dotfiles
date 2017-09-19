@@ -160,13 +160,16 @@ function getcertnames() {
 	fi;
 }
 
-# `s` with no arguments opens the current directory in Sublime Text, otherwise
+# `code` will launch Microsoft Visual Studio Code with the given arguments
+code () { VSCODE_CWD="$PWD" open -n -b "com.microsoft.VSCode" --args $* ;}
+
+# `c` with no arguments opens the current directory in VS Code, otherwise
 # opens the given location
-function s() {
+function c() {
 	if [ $# -eq 0 ]; then
-		subl .;
+		code .;
 	else
-		subl "$@";
+		code "$@";
 	fi;
 }
 
