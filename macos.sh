@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# ~/.macos — https://mths.be/macos
+# Based on https://mths.be/macos
 
 # Display commands in terminal as they are executed
 set -x
