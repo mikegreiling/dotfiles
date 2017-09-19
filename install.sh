@@ -7,10 +7,7 @@ git pull origin master;
 function doIt() {
 	rsync --exclude ".git/" \
 		--exclude ".DS_Store" \
-		--exclude ".macos" \
-		--exclude "bootstrap.sh" \
-		--exclude "brew.sh" \
-		--exclude "cask.sh" \
+		--exclude "*.sh" \
 		--exclude "init/" \
 		--exclude "README.md" \
 		--exclude "LICENSE-MIT.txt" \
@@ -21,7 +18,7 @@ function doIt() {
 	if [[ "$(uname)" == "Darwin" ]]; then
 		source brew.sh
 		source cask.sh
-		source .macos
+		source macos.sh
 	fi;
 }
 
