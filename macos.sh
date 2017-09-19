@@ -285,10 +285,10 @@ defaults write com.apple.finder FXPreferredViewStyle -string "Nlsv"
 # Enable AirDrop over Ethernet and on unsupported Macs running Lion
 defaults write com.apple.NetworkBrowser BrowseAllInterfaces -bool true
 
-# Show the ~/Library folder
+# Show the ~/Library folder (does not seem to work in macOS 10.13)
 chflags nohidden ~/Library
 
-# Show the /Volumes folder
+# Show the /Volumes folder (does not seem to work in macOS 10.13)
 sudo chflags nohidden /Volumes
 
 # Remove Dropbox’s green checkmark icons in Finder
