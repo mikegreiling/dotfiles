@@ -106,8 +106,13 @@ defaults write NSGlobalDomain com.apple.swipescrolldirection -bool false
 # Increase sound quality for Bluetooth headphones/headsets
 defaults write com.apple.BluetoothAudioAgent "Apple Bitpool Min (editable)" -int 40
 
-# Trackpad: swipe between pages with three fingers, disable two-finger swipe
+# Trackpad: swipe between spaces with four fingers
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadFourFingerHorizSwipeGesture -int 2
+
+# Trackpad: disable two-finger swipe between pages
 defaults write NSGlobalDomain AppleEnableSwipeNavigateWithScrolls -bool false
+
+# Trackpad: swipe between pages with three fingers
 defaults write -g com.apple.trackpad.threeFingerHorizSwipeGesture -int 1
 defaults -currentHost write -g com.apple.trackpad.threeFingerHorizSwipeGesture -int 1
 defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadThreeFingerHorizSwipeGesture -int 1
