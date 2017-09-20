@@ -94,3 +94,21 @@ brew cask install vlc
 # Remove outdated versions from the cellar.
 brew cask cleanup
 brew cleanup
+
+# Install App Store managed apps
+brew install mas
+
+mas install 443987910 # 1Password
+mas install 420212497 # Byword
+mas install 931657367 # Calcbot
+mas install 411643860 # DaisyDisk
+mas install 458034879 # Dash
+mas install 890031187 # Marked 2
+mas install 409203825 # Numbers
+mas install 409201541 # Pages
+mas install 407963104 # Pixelmator
+mas install 880001334 # Reeder
+mas install 425424353 # The Unarchiver
+mas install 904280696 # Things3
+mas install 557168941 # Tweetbot
+mas install 497799835 # Xcode
