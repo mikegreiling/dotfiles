@@ -91,10 +91,6 @@ brew cask install vagrant
 brew cask install visual-studio-code
 brew cask install vlc
 
-# Remove outdated versions from the cellar.
-brew cask cleanup
-brew cleanup
-
 # Install App Store managed apps
 brew install mas
 
@@ -111,3 +107,7 @@ mas install 425424353 # The Unarchiver
 mas install 904280696 # Things3
 mas install 557168941 # Tweetbot
 mas install 497799835 # Xcode
+
+# Remove outdated versions from the cellar.
+brew cask cleanup
+brew cleanup
