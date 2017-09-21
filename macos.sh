@@ -485,7 +485,7 @@ tell application "Terminal"
 	(* Open the custom theme so that it gets added to the list
 	   of available terminal themes (note: this will open two
 	   additional terminal windows). *)
-	do shell script "open './config/" & themeName & ".terminal'"
+	do shell script "open './.config/" & themeName & ".terminal'"
 
 	(* Wait a little bit to ensure that the custom theme is added. *)
 	delay 1
@@ -690,6 +690,15 @@ defaults write com.tapbots.TweetbotMac OpenURLsDirectly -bool true
 
 # Prevent ugly highlight color when clicking
 defaults write info.marcel-dierkes.KeepingYouAwake info.marcel-dierkes.KeepingYouAwake.MenuBarIconHighlightDisabled -bool YES
+
+###############################################################################
+# BitBar.app                                                                  #
+###############################################################################
+
+# Set bitbar plugins directory
+defaults write com.matryer.BitBar NSNavLastRootDirectory -string "${HOME}/.config/bitbar"
+defaults write com.matryer.BitBar pluginsDirectory -string "${HOME}/.config/bitbar"
+defaults write com.matryer.BitBar userConfigDisabled -bool true
 
 ###############################################################################
 # VMware Fusion.app                                                           #
