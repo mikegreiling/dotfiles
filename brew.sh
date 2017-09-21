@@ -81,6 +81,7 @@ brew cask install fantastical
 brew cask install firefox
 brew cask install google-chrome
 brew cask install kaleidoscope
+brew cask install kap
 brew cask install keepingyouawake
 brew cask install packer
 brew cask install things
