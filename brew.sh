@@ -67,7 +67,7 @@ brew install zopfli
 
 # Install cask-managed apps.
 brew tap caskroom/cask
-brew install brew-cask
+brew install cask
 
 export HOMEBREW_CASK_OPTS="--appdir=/Applications"
 
