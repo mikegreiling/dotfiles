@@ -68,6 +68,9 @@ defaults write com.apple.LaunchServices LSQuarantine -bool false
 # Try e.g. `cd /tmp; unidecode "\x{0000}" > cc.txt; open -e cc.txt`
 defaults write NSGlobalDomain NSTextShowsControlCharacters -bool true
 
+# Enable Resume system-wide
+defaults write NSGlobalDomain NSQuitAlwaysKeepsWindows -bool true
+
 # Disable automatic termination of inactive apps
 defaults write NSGlobalDomain NSDisableAutomaticTermination -bool true
 
@@ -192,16 +195,10 @@ defaults write com.apple.finder ShowStatusBar -bool true
 defaults write com.apple.finder _FXSortFoldersFirst -bool true
 
 # When performing a search, search the current folder by default
-# defaults write com.apple.finder FXDefaultSearchScope -string "SCcf"
+defaults write com.apple.finder FXDefaultSearchScope -string "SCcf"
 
 # Disable the warning when changing a file extension
 defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
-
-# Enable spring loading for directories
-# defaults write NSGlobalDomain com.apple.springing.enabled -bool true
-
-# Remove the spring loading delay for directories
-# defaults write NSGlobalDomain com.apple.springing.delay -float 0
 
 # Avoid creating .DS_Store files on network or USB volumes
 defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true
@@ -217,35 +214,20 @@ defaults write com.apple.frameworks.diskimages auto-open-ro-root -bool true
 defaults write com.apple.frameworks.diskimages auto-open-rw-root -bool true
 defaults write com.apple.finder OpenWindowForNewRemovableDisk -bool true
 
-# Show item info near icons on the desktop and in other icon views
+# Show item info to the right of icons on the desktop and increase icon sizes and spacing
 /usr/libexec/PlistBuddy -c "Set :DesktopViewSettings:IconViewSettings:showItemInfo true" ~/Library/Preferences/com.apple.finder.plist
-# /usr/libexec/PlistBuddy -c "Set :FK_StandardViewSettings:IconViewSettings:showItemInfo true" ~/Library/Preferences/com.apple.finder.plist
-# /usr/libexec/PlistBuddy -c "Set :StandardViewSettings:IconViewSettings:showItemInfo true" ~/Library/Preferences/com.apple.finder.plist
-
-# Show item info to the right of the icons on the desktop
 /usr/libexec/PlistBuddy -c "Set DesktopViewSettings:IconViewSettings:labelOnBottom false" ~/Library/Preferences/com.apple.finder.plist
+/usr/libexec/PlistBuddy -c "Set :DesktopViewSettings:IconViewSettings:iconSize 80" ~/Library/Preferences/com.apple.finder.plist
+/usr/libexec/PlistBuddy -c "Set :DesktopViewSettings:IconViewSettings:gridSpacing 100" ~/Library/Preferences/com.apple.finder.plist
 
 # Enable snap-to-grid for icons on the desktop and in other icon views
 /usr/libexec/PlistBuddy -c "Set :DesktopViewSettings:IconViewSettings:arrangeBy grid" ~/Library/Preferences/com.apple.finder.plist
 /usr/libexec/PlistBuddy -c "Set :FK_StandardViewSettings:IconViewSettings:arrangeBy grid" ~/Library/Preferences/com.apple.finder.plist
 /usr/libexec/PlistBuddy -c "Set :StandardViewSettings:IconViewSettings:arrangeBy grid" ~/Library/Preferences/com.apple.finder.plist
 
-# Increase grid spacing for icons on the desktop and in other icon views
-/usr/libexec/PlistBuddy -c "Set :DesktopViewSettings:IconViewSettings:gridSpacing 100" ~/Library/Preferences/com.apple.finder.plist
-# /usr/libexec/PlistBuddy -c "Set :FK_StandardViewSettings:IconViewSettings:gridSpacing 100" ~/Library/Preferences/com.apple.finder.plist
-# /usr/libexec/PlistBuddy -c "Set :StandardViewSettings:IconViewSettings:gridSpacing 100" ~/Library/Preferences/com.apple.finder.plist
-
-# Increase the size of icons on the desktop and in other icon views
-/usr/libexec/PlistBuddy -c "Set :DesktopViewSettings:IconViewSettings:iconSize 80" ~/Library/Preferences/com.apple.finder.plist
-# /usr/libexec/PlistBuddy -c "Set :FK_StandardViewSettings:IconViewSettings:iconSize 80" ~/Library/Preferences/com.apple.finder.plist
-# /usr/libexec/PlistBuddy -c "Set :StandardViewSettings:IconViewSettings:iconSize 80" ~/Library/Preferences/com.apple.finder.plist
-
 # Use list view in all Finder windows by default
 # Four-letter codes for the other view modes: `icnv`, `clmv`, `Flwv`
 defaults write com.apple.finder FXPreferredViewStyle -string "Nlsv"
-
-# Disable the warning before emptying the Trash
-# defaults write com.apple.finder WarnOnEmptyTrash -bool false
 
 # Enable AirDrop over Ethernet and on unsupported Macs running Lion
 defaults write com.apple.NetworkBrowser BrowseAllInterfaces -bool true
@@ -255,10 +237,6 @@ chflags nohidden ~/Library
 
 # Show the /Volumes folder (does not seem to work in macOS 10.13)
 sudo chflags nohidden /Volumes
-
-# Remove Dropbox’s green checkmark icons in Finder
-# file=/Applications/Dropbox.app/Contents/Resources/emblem-dropbox-uptodate.icns
-# [ -e "${file}" ] && mv -f "${file}" "${file}.bak"
 
 # Expand the following File Info panes:
 # “General”, “Open with”, and “Sharing & Permissions”
@@ -277,27 +255,11 @@ sudo chflags hidden /opt
 # Dock, Dashboard, and Spaces                                                 #
 ###############################################################################
 
-# Enable highlight hover effect for the grid view of a stack (Dock)
-# defaults write com.apple.dock mouse-over-hilite-stack -bool true
-
 # Set the icon size of Dock items to 42 pixels
 defaults write com.apple.dock tilesize -int 42
 
-# Enable spring loading for all Dock items
-# defaults write com.apple.dock enable-spring-load-actions-on-all-items -bool true
-
 # Show indicator lights for open applications in the Dock
 defaults write com.apple.dock show-process-indicators -bool true
-
-# Don’t animate opening applications from the Dock
-# defaults write com.apple.dock launchanim -bool false
-
-# Speed up Mission Control animations
-# defaults write com.apple.dock expose-animation-duration -float 0.1
-
-# Don’t group windows by application in Mission Control
-# (i.e. use the old Exposé behavior instead)
-# defaults write com.apple.dock expose-group-by-app -bool false
 
 # Disable Dashboard
 defaults write com.apple.dashboard mcx-disabled -bool true
@@ -307,11 +269,6 @@ defaults write com.apple.dock dashboard-in-overlay -bool true
 
 # Don’t automatically rearrange Spaces based on most recent use
 defaults write com.apple.dock mru-spaces -bool false
-
-# Remove the auto-hiding Dock delay
-defaults write com.apple.dock autohide-delay -float 0
-# Remove the animation when hiding/showing the Dock
-defaults write com.apple.dock autohide-time-modifier -float 0
 
 ###############################################################################
 # Safari & WebKit                                                             #
@@ -388,79 +345,6 @@ defaults write com.apple.Safari SendDoNotTrackHTTPHeader -bool true
 
 # Update extensions automatically
 defaults write com.apple.Safari InstallExtensionUpdatesAutomatically -bool true
-
-###############################################################################
-# Mail                                                                        #
-###############################################################################
-
-# Disable send and reply animations in Mail.app
-# defaults write com.apple.mail DisableReplyAnimations -bool true
-# defaults write com.apple.mail DisableSendAnimations -bool true
-
-# Copy email addresses as `foo@example.com` instead of `Foo Bar <foo@example.com>` in Mail.app
-# defaults write com.apple.mail AddressesIncludeNameOnPasteboard -bool false
-
-# Add the keyboard shortcut ⌘ + Enter to send an email in Mail.app
-# defaults write com.apple.mail NSUserKeyEquivalents -dict-add "Send" "@\U21a9"
-
-# Display emails in threaded mode, sorted by date (oldest at the top)
-# defaults write com.apple.mail DraftsViewerAttributes -dict-add "DisplayInThreadedMode" -string "yes"
-# defaults write com.apple.mail DraftsViewerAttributes -dict-add "SortedDescending" -string "yes"
-# defaults write com.apple.mail DraftsViewerAttributes -dict-add "SortOrder" -string "received-date"
-
-# Disable inline attachments (just show the icons)
-# defaults write com.apple.mail DisableInlineAttachmentViewing -bool true
-
-# Disable automatic spell checking
-# defaults write com.apple.mail SpellCheckingBehavior -string "NoSpellCheckingEnabled"
-
-###############################################################################
-# Spotlight                                                                   #
-###############################################################################
-
-# Hide Spotlight tray-icon (and subsequent helper)
-#sudo chmod 600 /System/Library/CoreServices/Search.bundle/Contents/MacOS/Search
-# Disable Spotlight indexing for any volume that gets mounted and has not yet
-# been indexed before.
-# Use `sudo mdutil -i off "/Volumes/foo"` to stop indexing any volume.
-# sudo defaults write /.Spotlight-V100/VolumeConfiguration Exclusions -array "/Volumes"
-# Change indexing order and disable some search results
-# Yosemite-specific search results (remove them if you are using macOS 10.9 or older):
-# 	MENU_DEFINITION
-# 	MENU_CONVERSION
-# 	MENU_EXPRESSION
-# 	MENU_SPOTLIGHT_SUGGESTIONS (send search queries to Apple)
-# 	MENU_WEBSEARCH             (send search queries to Apple)
-# 	MENU_OTHER
-# defaults write com.apple.spotlight orderedItems -array \
-# 	'{"enabled" = 1;"name" = "APPLICATIONS";}' \
-# 	'{"enabled" = 1;"name" = "SYSTEM_PREFS";}' \
-# 	'{"enabled" = 1;"name" = "DIRECTORIES";}' \
-# 	'{"enabled" = 1;"name" = "PDF";}' \
-# 	'{"enabled" = 1;"name" = "FONTS";}' \
-# 	'{"enabled" = 0;"name" = "DOCUMENTS";}' \
-# 	'{"enabled" = 0;"name" = "MESSAGES";}' \
-# 	'{"enabled" = 0;"name" = "CONTACT";}' \
-# 	'{"enabled" = 0;"name" = "EVENT_TODO";}' \
-# 	'{"enabled" = 0;"name" = "IMAGES";}' \
-# 	'{"enabled" = 0;"name" = "BOOKMARKS";}' \
-# 	'{"enabled" = 0;"name" = "MUSIC";}' \
-# 	'{"enabled" = 0;"name" = "MOVIES";}' \
-# 	'{"enabled" = 0;"name" = "PRESENTATIONS";}' \
-# 	'{"enabled" = 0;"name" = "SPREADSHEETS";}' \
-# 	'{"enabled" = 0;"name" = "SOURCE";}' \
-# 	'{"enabled" = 0;"name" = "MENU_DEFINITION";}' \
-# 	'{"enabled" = 0;"name" = "MENU_OTHER";}' \
-# 	'{"enabled" = 0;"name" = "MENU_CONVERSION";}' \
-# 	'{"enabled" = 0;"name" = "MENU_EXPRESSION";}' \
-# 	'{"enabled" = 0;"name" = "MENU_WEBSEARCH";}' \
-# 	'{"enabled" = 0;"name" = "MENU_SPOTLIGHT_SUGGESTIONS";}'
-# Load new settings before rebuilding the index
-# killall mds > /dev/null 2>&1
-# Make sure indexing is enabled for the main volume
-# sudo mdutil -i on / > /dev/null
-# Rebuild the index from scratch
-# sudo mdutil -E / > /dev/null
 
 ###############################################################################
 # Terminal                                                                    #
@@ -556,6 +440,7 @@ defaults write com.apple.ActivityMonitor SortDirection -int 0
 
 # Use plain text mode for new TextEdit documents
 defaults write com.apple.TextEdit RichText -int 0
+
 # Open and save files as UTF-8 in TextEdit
 defaults write com.apple.TextEdit PlainTextEncoding -int 4
 defaults write com.apple.TextEdit PlainTextEncodingForWrite -int 4
