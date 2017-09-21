@@ -72,7 +72,7 @@ brew install brew-cask
 export HOMEBREW_CASK_OPTS="--appdir=/Applications"
 
 brew cask install arq
-brew cask install asepsis
+# brew cask install asepsis
 brew cask install beardedspice
 brew cask install bettertouchtool
 brew cask install bitbar
@@ -83,12 +83,10 @@ brew cask install google-chrome
 brew cask install kaleidoscope
 brew cask install kap
 brew cask install keepingyouawake
-brew cask install packer
-brew cask install things
 brew cask install transmission
 brew cask install transmit
 brew cask install vagrant
-brew cask install virtualbox
+# brew cask install virtualbox
 brew cask install visual-studio-code
 brew cask install vlc
 
