@@ -568,6 +568,9 @@ defaults write com.apple.TextEdit PlainTextEncodingForWrite -int 4
 defaults write com.apple.DiskUtility DUDebugMenuEnabled -bool true
 defaults write com.apple.DiskUtility advanced-image-options -bool true
 
+# View -> Show All Devices
+defaults write com.apple.DiskUtility SidebarShowAllDevices -bool true
+
 ###############################################################################
 # Mac App Store                                                               #
 ###############################################################################
