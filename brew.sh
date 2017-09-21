@@ -90,6 +90,7 @@ brew cask install vagrant
 # brew cask install virtualbox
 brew cask install visual-studio-code
 brew cask install vlc
+brew cask install vmware-fusion
 
 # Install App Store managed apps
 brew install mas

@@ -689,6 +689,13 @@ defaults write com.tapbots.TweetbotMac OpenURLsDirectly -bool true
 defaults write info.marcel-dierkes.KeepingYouAwake info.marcel-dierkes.KeepingYouAwake.MenuBarIconHighlightDisabled -bool YES
 
 ###############################################################################
+# VMware Fusion.app                                                           #
+###############################################################################
+
+# Applications menu: Show in Menu Bar: Never
+defaults write com.vmware.fusion showStartMenu3 -int 0
+
+###############################################################################
 # Kill affected applications                                                  #
 ###############################################################################
 
