@@ -76,6 +76,7 @@ brew cask install arq
 brew cask install beardedspice
 brew cask install bettertouchtool
 brew cask install bitbar
+brew cask install dash
 brew cask install docker
 brew cask install fantastical
 brew cask install firefox
@@ -101,7 +102,6 @@ mas install 443987910 # 1Password
 mas install 420212497 # Byword
 mas install 931657367 # Calcbot
 mas install 411643860 # DaisyDisk
-mas install 458034879 # Dash
 mas install 890031187 # Marked 2
 mas install 409203825 # Numbers
 mas install 409201541 # Pages
