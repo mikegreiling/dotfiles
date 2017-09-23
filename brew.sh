@@ -39,8 +39,11 @@ fi;
 # Install more recent versions of some macOS tools.
 brew install vim --with-override-system-vi
 brew install grep
-brew install openssh
 brew install screen
+
+# Brew's openssh formula no longer supports the keychain patch
+# https://github.com/Homebrew/homebrew-dupes/pull/482#issuecomment-118994372
+# brew install openssh
 
 # Install other useful binaries.
 brew install ack
