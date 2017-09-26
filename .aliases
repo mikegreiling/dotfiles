@@ -19,10 +19,6 @@ alias git=hub
 # Git Shortcuts (enable `g -` in place of `git checkout -`)
 g() { if [[ $@ == "-" ]]; then git checkout -; else git "$@"; fi; }
 
-# Work Shortcuts
-alias ce="cd ~/Projects/gitlab-ce/gitlab"
-alias ee="cd ~/Projects/gitlab-ee/gitlab"
-
 # Detect which `ls` flavor is in use
 if ls --color > /dev/null 2>&1; then # GNU `ls`
 	colorflag="--color"
