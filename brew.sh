@@ -62,6 +62,7 @@ brew install mcrypt
 brew install node
 brew install p7zip
 brew install pigz
+brew install pinentry-mac
 brew install pkg-config
 brew install pv
 brew install rbenv
