@@ -47,6 +47,7 @@ brew install screen
 
 # Install other useful binaries.
 brew install ack
+brew install chromedriver
 brew install dnsmasq
 brew install exiv2
 brew install faac
