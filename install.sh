@@ -4,7 +4,7 @@ cd "$(dirname "${BASH_SOURCE}")";
 
 git pull origin master;
 
-function doIt() {
+function doBootstrap() {
 	rsync --exclude ".git/" \
 		--exclude ".DS_Store" \
 		--exclude "/*.sh" \
@@ -12,21 +12,31 @@ function doIt() {
 		--exclude "LICENSE-MIT.txt" \
 		-avh --no-perms . ~;
 	source ~/.bash_profile;
+}
 
-	# If running macOS install homebrew, cask, and system tweaks
-	if [[ "$(uname)" == "Darwin" ]]; then
-		source brew.sh
-		source macos.sh
-	fi;
+function doInstall() {
+	source brew.sh
+	source macos.sh
 }
 
 if [ "$1" == "--force" -o "$1" == "-f" ]; then
-	doIt;
+	doBootstrap;
+	[[ "$(uname)" == "Darwin" ]] && doInstall;
 else
 	read -p "This may overwrite existing files in your home directory. Are you sure? (y/n) " -n 1;
 	echo "";
 	if [[ $REPLY =~ ^[Yy]$ ]]; then
-		doIt;
+		doBootstrap;
+
+		if [[ "$(uname)" == "Darwin" ]]; then
+			read -p "Would you like to install homebrew, cask, and macOS system tweaks? (y/n) " -n 1;
+			echo "";
+			if [[ $REPLY =~ ^[Yy]$ ]]; then
+				doInstall;
+			fi;
+		fi;
 	fi;
 fi;
-unset doIt;
+
+unset doBootstrap;
+unset doInstall;
