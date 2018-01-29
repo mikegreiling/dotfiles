@@ -92,6 +92,7 @@ brew cask install docker
 brew cask install fantastical
 brew cask install firefox
 brew cask install google-chrome
+brew cask install google-cloud-sdk
 brew cask install kaleidoscope
 brew cask install kap
 brew cask install keepingyouawake
