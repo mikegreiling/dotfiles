@@ -49,3 +49,29 @@ complete -o "nospace" -W "Contacts Calendar Dock Finder Mail Safari iTunes Syste
 
 # Initialize rbenv
 eval "$(rbenv init -)";
+
+# Initialize nvm
+export NVM_DIR="$HOME/.nvm"
+. "/usr/local/opt/nvm/nvm.sh"
+
+#
+# Run 'nvm use' automatically every time there's 
+# a .nvmrc file in the directory. Also, revert to default 
+# version when entering a directory without .nvmrc
+#
+enter_directory() {
+	if [[ $PWD == $PREV_PWD ]]; then
+		return
+	fi
+
+	PREV_PWD=$PWD
+	if [[ -f ".nvmrc" ]]; then
+		nvm use
+		NVM_DIRTY=true
+	elif [[ $NVM_DIRTY = true ]]; then
+		nvm use default
+		NVM_DIRTY=false
+	fi
+}
+
+export PROMPT_COMMAND=enter_directory
