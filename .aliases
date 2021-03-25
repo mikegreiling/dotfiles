@@ -13,9 +13,6 @@ alias dl="cd ~/Downloads"
 alias dt="cd ~/Desktop"
 alias p="cd ~/Projects"
 
-# Use hub in place of git
-alias git=hub
-
 # Git Shortcuts (enable `g -` in place of `git checkout -`)
 g() { if [[ $@ == "-" ]]; then git checkout -; else git "$@"; fi; }
 

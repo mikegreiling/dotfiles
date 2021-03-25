@@ -56,7 +56,6 @@ brew install git
 brew install git-lfs
 brew install gnupg
 brew install httpie
-brew install hub
 brew install imagemagick --with-webp
 brew install lua
 brew install mcrypt
