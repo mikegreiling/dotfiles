@@ -34,6 +34,14 @@ elif [ -f /etc/bash_completion ]; then
 	source /etc/bash_completion;
 fi;
 
+# Source git autocomplete manually
+xcode_dev_dir='/Applications/Xcode.app/Contents/Developer'
+git_core="$xcode_dev_dir/usr/share/git-core"
+git_completion="$git_core/git-completion.bash"
+[ -x "$(which git)" ] && \
+    [ -f "$git_completion" ] && \
+    source "$git_completion"
+
 # Enable tab completion for `g` by marking it as an alias for `git`
 if type __git_complete &> /dev/null; then
 	__git_complete g __git_main;
