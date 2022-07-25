@@ -47,6 +47,7 @@ brew install screen
 
 # Install other useful binaries.
 brew install ack
+brew install asdf
 brew install chromedriver
 brew install dnsmasq
 brew install exiv2
@@ -59,20 +60,20 @@ brew install httpie
 brew install imagemagick --with-webp
 brew install lua
 brew install mcrypt
-brew install node
+# brew install node
 brew install p7zip
 brew install pigz
 brew install pinentry-mac
 brew install pkg-config
 brew install pv
-brew install rbenv
+# brew install rbenv
 brew install rename
 brew install rlwrap
 brew install siege
 brew install sqlite
 brew install tree
 brew install wget --with-iri
-brew install yarn
+# brew install yarn
 brew install zopfli
 
 # Install cask-managed apps.
@@ -81,43 +82,43 @@ brew install cask
 
 export HOMEBREW_CASK_OPTS="--appdir=/Applications"
 
-brew cask install arq
-# brew cask install asepsis
-brew cask install beardedspice
-brew cask install bettertouchtool
-brew cask install bitbar
-brew cask install dash
-brew cask install docker
-brew cask install fantastical
-brew cask install firefox
-brew cask install google-chrome
-brew cask install google-cloud-sdk
-brew cask install kaleidoscope
-brew cask install kap
-brew cask install keepingyouawake
-brew cask install transmission
-brew cask install transmit
-brew cask install vagrant
-# brew cask install virtualbox
-brew cask install visual-studio-code
-brew cask install vlc
-brew cask install vmware-fusion
+# brew install --cask arq
+# brew install --cask asepsis
+# brew install --cask beardedspice
+# brew install --cask bettertouchtool
+brew install --cask xbar
+brew install --cask dash
+brew install --cask docker
+# brew install --cask fantastical
+brew install --cask firefox
+brew install --cask google-chrome
+# brew install --cask google-cloud-sdk
+brew install --cask kaleidoscope
+# brew install --cask kap
+# brew install --cask keepingyouawake
+brew install --cask transmission
+brew install --cask transmit
+# brew install --cask vagrant
+# brew install --cask virtualbox
+brew install --cask visual-studio-code
+brew install --cask vlc
+# brew install --cask vmware-fusion
 
 # Install App Store managed apps
 brew install mas
 
-mas install 443987910 # 1Password
-mas install 420212497 # Byword
+# mas install 443987910 # 1Password
+# mas install 420212497 # Byword
 mas install 931657367 # Calcbot
 mas install 411643860 # DaisyDisk
-mas install 890031187 # Marked 2
-mas install 409203825 # Numbers
-mas install 409201541 # Pages
+# mas install 890031187 # Marked 2
+# mas install 409203825 # Numbers
+# mas install 409201541 # Pages
 mas install 407963104 # Pixelmator
-mas install 880001334 # Reeder
-mas install 425424353 # The Unarchiver
+# mas install 880001334 # Reeder
+# mas install 425424353 # The Unarchiver
 mas install 904280696 # Things3
-mas install 557168941 # Tweetbot
+# mas install 557168941 # Tweetbot
 mas install 497799835 # Xcode
 
 # Remove outdated versions from the cellar.
