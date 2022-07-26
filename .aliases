@@ -12,6 +12,8 @@ alias -- -="cd -"
 alias dl="cd ~/Downloads"
 alias dt="cd ~/Desktop"
 alias p="cd ~/Projects"
+alias gl="cd ~/Projects/gdk/gitlab"
+alias glr="ce ~/Projects/gdk/gitlab; gdk update; g checkout HEAD db"
 
 # Git Shortcuts (enable `g -` in place of `git checkout -`)
 g() { if [[ $@ == "-" ]]; then git checkout -; else git "$@"; fi; }
