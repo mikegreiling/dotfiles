@@ -25,15 +25,15 @@ brew install findutils
 # Install GNU `sed`, overwriting the built-in `sed`.
 brew install gnu-sed --with-default-names
 # Install Bash 4.
-# Note: don’t forget to add `/usr/local/bin/bash` to `/etc/shells` before
+# Note: don’t forget to add `/opt/homebrew/bin/bash` to `/etc/shells` before
 # running `chsh`.
 brew install bash
 brew install bash-completion2
 
 # Switch to using brew-installed bash as default shell
-if ! fgrep -q '/usr/local/bin/bash' /etc/shells; then
-  echo '/usr/local/bin/bash' | sudo tee -a /etc/shells;
-  chsh -s /usr/local/bin/bash;
+if ! fgrep -q '/opt/homebrew/bin/bash' /etc/shells; then
+  echo '/opt/homebrew/bin/bash' | sudo tee -a /etc/shells;
+  chsh -s /opt/homebrew/bin/bash;
 fi;
 
 # Install more recent versions of some macOS tools.
@@ -87,16 +87,16 @@ export HOMEBREW_CASK_OPTS="--appdir=/Applications"
 # brew install --cask beardedspice
 # brew install --cask bettertouchtool
 brew install --cask xbar
-brew install --cask dash
+# brew install --cask dash
 brew install --cask docker
 # brew install --cask fantastical
-brew install --cask firefox
-brew install --cask google-chrome
+# brew install --cask firefox
+# brew install --cask google-chrome
 # brew install --cask google-cloud-sdk
 brew install --cask kaleidoscope
 # brew install --cask kap
-# brew install --cask keepingyouawake
-brew install --cask transmission
+brew install --cask keepingyouawake
+# brew install --cask transmission
 brew install --cask transmit
 # brew install --cask vagrant
 # brew install --cask virtualbox
@@ -114,9 +114,9 @@ mas install 411643860 # DaisyDisk
 # mas install 890031187 # Marked 2
 # mas install 409203825 # Numbers
 # mas install 409201541 # Pages
-mas install 407963104 # Pixelmator
+# mas install 407963104 # Pixelmator
 # mas install 880001334 # Reeder
-# mas install 425424353 # The Unarchiver
+mas install 425424353 # The Unarchiver
 mas install 904280696 # Things3
 # mas install 557168941 # Tweetbot
 mas install 497799835 # Xcode
