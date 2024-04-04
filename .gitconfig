@@ -80,6 +80,9 @@
 	cp  = cherry-pick
   cpm = cherry-pick -m 1
 
+	# Push the current branch and set it to track the remote branch with the same name
+	po = push -u origin HEAD
+
 [apply]
 
 	# Detect whitespace errors when applying a patch
