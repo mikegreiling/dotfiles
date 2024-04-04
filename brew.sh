@@ -14,9 +14,13 @@ fi
 brew update
 brew upgrade
 
+# Save Homebrew’s installed location.
+BREW_PREFIX=$(brew --prefix)
+
 # Install GNU core utilities (those that come with macOS are outdated).
 # Don’t forget to add `$(brew --prefix coreutils)/libexec/gnubin` to `$PATH`.
 brew install coreutils
+ln -s "${BREW_PREFIX}/bin/gsha256sum" "${BREW_PREFIX}/bin/sha256sum"
 
 # Install some other useful utilities like `sponge`.
 brew install moreutils
@@ -24,17 +28,21 @@ brew install moreutils
 brew install findutils
 # Install GNU `sed`, overwriting the built-in `sed`.
 brew install gnu-sed --with-default-names
-# Install Bash 4.
-# Note: don’t forget to add `/opt/homebrew/bin/bash` to `/etc/shells` before
-# running `chsh`.
+# Install a modern version of Bash.
 brew install bash
 brew install bash-completion2
 
 # Switch to using brew-installed bash as default shell
-if ! fgrep -q '/opt/homebrew/bin/bash' /etc/shells; then
-  echo '/opt/homebrew/bin/bash' | sudo tee -a /etc/shells;
-  chsh -s /opt/homebrew/bin/bash;
+if ! fgrep -q "${BREW_PREFIX}/bin/bash" /etc/shells; then
+  echo "${BREW_PREFIX}/bin/bash" | sudo tee -a /etc/shells;
+  chsh -s "${BREW_PREFIX}/bin/bash";
 fi;
+
+# Install `wget` with IRI support.
+brew install wget --with-iri
+
+# Install GnuPG to enable PGP-signing commits.
+brew install gnupg
 
 # Install more recent versions of some macOS tools.
 brew install vim --with-override-system-vi
@@ -50,30 +58,26 @@ brew install ack
 brew install asdf
 brew install chromedriver
 brew install dnsmasq
-brew install exiv2
 brew install faac
 brew install ffmpeg
 brew install git
 brew install git-lfs
-brew install gnupg
+brew install gs
 brew install httpie
 brew install imagemagick --with-webp
 brew install lua
+brew install lynx
 brew install mcrypt
-# brew install node
 brew install p7zip
 brew install pigz
-brew install pinentry-mac
-brew install pkg-config
 brew install pv
-# brew install rbenv
 brew install rename
 brew install rlwrap
 brew install siege
+brew install ssh-copy-id
 brew install sqlite
 brew install tree
-brew install wget --with-iri
-# brew install yarn
+brew install vbindiff
 brew install zopfli
 
 # # Install cask-managed apps.

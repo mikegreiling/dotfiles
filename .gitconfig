@@ -1,7 +1,7 @@
 [alias]
 
 	# View abbreviated SHA, description, and history graph of the latest 20 commits
-	l = log --pretty=oneline --graph --abbrev-commit
+	l = log --pretty=oneline -n 20 --graph --abbrev-commit
 
 	# View the current working tree status using the short format
 	s = status -s
@@ -16,7 +16,7 @@
 	dt = difftool
 
 	# Pull in remote changes for the current repository and all its submodules
-	p = !"git pull; git submodule foreach git pull origin master"
+	p = pull --recurse-submodules
 
 	# Clone a repository including all submodules
 	c = clone --recursive
@@ -29,8 +29,8 @@
 
 	# Show verbose output about tags, branches or remotes
 	tags = tag -l
-	branches = branch -a
-	remotes = remote -v
+	branches = branch --all
+	remotes = remote --verbose
 
 	# List aliases
 	aliases = config --get-regexp alias
@@ -59,28 +59,15 @@
 	# Find commits by commit message
 	fm = "!f() { git log --pretty=format:'%C(yellow)%h  %Cblue%ad  %Creset%s%Cgreen  [%cn] %Cred%d' --decorate --date=short --grep=$1; }; f"
 
-	# Remove branches that have already been merged with master
+	# Remove branches that have already been merged with main
 	# a.k.a. ‘delete merged’
 	dm = "!git branch --merged | grep -v '\\*' | xargs -n 1 git branch -d"
 
 	# List contributors with number of commits
 	contributors = shortlog --summary --numbered
 
-	# Merge GitHub pull request on top of the current branch or,
-	# if a branch name is specified, on top of the specified branch
-	mpr = "!f() { \
-		declare currentBranch=\"$(git symbolic-ref --short HEAD)\"; \
-		declare branch=\"${2:-$currentBranch}\"; \
-		if [ $(printf \"%s\" \"$1\" | grep '^[0-9]\\+$' > /dev/null; printf $?) -eq 0 ]; then \
-			git fetch origin refs/pull/$1/head:pr/$1 && \
-			git checkout -B $branch && \
-			git rebase $branch pr/$1 && \
-			git checkout -B $branch && \
-			git merge pr/$1 && \
-			git branch -D pr/$1 && \
-			git commit --amend -m \"$(git log -1 --pretty=%B)\n\nCloses #$1.\"; \
-		fi \
-	}; f"
+	# Show the user email for the current repository
+	whoami = config user.email
 
 	# Clear all changes (staged and unstaged) since HEAD
 	nuke = reset --hard HEAD
@@ -97,6 +84,11 @@
 
 	# Detect whitespace errors when applying a patch
 	whitespace = fix
+
+[branch]
+
+	# Show most recently changed branches first.
+	sort = -committerdate
 
 [core]
 
@@ -115,6 +107,10 @@
 	# Prevent showing files whose names contain non-ASCII symbols as unversioned.
 	# http://michael-kuehnel.de/git/2014/11/21/git-mac-osx-and-german-umlaute.html
 	precomposeunicode = false
+
+	# Speed up commands involving untracked files such as `git status`.
+	# https://git-scm.com/docs/git-update-index#_untracked_cache
+	untrackedCache = true
 
 [color]
 
@@ -149,6 +145,7 @@
 [diff]
 
 	tool = Kaleidoscope
+
 	# Detect copies as well as renames
 	renames = copies
 
@@ -168,6 +165,7 @@
 [merge]
 
 	tool = Kaleidoscope
+
 	# Include summaries of merged commits in newly created merge commit messages
 	log = true
 
@@ -192,12 +190,10 @@
 
 [push]
 
-	# Use the Git 1.x.x default to avoid errors on machines with old Git
-	# installations. To use `simple` instead, add this to your `~/.extra` file:
-	# `git config --global push.default simple`. See http://git.io/mMah-w.
-	default = matching
+	# https://git-scm.com/docs/git-config#git-config-pushdefault
+	default = simple
 	# Make `git push` push relevant annotated tags when pushing branches out.
-	# followTags = true
+	followTags = true
 
 # URL shorthands
 
@@ -220,3 +216,7 @@
 [url "git://gist.github.com/"]
 
 	insteadOf = "gist:"
+
+[init]
+
+	defaultBranch = main

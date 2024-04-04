@@ -1,6 +1,6 @@
-# Dotfiles (Mike Greiling)
+# Mike Greiling's Dotfiles
 
-My OS X dotfiles
+An itempotent set of scripts and config files to automate and synchronize my system environment across multiple machines.
 
 ## About
 
@@ -131,5 +131,5 @@ Original by [Mathias Bynens](https://mathiasbynens.be/)
 * [Mathias Bynens](https://mathiasbynens.be/) and the original [dotfiles repository](https://github.com/mathiasbynens/dotfiles)
 * [Nicolas Gallagher](http://nicolasgallagher.com/) and his [dotfiles repository](https://github.com/necolas/dotfiles)
 * [Ben Alman](http://benalman.com/) and his [dotfiles repository](https://github.com/cowboy/dotfiles)
-* [Matthew Mueller](https://github.com/MatthewMueller) and his "[Hacker's Guide to Setting Up Your Mac](http://lapwinglabs.com/blog/hacker-guide-to-setting-up-your-mac)" article which inspired me to research this
+* [Matthew Mueller](https://github.com/MatthewMueller) and his "[Hacker's Guide to Setting Up Your Mac](https://web.archive.org/web/20160119134924/http://lapwinglabs.com/blog/hacker-guide-to-setting-up-your-mac)" article which inspired me to research this
 * [Brandon Brown](https://brandonb.io/) and his [osx-for-hackers.sh](https://gist.github.com/brandonb927/3195465) gistfile
