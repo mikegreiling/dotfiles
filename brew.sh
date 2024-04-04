@@ -76,51 +76,52 @@ brew install wget --with-iri
 # brew install yarn
 brew install zopfli
 
-# Install cask-managed apps.
-brew tap caskroom/cask
-brew install cask
+# # Install cask-managed apps.
+# brew tap caskroom/cask
+# brew install cask
 
-export HOMEBREW_CASK_OPTS="--appdir=/Applications"
+# export HOMEBREW_CASK_OPTS="--appdir=/Applications"
 
-# brew install --cask arq
-# brew install --cask asepsis
-# brew install --cask beardedspice
-# brew install --cask bettertouchtool
-brew install --cask xbar
-# brew install --cask dash
-brew install --cask docker
-# brew install --cask fantastical
-# brew install --cask firefox
-# brew install --cask google-chrome
-# brew install --cask google-cloud-sdk
-brew install --cask kaleidoscope
-# brew install --cask kap
-brew install --cask keepingyouawake
-# brew install --cask transmission
-brew install --cask transmit
-# brew install --cask vagrant
-# brew install --cask virtualbox
-brew install --cask visual-studio-code
-brew install --cask vlc
-# brew install --cask vmware-fusion
+# # brew install --cask arq
+# # brew install --cask asepsis
+# # brew install --cask beardedspice
+# # brew install --cask bettertouchtool
+# brew install --cask xbar
+# # brew install --cask dash
+# brew install --cask docker
+# # brew install --cask fantastical
+# # brew install --cask firefox
+# # brew install --cask google-chrome
+# # brew install --cask google-cloud-sdk
+# brew install --cask kaleidoscope
+# # brew install --cask kap
+# brew install --cask keepingyouawake
+# # brew install --cask transmission
+# brew install --cask transmit
+# # brew install --cask vagrant
+# # brew install --cask virtualbox
+# brew install --cask visual-studio-code
+# brew install --cask vlc
+# # brew install --cask vmware-fusion
 
-# Install App Store managed apps
-brew install mas
+# # Install App Store managed apps
+# brew install mas
 
-# mas install 443987910 # 1Password
-# mas install 420212497 # Byword
-mas install 931657367 # Calcbot
-mas install 411643860 # DaisyDisk
-# mas install 890031187 # Marked 2
-# mas install 409203825 # Numbers
-# mas install 409201541 # Pages
-# mas install 407963104 # Pixelmator
-# mas install 880001334 # Reeder
-mas install 425424353 # The Unarchiver
-mas install 904280696 # Things3
-# mas install 557168941 # Tweetbot
-mas install 497799835 # Xcode
+# # mas install 443987910 # 1Password
+# # mas install 420212497 # Byword
+# mas install 931657367 # Calcbot
+# mas install 411643860 # DaisyDisk
+# # mas install 890031187 # Marked 2
+# # mas install 409203825 # Numbers
+# # mas install 409201541 # Pages
+# # mas install 407963104 # Pixelmator
+# # mas install 880001334 # Reeder
+# mas install 425424353 # The Unarchiver
+# mas install 904280696 # Things3
+# # mas install 557168941 # Tweetbot
+# mas install 497799835 # Xcode
 
-# Remove outdated versions from the cellar.
-brew cask cleanup
+# # Remove outdated versions from the cellar.
+# brew cask cleanup
+
 brew cleanup
