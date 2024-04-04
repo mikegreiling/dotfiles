@@ -50,7 +50,7 @@ brew install grep
 brew install screen
 
 # Brew's openssh formula no longer supports the keychain patch
-# https://github.com/Homebrew/homebrew-dupes/pull/482#issuecomment-118994372
+# https://archive.md/hSB6d
 # brew install openssh
 
 # Install other useful binaries.
