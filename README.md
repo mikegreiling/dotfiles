@@ -1,6 +1,6 @@
 # Mike Greiling's Dotfiles
 
-An itempotent set of scripts and config files to automate and synchronize my system environment across multiple machines.
+A set of config files and itempotent scripts used to automate and synchronize my system environment across multiple machines.
 
 ## About
 
