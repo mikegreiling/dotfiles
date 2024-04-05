@@ -1,4 +1,4 @@
-![](.config/dotfiles-icon-80x80.png)
+![](assets/dotfiles-icon-80x80.png)
 
 # Mike Greiling's Dotfiles
 
@@ -97,7 +97,7 @@ Once this is all in place, there are a few other items which must be done manual
 
 ## Prompt Reference
 
-Included is a prompt which I shamelessly stole from [Nicolas Gallagher](https://github.com/necolas/dotfiles/).  Here is his descroption:
+Included is a prompt which was shamelessly stolen from [Nicolas Gallagher](https://github.com/necolas/dotfiles/).  Here is his descroption:
 
 > ### Custom bash prompt
 >
@@ -126,12 +126,9 @@ Included is a prompt which I shamelessly stole from [Nicolas Gallagher](https://
 |---|
 | [Mike Greiling](https://pixelcog.com/) |
 
-Original by [Mathias Bynens](https://mathiasbynens.be/)
-
 ## Thanks to…
 
-* [Mathias Bynens](https://mathiasbynens.be/) and the original [dotfiles repository](https://github.com/mathiasbynens/dotfiles)
-* [Nicolas Gallagher](http://nicolasgallagher.com/) and his [dotfiles repository](https://github.com/necolas/dotfiles)
-* [Ben Alman](http://benalman.com/) and his [dotfiles repository](https://github.com/cowboy/dotfiles)
+* [Mathias Bynens](https://mathiasbynens.be/) and the original [dotfiles repository](https://github.com/mathiasbynens/dotfiles) I based mine off of
+* Katrin Leinweber's [dotfiles repository](https://gitlab.com/katrinleinweber/dotfiles)
+* Paul Irish's [dotfiles repository](https://github.com/paulirish/dotfiles)
 * [Matthew Mueller](https://github.com/MatthewMueller) and his "[Hacker's Guide to Setting Up Your Mac](https://web.archive.org/web/20160119134924/http://lapwinglabs.com/blog/hacker-guide-to-setting-up-your-mac)" article which inspired me to research this
-* [Brandon Brown](https://brandonb.io/) and his [osx-for-hackers.sh](https://gist.github.com/brandonb927/3195465) gistfile

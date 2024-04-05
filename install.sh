@@ -1,42 +1,24 @@
-#!/usr/bin/env bash
+#!/bin/sh
+# Installation script borrowed from @twpayne
 
-cd "$(dirname "${BASH_SOURCE}")";
+set -e # -e: exit on error
 
-# git pull origin main;
-
-function doBootstrap() {
-	rsync --exclude ".git/" \
-		--exclude ".DS_Store" \
-		--exclude "/*.sh" \
-		--exclude "README.md" \
-		--exclude "LICENSE-MIT.txt" \
-		-avh --no-perms . ~;
-	source ~/.bash_profile;
-}
-
-function doInstall() {
-	source brew.sh
-	source macos.sh
-}
-
-if [ "$1" == "--force" -o "$1" == "-f" ]; then
-	doBootstrap;
-	[[ "$(uname)" == "Darwin" ]] && doInstall;
+if [ ! "$(command -v chezmoi)" ]; then
+  bin_dir="$HOME/.local/bin"
+  chezmoi="$bin_dir/chezmoi"
+  if [ "$(command -v curl)" ]; then
+    sh -c "$(curl -fsSL https://git.io/chezmoi)" -- -b "$bin_dir"
+  elif [ "$(command -v wget)" ]; then
+    sh -c "$(wget -qO- https://git.io/chezmoi)" -- -b "$bin_dir"
+  else
+    echo "To install chezmoi, you must have curl or wget installed." >&2
+    exit 1
+  fi
 else
-	read -p "This may overwrite existing files in your home directory. Are you sure? (y/n) " -n 1;
-	echo "";
-	if [[ $REPLY =~ ^[Yy]$ ]]; then
-		doBootstrap;
+  chezmoi=chezmoi
+fi
 
-		if [[ "$(uname)" == "Darwin" ]]; then
-			read -p "Would you like to install homebrew, cask, and macOS system tweaks? (y/n) " -n 1;
-			echo "";
-			if [[ $REPLY =~ ^[Yy]$ ]]; then
-				doInstall;
-			fi;
-		fi;
-	fi;
-fi;
-
-unset doBootstrap;
-unset doInstall;
+# POSIX way to get script's dir: https://stackoverflow.com/a/29834779/12156188
+script_dir="$(cd -P -- "$(dirname -- "$(command -v -- "$0")")" && pwd -P)"
+# exec: replace current process with chezmoi init
+exec "$chezmoi" init --apply "--source=$script_dir"
