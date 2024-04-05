@@ -1,3 +1,5 @@
+![](.config/dotfiles-icon-80x80.png)
+
 # Mike Greiling's Dotfiles
 
 A set of config files and itempotent scripts used to automate and synchronize my system environment across multiple machines.
