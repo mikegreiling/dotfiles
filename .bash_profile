@@ -1,13 +1,17 @@
 # Add homebrew shell environment (this must be done early or auto-complete will bug out)
 [ -s "/opt/homebrew/bin/brew" ] && eval "$(/opt/homebrew/bin/brew shellenv)"
 
-# Load the shell dotfiles, and then some:
 # * ~/.path can be used to extend `$PATH`.
+[ -r ".path" ] && [ -f ".path" ] && source ".path";
+
+# Load the shell dotfiles:
+source .config/bash_prompt;
+source .config/exports;
+source .config/aliases;
+source .config/functions;
+
 # * ~/.extra can be used for other settings you don’t want to commit.
-for file in ~/.{path,config/bash_prompt,config/exports,config/aliases,config/functions,extra}; do
-	[ -r "$file" ] && [ -f "$file" ] && source "$file";
-done;
-unset file;
+[ -r ".extra" ] && [ -f ".extra" ] && source ".extra";
 
 # Case-insensitive globbing (used in pathname expansion)
 shopt -s nocaseglob;
