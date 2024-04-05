@@ -1077,3 +1077,6 @@ if [[ ! ($* == *--no-restart*) ]]; then
 fi
 
 printf "Please log out and log back in to make all settings take effect.\n"
+
+# if we don't exit with 0, chezmoi will presume this failed and keep re-running the script
+exit 0
