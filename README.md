@@ -6,35 +6,15 @@ A set of config files and itempotent scripts used to automate and synchronize my
 
 ## About
 
-This is a very basic dotfile repository forked from <https://mths.be/dotfiles>. I have modified the settings to my liking, enhanced the installation process, and added cask to automate macOS Application installation.
+This repository contains the personal dotfiles of Mike Greiling. Originally forked from <https://mths.be/dotfiles>, it has subsequently been almost entirely rewritten and adapted to utilize [chezmoi](https://github.com/twpayne/chezmoi) (ʃeɪmwɑː | shay-mwah) for easy installation, maintenance, and synchronization. The aim is to make my preferred system configuration portable across workstations and operating systems in a deterministic way. All scripts are meant to be idempotent.
 
 ## Installation
 
-**Warning:** If you want to give these dotfiles a try, you should first fork this repository, review the code, and remove things you don’t want or need. Don’t blindly use my settings unless you know what that entails. Use at your own risk!
-
-### Using Git and the install script
-
-You can clone the repository wherever you want. The bootstrapper script will pull in the latest version and copy the files to your home folder.
-
 ```bash
-git clone https://github.com/mikegreiling/dotfiles.git && cd dotfiles && source install.sh
+chezmoi init mikegreiling
 ```
 
-To update, `cd` into your local `dotfiles` repository and then:
-
-```bash
-source install.sh
-```
-
-### Git-free install
-
-To install these dotfiles without Git:
-
-```bash
-cd; curl -#L https://github.com/mikegreiling/dotfiles/tarball/main | tar -xzv --strip-components 1 --exclude={README.md,*.sh,LICENSE-MIT.txt}
-```
-
-To update later on, just run that command again.
+You will be prompted to supply a full name and email address which will allow git to be configured properly
 
 ### Specify the `$PATH`
 
@@ -46,49 +26,11 @@ Here’s an example `~/.path` file that adds `/usr/local/bin` to the `$PATH`:
 export PATH="/usr/local/bin:$PATH"
 ```
 
-### Add custom commands without creating a new fork
-
-If `~/.extra` exists, it will be sourced along with the other files. You can use this to add a few custom commands without the need to fork this entire repository, or to add commands you don’t want to commit to a public repository.
-You could also use `~/.extra` to override settings, functions and aliases from my dotfiles repository. It’s probably better to [fork this repository](https://github.com/mathiasbynens/dotfiles/fork) instead, though.
-
-My `~/.extra` looks something like this:
-
-```bash
-# Git credentials
-# Not under version control to prevent people from
-# accidentally committing with your details
-GIT_AUTHOR_NAME="Mike Greiling"
-GIT_AUTHOR_EMAIL="mike@pixelcog.com"
-GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
-GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
-# Set the credentials (modifies ~/.gitconfig)
-git config --global user.name "$GIT_AUTHOR_NAME"
-git config --global user.email "$GIT_AUTHOR_EMAIL"
-```
-
-### Sensible macOS defaults
-
-When setting up a new Mac, you may want to set some sensible macOS defaults:
-
-```bash
-./macos.sh
-```
-
-### Install Homebrew formulae
-
-When setting up a new Mac, you may want to install some common [Homebrew](https://brew.sh/) formulae (after installing Homebrew, of course):
-
-```bash
-./brew.sh
-```
-
-Some of the functionality of these dotfiles depends on formulae installed by `brew.sh`. If you don’t plan to run `brew.sh`, you should look carefully through the script and manually install any particularly important ones. A good example is Bash/Git completion: the dotfiles use a special version from Homebrew.
-
 ## Additional System Setup Instructions
 
 Once this is all in place, there are a few other items which must be done manually (included here for my own reference).
 
-1. Go to System Settings ➜ General and:
+1. Go to System Settings ➜ Desktop & Dock ➜ Windows and:
   - Check "Ask to keep changes when closing documents"
   - Uncheck "Close windows when quitting an app"  
     _*I have not yet learned how to do this programmatically_
