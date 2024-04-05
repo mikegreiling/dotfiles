@@ -197,11 +197,16 @@
 
 # URL shorthands
 
+[url "git@gitlab.com:"]
+
+	insteadOf = "https://gitlab.com/"
+
 [url "git@github.com:"]
 
 	insteadOf = "gh:"
 	pushInsteadOf = "github:"
 	pushInsteadOf = "git://github.com/"
+	pushInsteadOf = "https://github.com/"
 
 [url "git://github.com/"]
 
