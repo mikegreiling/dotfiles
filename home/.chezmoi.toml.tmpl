@@ -65,13 +65,16 @@
 {{- /* This retains the value passed with --source on chezmoi init, which is used in the ../install.sh script */ -}}
 sourceDir = {{ .chezmoi.workingTree | quote }}
 
+[hooks.read-source-state.pre]
+  command = "{{ .chezmoi.sourceDir }}/.chezmoihooks/pre-source-state.sh"
+
 verbose = true
 
 [diff]
-    exclude = ["scripts"]
+  exclude = ["scripts"]
 
 [status]
-    exclude = ["always"]
+  exclude = ["always"]
 
 [data]
   is_headless = {{ $headless }}
