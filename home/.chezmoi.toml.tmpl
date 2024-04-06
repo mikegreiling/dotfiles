@@ -70,6 +70,11 @@ sourceDir = {{ .chezmoi.workingTree | quote }}
 
 verbose = true
 
+encryption = "age"
+[age]
+  identity = "~/.config/chezmoi/key.txt"
+  recipient = "age1j78rq7y3x5hx3x7lra4p44jkfzsme3v3vnhj6t9cpf8dywwwaeksqfgtx4"
+
 [diff]
   exclude = ["scripts"]
 
