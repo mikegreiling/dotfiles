@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+{{- $safe_local_hostname := .computer_name | replace " " "-" | replaceAllRegex "[^a-zA-Z0-9-_]" "" }}
+{{- $safe_netbios_name := .hostname | replace " " "-" | replaceAllRegex "[^a-zA-Z0-9-_]" "" | trunc 15 | trimAll "-." | upper }}
+
+echo ""
+echo "Setting up computer name and hostnames:"
+
+# Ask for the administrator password upfront
+sudo -v
+
+# The ComputerName is the user fiendly name for the system.
+# Visible in System Preferences → About → Name
+echo "  ComputerName  → {{ .computer_name }}"
+sudo scutil --set ComputerName {{ .computer_name | quote }}
+
+# The name that designates a computer on a local subnet. It will be reset every
+# time ComputerName is changed in System Preferences, with illegal characters
+# removed and dashes in place of spaces.
+# Visible in System Preferences → Sharing → Local hostname
+echo "  LocalHostName → {{ $safe_local_hostname }}"
+sudo scutil --set LocalHostName {{ $safe_local_hostname | quote }}
+
+# By default the HostName is set automatically and gets derived from either
+# DHCP or the LocalHostName, but it can be set manially as well.
+# Visible in the Terminal via the `hostname` command
+echo "  HostName      → {{ .hostname }}"
+sudo scutil --set HostName {{ .hostname | quote }}
+
+# The NetBIOS name is a legacy feature of Windows networking protocols.
+# Limited to 15 alphanumeric characters with some restrictions.
+# see https://en.wikipedia.org/wiki/NetBIOS#NetBIOS_name
+echo "  NetBIOSName   → {{ $safe_netbios_name }}"
+sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server NetBIOSName -string {{ $safe_netbios_name | quote }}

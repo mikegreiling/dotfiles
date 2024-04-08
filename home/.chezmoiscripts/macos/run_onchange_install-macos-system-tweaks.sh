@@ -58,27 +58,6 @@ while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 # General UI/UX                                                               #
 ###############################################################################
 
-# NOTE: I have moved this to an external helper function. There is some more
-# nuance to setting up the computer hostname than these commands suggest.
-
-# The user fiendly name for the system. Visible in System Preferences → Sharing
-# sudo scutil --set ComputerName "Mike's MacBook Pro"
-
-# The name that designates a computer on a local subnet. Visible in the terminal
-# sudo scutil --set LocalHostName "mike-mbp"
-
-# This should never be set manually. It is meant to be derived from DHCP.
-# DO NOT UNCOMMENT THIS LINE
-# sudo scutil --set HostName "mike-mbp"
-
-# This sets the NetBIOS name which is a legacy feature of Windows networking
-# protocols. Limited to 15 alphanumeric characters with some restrictions.
-# see https://en.wikipedia.org/wiki/NetBIOS#NetBIOS_name
-#
-# If this is not set it will default to the LocalHostName value. It is best
-# to leave this alone.
-# sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server NetBIOSName -string "mike-mbp"
-
 # Set sidebar icon size to medium
 defaults write NSGlobalDomain NSTableViewDefaultSizeMode -int 2
 
@@ -753,38 +732,24 @@ set +x
 # Activate some of the above settings without a logout
 /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
 
-# for app in "Activity Monitor" \
-# 	"Address Book" \
-# 	"Calendar" \
-# 	"cfprefsd" \
-# 	"Contacts" \
-# 	"Dock" \
-# 	"Finder" \
-# 	"Google Chrome Canary" \
-# 	"Google Chrome" \
-# 	"Mail" \
-# 	"Messages" \
-# 	"Opera" \
-# 	"Photos" \
-# 	"Safari" \
-# 	"SizeUp" \
-# 	"Spectacle" \
-# 	"SystemUIServer" \
-# 	"Terminal" \
-# 	"Transmission" \
-# 	"Tweetbot" \
-# 	"Twitter" \
-# 	"iCal"; do
-# 	killall "${app}" &> /dev/null
-# done
-# echo "Done. Note that some of these changes require a logout/restart to take effect."
-
-# Restart affected applications if `--no-restart` flag is not present.
-if [[ ! ($* == *--no-restart*) ]]; then
+function killApps() {
   for app in "cfprefsd" "Dock" "Finder" "Mail" "SystemUIServer"; do
     killall "${app}" > /dev/null 2>&1
   done
-fi
+}
+
+# Restart affected applications if `--no-restart` flag is not present.
+if [[ ! ($* == *--no-restart*) ]]; then
+	if [ -t 0 -a -t 1 ]; then
+		read -p "Setup completed. Would you like to reload the effected apps? (y/N) " -n 1;
+		echo "";
+		if [[ $REPLY =~ ^[Yy]$ ]]; then
+			killApps;
+		fi;
+	else
+		killApps;
+	fi;
+fi;
 
 printf "Please log out and log back in to make all settings take effect.\n"
 

@@ -1,18 +1,41 @@
 {{- /* Setup script adapted from https://github.com/felipecrs/dotfiles */ -}}
 
-{{- $full_name := "Mike Greiling" -}}
-{{- $email := "mike@pixelcog.com" -}}
-
 {{- $chezmoiForce := or (has "--force" .chezmoi.args) (has "--force=true" .chezmoi.args) -}}
 {{- $interactive := and stdinIsATTY (not $chezmoiForce) -}}
 {{- $headless := or (env "SSH_CLIENT" | not | not) (not (or (env "DISPLAY") (env "WAYLAND_DISPLAY"))) -}}
 
+{{- $username := output "logname" | trim -}}
+{{- $full_name := "" -}}
+{{- $email := "" -}}
+{{- $computer_name := "" -}}
+{{- $hostname := .chezmoi.hostname -}}
+
+{{- /* Grab some different defaults of we're on macOS */ -}}
+{{- if eq .chezmoi.os "darwin" -}}
+{{-   $full_name = output "id" "-F" $username | trim -}}
+{{-   $email = output "/usr/libexec/PlistBuddy" "-c" "print :Accounts:0:AccountID" "/Users/mike/Library/Preferences/MobileMeAccounts.plist" | trim -}}
+{{-   $computer_name = output "scutil" "--get" "ComputerName" -}}
+{{-   $hostname = output "scutil" "--get" "LocalHostName" -}}
+{{- end -}}
+
+{{- /* Default to values already provided if available */ -}}
 {{- if hasKey . "full_name" -}}
 {{-   $full_name = .full_name -}}
 {{- end -}}
+{{- if hasKey . "email" -}}
+{{-   $email = .email -}}
+{{- end -}}
+{{- if hasKey . "computer_name" -}}
+{{-   $computer_name = .computer_name -}}
+{{- end -}}
+{{- if hasKey . "hostname" -}}
+{{-   $hostname = .hostname -}}
+{{- end -}}
+
 {{- if $interactive -}}
+
 {{-   range $i := until 99 -}}
-{{-     $question := "❔ What is your full name" -}}
+{{-     $question := "> What is your full name (for git config)" -}}
 {{-     $answer := "" -}}
 {{-     if $full_name -}}
 {{-       $answer = promptString $question $full_name -}}
@@ -30,14 +53,9 @@
 {{-       exit 1 -}}
 {{-     end -}}
 {{-   end -}}
-{{- end -}}
 
-{{- if hasKey . "email" -}}
-{{-   $email = .email -}}
-{{- end -}}
-{{- if $interactive -}}
 {{-   range $i := until 99 -}}
-{{-     $question := "❔ What is your email" -}}
+{{-     $question := "> What is your email (for git config)" -}}
 {{-     $answer := "" -}}
 {{-     if $email -}}
 {{-       $answer = promptString $question $email -}}
@@ -56,9 +74,47 @@
 {{-       exit 1 -}}
 {{-     end -}}
 {{-   end -}}
-{{- end -}}
 
-{{- if $interactive -}}
+{{-   range $i := until 99 -}}
+{{-     $question := "> What is a user-fiendly name for this computer? (as seen in network services)" -}}
+{{-     $answer := "" -}}
+{{-     if $computer_name -}}
+{{-       $answer = promptString $question $computer_name -}}
+{{-     else -}}
+{{-       $answer = promptString $question -}}
+{{-     end -}}
+{{-     if regexMatch "^[a-zA-Z0-9][-' a-zA-Z0-9]+$" $answer -}}
+{{-       $computer_name = $answer -}}
+{{-       writeToStdout (printf "✅ Computer Name set as '%s'\n" $computer_name) -}}
+{{-       break -}}
+{{-     end -}}
+{{-     writeToStdout (printf "❌ '%s' is an invalid name\n" $answer) -}}
+{{-     if eq $i 98 -}}
+{{-       writeToStdout "❌ ERROR: maximum tries exceeded\n" -}}
+{{-       exit 1 -}}
+{{-     end -}}
+{{-   end -}}
+
+{{-   range $i := until 99 -}}
+{{-     $question := "> What should the hostname for this computer be? (lowercase, no spaces)" -}}
+{{-     $answer := "" -}}
+{{-     if $hostname -}}
+{{-       $answer = promptString $question $hostname -}}
+{{-     else -}}
+{{-       $answer = promptString $question -}}
+{{-     end -}}
+{{-     if regexMatch "^[a-zA-Z0-9][-_a-zA-Z0-9]*$" $answer -}}
+{{-       $hostname = $answer -}}
+{{-       writeToStdout (printf "✅ Hostname set as '%s'\n" $hostname) -}}
+{{-       break -}}
+{{-     end -}}
+{{-     writeToStdout (printf "❌ '%s' is an invalid hostname\n" $answer) -}}
+{{-     if eq $i 98 -}}
+{{-       writeToStdout "❌ ERROR: maximum tries exceeded\n" -}}
+{{-       exit 1 -}}
+{{-     end -}}
+{{-   end -}}
+
 {{-   writeToStdout "\n💡 Tip: you can always make chezmoi ask this again by running `chezmoi init` without `--force`.\n" -}}
 {{- end -}}
 
@@ -83,5 +139,8 @@ encryption = "age"
 
 [data]
   is_headless = {{ $headless }}
+  username = {{ $username | quote }}
   full_name = {{ $full_name | quote }}
   email = {{ $email | quote }}
+  computer_name = {{ $computer_name | quote }}
+  hostname = {{ $hostname | quote }}

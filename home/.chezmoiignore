@@ -1,4 +1,5 @@
 {{ if ne .chezmoi.os "darwin" }}
+.chezmoiscripts/macos/**
 Library
 {{ end }}
 
