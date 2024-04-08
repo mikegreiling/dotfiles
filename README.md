@@ -8,13 +8,15 @@ A set of config files and itempotent scripts used to automate and synchronize my
 
 This repository contains the personal dotfiles of Mike Greiling. Originally forked from <https://mths.be/dotfiles>, it has subsequently been almost entirely rewritten and adapted to utilize [chezmoi](https://github.com/twpayne/chezmoi) (ʃeɪmwɑː | shay-mwah) for easy installation, maintenance, and synchronization. The aim is to make my preferred system configuration portable across workstations and operating systems in a deterministic way. All scripts are meant to be idempotent.
 
+Anyone is free to use any or all of this repository for their own purposes, however I do not recommend using it verbatim. This script will prompt you for a decryption key (which you do not have) in order to enable it to install my private SSH and GPG keys.
+
 ## Installation
 
 ```bash
 chezmoi init mikegreiling
 ```
 
-You will be prompted to supply a full name and email address which will allow git to be configured properly
+You will be prompted to supply the decryption key to install SSH and GPG keys, followed by your full name and email address which will allow git to be configured properly, further followed by an option to override the computer and hostname settings. Once all of that information is collected, it will install the dotfiles and run setup scripts.
 
 ### Specify the `$PATH`
 
