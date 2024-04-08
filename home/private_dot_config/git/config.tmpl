@@ -83,6 +83,11 @@
 	# Push the current branch and set it to track the remote branch with the same name
 	po = push -u origin HEAD
 
+	# Same as po, but with force and no-verify options applied
+	pof = push -u origin HEAD --force
+	pon = push -u origin HEAD --no-verify
+	ponf = push -u origin HEAD --force --no-verify
+
 [apply]
 
 	# Detect whitespace errors when applying a patch
