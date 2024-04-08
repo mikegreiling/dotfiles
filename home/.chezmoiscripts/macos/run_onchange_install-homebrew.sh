@@ -8,124 +8,94 @@ while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 
 # Install Homebrew and ensure it is up-to-date.
 if [[ ! "$(type -P brew)" ]]; then
-	true | ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
 fi
+eval "$(/opt/homebrew/bin/brew shellenv)"
 
 brew update
 brew upgrade
 
-# Save Homebrew’s installed location.
+brew bundle install \
+	--quiet \
+	--no-lock \
+	--file=/dev/stdin <<BREWS
+tap "homebrew/bundle"
+tap "homebrew/cask-fonts"
+tap "homebrew/cask-versions"
+tap "homebrew/core"
+
+# Install essentials
+brew "coreutils"
+brew "moreutils"
+brew "findutils"
+brew "wget"
+brew "gnupg"
+
+# Install modern version of bash
+brew "bash"
+brew "bash-completion@2"
+
+# Install some useful command-line utilities
+brew "ack"
+brew "age"
+brew "asdf"
+brew "bat"
+brew "chezmoi"
+brew "dnsmasq"
+brew "faac"
+brew "ffmpeg"
+brew "fzf"
+brew "git"
+brew "git-lfs"
+brew "git-absorb"
+brew "gitlab-ci-local"
+brew "glab"
+brew "grep"
+brew "gs"
+brew "httpie"
+brew "jq"
+brew "lazydocker"
+brew "lefthook"
+brew "lftp"
+brew "lua"
+brew "mcrypt"
+brew "p7zip"
+brew "pigz"
+brew "pv"
+brew "ripgrep"
+brew "sd"
+brew "shfmt"
+brew "siege"
+brew "sqlite"
+brew "tree"
+brew "tealdeer"
+brew "ugrep"
+brew "vbindiff"
+brew "vim"
+brew "xh"
+brew "zopfli"
+
+# Install some macOS apps and tools
+cask "1password"
+cask "1password-cli"
+cask "kaleidoscope"
+cask "keepingyouawake"
+cask "little-snitch"
+cask "meetingbar"
+cask "slack"
+cask "vlc"
+cask "xbar"
+cask "zoom"
+BREWS
+
+# Save the list of installed packages to a Brewfile for inspection
+brew bundle dump --file=${HOME}/Downloads/Brewfile-$(hostname) --force
+
+# TODO: remove this bit once we switch to zsh
 BREW_PREFIX=$(brew --prefix)
-
-# Install GNU core utilities (those that come with macOS are outdated).
-# Don’t forget to add `$(brew --prefix coreutils)/libexec/gnubin` to `$PATH`.
-brew install coreutils
-ln -s "${BREW_PREFIX}/bin/gsha256sum" "${BREW_PREFIX}/bin/sha256sum"
-
-# Install some other useful utilities like `sponge`.
-brew install moreutils
-# Install GNU `find`, `locate`, `updatedb`, and `xargs`, `g`-prefixed.
-brew install findutils
-# Install GNU `sed`, overwriting the built-in `sed`.
-brew install gnu-sed --with-default-names
-# Install a modern version of Bash.
-brew install bash
-brew install bash-completion2
 
 # Switch to using brew-installed bash as default shell
 if ! fgrep -q "${BREW_PREFIX}/bin/bash" /etc/shells; then
   echo "${BREW_PREFIX}/bin/bash" | sudo tee -a /etc/shells;
   chsh -s "${BREW_PREFIX}/bin/bash";
 fi;
-
-# Install `wget` with IRI support.
-brew install wget --with-iri
-
-# Install GnuPG to enable PGP-signing commits.
-brew install gnupg
-
-# Install more recent versions of some macOS tools.
-brew install vim
-brew install grep
-brew install screen
-
-# Brew's openssh formula no longer supports the keychain patch
-# https://archive.md/hSB6d
-# brew install openssh
-
-# Install other useful binaries.
-brew install ack
-brew install asdf
-brew install chromedriver
-brew install dnsmasq
-brew install faac
-brew install ffmpeg
-brew install git
-brew install git-lfs
-brew install gs
-brew install httpie
-brew install imagemagick --with-webp
-brew install lua
-brew install lynx
-brew install mcrypt
-brew install p7zip
-brew install pigz
-brew install pv
-brew install rename
-brew install rlwrap
-brew install siege
-brew install ssh-copy-id
-brew install sqlite
-brew install tree
-brew install vbindiff
-brew install zopfli
-
-# # Install cask-managed apps.
-# brew tap caskroom/cask
-# brew install cask
-
-# export HOMEBREW_CASK_OPTS="--appdir=/Applications"
-
-# # brew install --cask arq
-# # brew install --cask asepsis
-# # brew install --cask beardedspice
-# # brew install --cask bettertouchtool
-# brew install --cask xbar
-# # brew install --cask dash
-# brew install --cask docker
-# # brew install --cask fantastical
-# # brew install --cask firefox
-# # brew install --cask google-chrome
-# # brew install --cask google-cloud-sdk
-# brew install --cask kaleidoscope
-# # brew install --cask kap
-# brew install --cask keepingyouawake
-# # brew install --cask transmission
-# brew install --cask transmit
-# # brew install --cask vagrant
-# # brew install --cask virtualbox
-# brew install --cask visual-studio-code
-# brew install --cask vlc
-# # brew install --cask vmware-fusion
-
-# # Install App Store managed apps
-# brew install mas
-
-# # mas install 443987910 # 1Password
-# # mas install 420212497 # Byword
-# mas install 931657367 # Calcbot
-# mas install 411643860 # DaisyDisk
-# # mas install 890031187 # Marked 2
-# # mas install 409203825 # Numbers
-# # mas install 409201541 # Pages
-# # mas install 407963104 # Pixelmator
-# # mas install 880001334 # Reeder
-# mas install 425424353 # The Unarchiver
-# mas install 904280696 # Things3
-# # mas install 557168941 # Tweetbot
-# mas install 497799835 # Xcode
-
-# # Remove outdated versions from the cellar.
-# brew cask cleanup
-
-brew cleanup
