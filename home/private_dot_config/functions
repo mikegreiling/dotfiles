@@ -141,6 +141,16 @@ function getcertnames() {
 	fi;
 }
 
+# Git Shortcuts (enable `g -` in place of `git checkout -`)
+function g() {
+	# This cannot be set up as an alias because `-` is a special character
+	if [[ $@ == "-" ]]; then
+		git checkout -;
+	else
+		git "$@";
+	fi;
+}
+
 # `code` will launch Microsoft Visual Studio Code with the given arguments
 code () { VSCODE_CWD="$PWD" open -n -b "com.microsoft.VSCode" --args $* ;}
 
