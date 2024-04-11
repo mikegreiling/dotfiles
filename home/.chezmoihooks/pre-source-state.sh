@@ -20,13 +20,20 @@ has_homebrew() {
   type brew >/dev/null 2>&1
 }
 
-# exit immediately if xcode, op and brew are already in $PATH
+# Exit immediately if xcode, op and brew are already in $PATH
 has_xcode_clt && has_homebrew && has_1password && exit
 
 case "$(uname -s)" in
 Darwin)
   if ! has_xcode_clt; then
     xcode-select --install
+
+    # For some reason the above install command doesn't always work, so if it's
+    # not installed, we'll just prompt the user to install it manually and exit
+    if ! has_xcode_clt; then
+      echo "Please install Xcode Command Line Tools and run this script again"
+      exit 1
+    fi
   fi
 
   if ! has_homebrew; then
@@ -41,7 +48,7 @@ Darwin)
 
   ;;
 *)
-  echo "unsupported OS"
+  echo "Unsupported OS"
   exit 1
   ;;
 esac
