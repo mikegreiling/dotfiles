@@ -12,15 +12,15 @@ Anyone is free to use any or all of this repository for their own purposes, howe
 
 ## Installation
 
-First, if you're on a mac, ensure Xcode developer tools are installed, otherwise chezmoi will fail when attempting to use git to download these dotfiles.
-
 ```bash
 # if chezmoi is not installed already
-sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply mikegreiling
+BINDIR=/tmp/bin sh -c "$(curl -fsLS get.chezmoi.io)" -- init --use-builtin-git on --apply mikegreiling
 
 # if chezmoi is installed (e.g. via a package manager like homebrew)
 chezmoi init mikegreiling
 ```
+
+The `--use-builtin-git on` is necessary if Xcode is not currently installed. On macOS, the `git` command is stubbed with a prompt to install Xcode, so chezmoi does not detect when it is actually unavailable.
 
 You will be prompted to supply the decryption key to install SSH and GPG keys, followed by your full name and email address which will allow git to be configured properly, further followed by an option to override the computer and hostname settings. Once all of that information is collected, it will install the dotfiles and run setup scripts.
 
