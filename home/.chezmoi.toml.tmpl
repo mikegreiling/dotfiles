@@ -13,7 +13,10 @@
 {{- /* Grab some different defaults of we're on macOS */ -}}
 {{- if eq .chezmoi.os "darwin" -}}
 {{-   $full_name = output "id" "-F" $username | trim -}}
-{{-   $email = output "/usr/libexec/PlistBuddy" "-c" "print :Accounts:0:AccountID" "/Users/mike/Library/Preferences/MobileMeAccounts.plist" | trim -}}
+{{-   $mobileme_conf_file := (joinPath "/Users/" $username "/Library/Preferences/MobileMeAccounts.plist") -}}
+{{-   if $mobileme_conf_file | lstat -}}
+{{-     $email = output "/usr/libexec/PlistBuddy" "-c" "print :Accounts:0:AccountID" (joinPath "/Users/" $username "/Library/Preferences/MobileMeAccounts.plist") | trim -}}
+{{-   end -}}
 {{-   $computer_name = output "scutil" "--get" "ComputerName" -}}
 {{-   $hostname = output "scutil" "--get" "LocalHostName" -}}
 {{- end -}}
