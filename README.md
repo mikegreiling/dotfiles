@@ -12,7 +12,13 @@ Anyone is free to use any or all of this repository for their own purposes, howe
 
 ## Installation
 
+First, if you're on a mac, ensure Xcode developer tools are installed, otherwise chezmoi will fail when attempting to use git to download these dotfiles.
+
 ```bash
+# if chezmoi is not installed already
+sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply mikegreiling
+
+# if chezmoi is installed (e.g. via a package manager like homebrew)
 chezmoi init mikegreiling
 ```
 
