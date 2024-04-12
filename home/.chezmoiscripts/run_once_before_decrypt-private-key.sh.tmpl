@@ -7,6 +7,8 @@ if [ ! -f "${config_dir}/key.txt" ]; then
 
   max_retry=10
   counter=0
+
+  echo "A passphrase is needed to decrypt SSH and GPG keys."
   until {{ .chezmoi.executable }} age decrypt --output "${config_dir}/key.txt" --passphrase "{{ .chezmoi.sourceDir }}/key.txt.age"
   do
     [[ counter -eq $max_retry ]] && echo "Too many attempts, aborting." && exit 1
