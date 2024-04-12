@@ -68,13 +68,17 @@ BREWS
 
 BREW_PREFIX=$(brew --prefix)
 
-# Switch to using brew-installed bash as default shell
-# TODO: remove this bit once we switch to zsh
+# Add brew-installed bash to the list of allowable shells
 if ! fgrep -q "${BREW_PREFIX}/bin/bash" /etc/shells; then
-	echo "Configureing bash as default shell";
+	echo "Adding ${BREW_PREFIX}/bin/bash to /etc/shells"
   echo "${BREW_PREFIX}/bin/bash" | sudo tee -a /etc/shells;
-  chsh -s "${BREW_PREFIX}/bin/bash";
 fi;
+
+# Change shell to brew-installed bash
+# TODO: remove this bit if/when we switch to zsh
+if [[ "$SHELL" != "${BREW_PREFIX}/bin/bash" ]]; then
+	chsh -s "${BREW_PREFIX}/bin/bash";
+fi
 
 # Save the list of installed packages to a Brewfile for inspection
 brew bundle dump --file=${HOME}/Downloads/Brewfile-$(hostname) --force
