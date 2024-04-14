@@ -148,6 +148,9 @@ defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool false
 # Enable "Dark Mode"
 defaults write NSGlobalDomain AppleInterfaceStyle -string "Dark"
 
+# Disable "click to wallpaper to show desktop items"
+defaults write com.apple.WindowManager EnableStandardClickToShowDesktop -bool false
+
 # Disable Siri
 defaults write com.apple.Siri StatusMenuVisible -bool false
 defaults write com.apple.assistant.support "Assistant Enabled" -bool false
@@ -733,7 +736,7 @@ set +x
 /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
 
 function killApps() {
-  for app in "cfprefsd" "Dock" "Finder" "Mail" "SystemUIServer"; do
+  for app in "cfprefsd" "Dock" "Finder" "Mail" "SystemUIServer" "WindowManager"; do
     killall "${app}" > /dev/null 2>&1
   done
 }
