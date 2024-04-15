@@ -7,6 +7,7 @@ sudo -v -p 'Enter password for %p:'
 while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 
 # Update homebrew and install required packages
+HOMEBREW_NO_ENV_HINTS=1 HOMEBREW_AUTO_UPDATE_SECS=3600 \
 brew bundle install \
 	--quiet \
 	--no-lock \
