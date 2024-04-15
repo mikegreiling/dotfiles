@@ -39,20 +39,75 @@
 # NOTE: Some of these settings cannot be applied without first going into
 # System Preferences → Privacy & Security → Full Disk Access and toggling full
 # disk access on for the Terminal app.
-#
-# Display commands in terminal as they are executed, just in case we run into
-# an issue and want to know what command was being executed at the time.
-set -x
 
-# Close any open System Preferences panes, to prevent them from overriding
-# settings we’re about to change
-osascript -e 'tell application "System Preferences" to quit'
+# Check if the process has Full Disk Access
+process_has_full_disk_access={{ output "bash" "-c" "plutil -lint /Library/Preferences/com.apple.TimeMachine.plist &>/dev/null && echo 'true' || echo 'false'; exit 0;" | trim }}
+
+# Use the SHA256 of this script to determine if it has changed
+template_sha={{ include (joinPath .chezmoi.sourceDir .chezmoi.sourceFile) | sha256sum | quote}}
+suppress_fda_file="${HOME}/.config/chezmoi/suppress-fda-warning"
+suppress_fda_sha=$(cat "${suppress_fda_file}" 2>&- | tr -d '[:space:]')
+
+suppress_fda_warning() {
+	[ "$template_sha" = "$suppress_fda_sha" ]
+}
+enable_suppress_fda_warning() {
+	echo "$template_sha" > "$suppress_fda_file"
+	suppress_fda_sha="$template_sha"
+}
+
+# Ensure the exit status is non-zero if we want to re-run this script again
+# e.g. to continue to prompt the user about full disk access.
+force_rerun_script=false
+
+echo "Configuring macOS system settings."
+echo ""
+
+if ! $process_has_full_disk_access && ! suppress_fda_warning; then
+	# Ensure we exit with a non-zero status so that chezmoi will re-run this script
+	force_rerun_script=true
+
+	echo "--- WARNING: -------------------------------------------------------------"
+	echo "Several macOS system config changes require Full Disk Access to apply."
+	echo ""
+	echo "Please open System Preferences → Privacy & Security → Full Disk Access"
+	echo "and toggle it on for the Terminal app (or your TTY application of choice)."
+	echo "You will need to restart the terminal and re-run 'chezmoi apply' after"
+	echo "doing this."
+	echo ""
+	echo "If you are running chezmoi for the first time, you may should allow it to"
+	echo "complete before quitting the terminal to re-run this script."
+	echo "--------------------------------------------------------------------------"
+	echo ""
+
+	read -p "Continue to apply settings which do not require Full Disk Access? [Y/n] " -n 1;
+	echo "";
+	if [[ $REPLY =~ ^[Nn]$ ]]; then
+		echo "Exiting..."
+		exit 1
+	fi;
+
+	read -p "Suppress this warning in the future? [y/N] " -n 1;
+	echo "";
+	if [[ $REPLY =~ ^[Yy]$ ]]; then
+		enable_suppress_fda_warning
+		force_rerun_script=false
+	fi;
+fi;
 
 # Ask for the administrator password upfront
 sudo -v -p 'Enter password for %p:'
 
 # Keep-alive: update existing `sudo` time stamp until this script has finished
 while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
+
+# Close any open System Preferences panes, to prevent them from overriding
+# settings we’re about to change
+osascript -e 'tell application "System Preferences" to quit'
+
+# Display commands in terminal as they are executed, just in case we run into
+# an issue and want to know what command was being executed at the time.
+set -x
 
 ###############################################################################
 # General UI/UX                                                               #
@@ -181,11 +236,13 @@ defaults -currentHost write com.apple.driver.AppleBluetoothMultitouch.trackpad T
 # (e.g. enable Tab in modal dialogs)
 defaults write NSGlobalDomain AppleKeyboardUIMode -int 3
 
-# Use scroll gesture with the Ctrl (^) modifier key to zoom
-defaults write com.apple.universalaccess closeViewScrollWheelToggle -bool true
-defaults write com.apple.universalaccess HIDScrollZoomModifierMask -int 262144
-# Follow the keyboard focus while zoomed in
-defaults write com.apple.universalaccess closeViewZoomFollowsFocus -bool true
+if $process_has_full_disk_access; then
+	# Use scroll gesture with the Ctrl (^) modifier key to zoom
+	defaults write com.apple.universalaccess closeViewScrollWheelToggle -bool true
+	defaults write com.apple.universalaccess HIDScrollZoomModifierMask -int 262144
+	# Follow the keyboard focus while zoomed in
+	defaults write com.apple.universalaccess closeViewZoomFollowsFocus -bool true
+fi
 
 # # Disable press-and-hold for keys in favor of key repeat
 # defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
@@ -324,7 +381,10 @@ defaults write com.apple.finder FXPreferredViewStyle -string "Nlsv"
 defaults write com.apple.NetworkBrowser BrowseAllInterfaces -bool true
 
 # Show the ~/Library folder
-chflags nohidden ~/Library && xattr -d com.apple.FinderInfo ~/Library
+chflags nohidden ~/Library
+if xattr ~/Library | grep -q "com.apple.FinderInfo"; then
+	xattr -d com.apple.FinderInfo ~/Library
+fi
 
 # Show the /Volumes folder
 sudo chflags nohidden /Volumes
@@ -335,9 +395,6 @@ defaults write com.apple.finder FXInfoPanesExpanded -dict \
 	General -bool true \
 	OpenWith -bool true \
 	Privileges -bool true
-
-# Hide user binaries directory in Finder
-sudo chflags hidden ~/bin
 
 # Hide cask-created 'opt' directory in Finder
 sudo chflags hidden /opt
@@ -400,106 +457,114 @@ defaults write com.apple.dock showLaunchpadGestureEnabled -int 0
 # Safari & WebKit                                                             #
 ###############################################################################
 
-# Privacy: don’t send search queries to Apple
-defaults write com.apple.Safari UniversalSearchEnabled -bool false
-defaults write com.apple.Safari SuppressSearchSuggestions -bool true
+# Safari is sandboxed, so changing its settings requires full disk access
+if $process_has_full_disk_access; then
 
-# Press Tab to highlight each item on a web page
-defaults write com.apple.Safari WebKitTabToLinksPreferenceKey -bool true
-defaults write com.apple.Safari com.apple.Safari.ContentPageGroupIdentifier.WebKit2TabsToLinks -bool true
+	# Privacy: don’t send search queries to Apple
+	defaults write -app Safari UniversalSearchEnabled -bool false
+	defaults write -app Safari SuppressSearchSuggestions -bool true
 
-# Show the full URL in the address bar (note: this still hides the scheme)
-defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true
+	# Press Tab to highlight each item on a web page
+	defaults write -app Safari WebKitTabToLinksPreferenceKey -bool true
+	defaults write -app Safari com.apple.Safari.ContentPageGroupIdentifier.WebKit2TabsToLinks -bool true
 
-# Set Safari’s home page to `about:blank` for faster loading
-defaults write com.apple.Safari HomePage -string "about:blank"
+	# Show the full URL in the address bar (note: this still hides the scheme)
+	defaults write -app Safari ShowFullURLInSmartSearchField -bool true
 
-# Prevent Safari from opening ‘safe’ files automatically after downloading
-defaults write com.apple.Safari AutoOpenSafeDownloads -bool false
+	# Set Safari’s home page to `about:blank` for faster loading
+	defaults write -app Safari HomePage -string "about:blank"
 
-# Hide Safari’s bookmarks bar by default
-defaults write com.apple.Safari ShowFavoritesBar -bool false
+	# Prevent Safari from opening ‘safe’ files automatically after downloading
+	defaults write -app Safari AutoOpenSafeDownloads -bool false
 
-# Hide Safari’s sidebar in Top Sites
-defaults write com.apple.Safari ShowSidebarInTopSites -bool false
+	# Hide Safari’s bookmarks bar by default
+	defaults write -app Safari ShowFavoritesBar -bool false
 
-# Disable Safari’s thumbnail cache for History and Top Sites
-defaults write com.apple.Safari DebugSnapshotsUpdatePolicy -int 2
+	# Hide Safari’s sidebar in Top Sites
+	defaults write -app Safari ShowSidebarInTopSites -bool false
 
-# Enable Safari’s debug menu
-defaults write com.apple.Safari IncludeInternalDebugMenu -bool true
+	# Disable Safari’s thumbnail cache for History and Top Sites
+	defaults write -app Safari DebugSnapshotsUpdatePolicy -int 2
 
-# Make Safari’s search banners default to Contains instead of Starts With
-defaults write com.apple.Safari FindOnPageMatchesWordStartsOnly -bool false
+	# Enable Safari’s debug menu
+	defaults write -app Safari IncludeInternalDebugMenu -bool true
 
-# Enable the Develop menu and the Web Inspector in Safari
-defaults write com.apple.Safari.SandboxBroker ShowDevelopMenu -bool true
-defaults write com.apple.Safari IncludeDevelopMenu -bool true
-defaults write com.apple.Safari WebKitDeveloperExtrasEnabledPreferenceKey -bool true
-defaults write com.apple.Safari com.apple.Safari.ContentPageGroupIdentifier.WebKit2DeveloperExtrasEnabled -bool true
+	# Make Safari’s search banners default to Contains instead of Starts With
+	defaults write -app Safari FindOnPageMatchesWordStartsOnly -bool false
 
-# Add a context menu item for showing the Web Inspector in web views
-defaults write NSGlobalDomain WebKitDeveloperExtras -bool true
+	# Enable the Develop menu and the Web Inspector in Safari
+	defaults write com.apple.Safari.SandboxBroker ShowDevelopMenu -bool true
+	defaults write -app Safari IncludeDevelopMenu -bool true
+	defaults write -app Safari WebKitDeveloperExtrasEnabledPreferenceKey -bool true
+	defaults write -app Safari com.apple.Safari.ContentPageGroupIdentifier.WebKit2DeveloperExtrasEnabled -bool true
 
-# Enable continuous spellchecking
-defaults write com.apple.Safari WebContinuousSpellCheckingEnabled -bool true
-# Disable auto-correct
-defaults write com.apple.Safari WebAutomaticSpellingCorrectionEnabled -bool false
+	# Add a context menu item for showing the Web Inspector in web views
+	defaults write NSGlobalDomain WebKitDeveloperExtras -bool true
 
-# Disable AutoFill
-# defaults write com.apple.Safari AutoFillFromAddressBook -bool false
-# defaults write com.apple.Safari AutoFillPasswords -bool false
-# defaults write com.apple.Safari AutoFillCreditCardData -bool false
-# defaults write com.apple.Safari AutoFillMiscellaneousForms -bool false
+	# Enable continuous spellchecking
+	defaults write -app Safari WebContinuousSpellCheckingEnabled -bool true
+	# Disable auto-correct
+	defaults write -app Safari WebAutomaticSpellingCorrectionEnabled -bool false
 
-# Warn about fraudulent websites
-defaults write com.apple.Safari WarnAboutFraudulentWebsites -bool true
+	# Disable AutoFill
+	# defaults write -app Safari AutoFillFromAddressBook -bool false
+	# defaults write -app Safari AutoFillPasswords -bool false
+	# defaults write -app Safari AutoFillCreditCardData -bool false
+	# defaults write -app Safari AutoFillMiscellaneousForms -bool false
 
-# Disable plug-ins
-defaults write com.apple.Safari WebKitPluginsEnabled -bool false
-defaults write com.apple.Safari com.apple.Safari.ContentPageGroupIdentifier.WebKit2PluginsEnabled -bool false
+	# Warn about fraudulent websites
+	defaults write -app Safari WarnAboutFraudulentWebsites -bool true
 
-# Disable Java
-defaults write com.apple.Safari WebKitJavaEnabled -bool false
-defaults write com.apple.Safari com.apple.Safari.ContentPageGroupIdentifier.WebKit2JavaEnabled -bool false
-defaults write com.apple.Safari com.apple.Safari.ContentPageGroupIdentifier.WebKit2JavaEnabledForLocalFiles -bool false
+	# Disable plug-ins
+	defaults write -app Safari WebKitPluginsEnabled -bool false
+	defaults write -app Safari com.apple.Safari.ContentPageGroupIdentifier.WebKit2PluginsEnabled -bool false
 
-# Enable “Do Not Track”
-defaults write com.apple.Safari SendDoNotTrackHTTPHeader -bool true
+	# Disable Java
+	defaults write -app Safari WebKitJavaEnabled -bool false
+	defaults write -app Safari com.apple.Safari.ContentPageGroupIdentifier.WebKit2JavaEnabled -bool false
+	defaults write -app Safari com.apple.Safari.ContentPageGroupIdentifier.WebKit2JavaEnabledForLocalFiles -bool false
 
-# Update extensions automatically
-defaults write com.apple.Safari InstallExtensionUpdatesAutomatically -bool true
+	# Enable “Do Not Track”
+	defaults write -app Safari SendDoNotTrackHTTPHeader -bool true
 
-# Never remove history, this is the constant the UI uses
-defaults write -app Safari HistoryAgeInDaysLimit -int 365000
+	# Update extensions automatically
+	defaults write -app Safari InstallExtensionUpdatesAutomatically -bool true
 
-# Some additional defaults
-defaults write -app Safari ShowOverlayStatusBar -bool true
-defaults write -app Safari AlwaysRestoreSessionAtLaunch -bool true
-defaults write -app Safari AlwaysShowTabBar -bool true
+	# Never remove history, this is the constant the UI uses
+	defaults write -app Safari HistoryAgeInDaysLimit -int 365000
+
+	# Some additional defaults
+	defaults write -app Safari ShowOverlayStatusBar -bool true
+	defaults write -app Safari AlwaysRestoreSessionAtLaunch -bool true
+	defaults write -app Safari AlwaysShowTabBar -bool true
+fi
 
 ###############################################################################
 # Mail                                                                        #
 ###############################################################################
 
-# Disable send and reply animations in Mail.app
-defaults write com.apple.mail DisableReplyAnimations -bool true
-defaults write com.apple.mail DisableSendAnimations -bool true
+# Mail is sandboxed, so changing its settings requires full disk access
+if $process_has_full_disk_access; then
 
-# Copy email addresses as `foo@example.com` instead of `Foo Bar <foo@example.com>` in Mail.app
-defaults write com.apple.mail AddressesIncludeNameOnPasteboard -bool false
+	# Disable send and reply animations in Mail.app
+	defaults write com.apple.mail DisableReplyAnimations -bool true
+	defaults write com.apple.mail DisableSendAnimations -bool true
 
-# Add the keyboard shortcut ⌘ + = to archive an email in Mail.app
-defaults write com.apple.mail NSUserKeyEquivalents -dict-add "Archive" "@="
+	# Copy email addresses as `foo@example.com` instead of `Foo Bar <foo@example.com>` in Mail.app
+	defaults write com.apple.mail AddressesIncludeNameOnPasteboard -bool false
 
-# Disable inline attachments (just show the icons)
-# defaults write com.apple.mail DisableInlineAttachmentViewing -bool true
+	# Add the keyboard shortcut ⌘ + = to archive an email in Mail.app
+	defaults write com.apple.mail NSUserKeyEquivalents -dict-add "Archive" "@="
 
-# Disable automatic spell checking
-defaults write com.apple.mail SpellCheckingBehavior -string "NoSpellCheckingEnabled"
+	# Disable inline attachments (just show the icons)
+	# defaults write com.apple.mail DisableInlineAttachmentViewing -bool true
+
+	# Disable automatic spell checking
+	defaults write com.apple.mail SpellCheckingBehavior -string "NoSpellCheckingEnabled"
+fi
 
 ###############################################################################
-# Terminal & iTerm 2                                                          #
+# Terminal                                                                    #
 ###############################################################################
 
 # Only use UTF-8 in Terminal.app
@@ -741,20 +806,28 @@ function killApps() {
   done
 }
 
-# Restart affected applications if `--no-restart` flag is not present.
-if [[ ! ($* == *--no-restart*) ]]; then
-	if [ -t 0 -a -t 1 ]; then
-		read -p "Setup completed. Would you like to reload the effected apps? (y/N) " -n 1;
-		echo "";
-		if [[ $REPLY =~ ^[Yy]$ ]]; then
-			killApps;
-		fi;
-	else
+# If we're running in an interactive shell, ask the user if they want to reload
+if [ -t 0 -a -t 1 ]; then
+	read -p "Setup completed. Would you like to reload the effected apps? (y/N) " -n 1;
+	echo "";
+	if [[ $REPLY =~ ^[Yy]$ ]]; then
 		killApps;
 	fi;
+else
+	killApps;
 fi;
 
 printf "Please log out and log back in to make all settings take effect.\n"
 
-# if we don't exit with 0, chezmoi will presume this failed and keep re-running the script
+# Exit with a non-zero status to cause this script to re-run with chezmoi apply
+if $force_rerun_script; then
+	exit 1
+fi;
+
+# If we've made it this far, we can disable the warning about Full Disk Access
+# until the template itself is changed.
+if $process_has_full_disk_access && ! suppress_fda_warning; then
+	enable_suppress_fda_warning
+fi;
+
 exit 0
