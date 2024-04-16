@@ -5,6 +5,23 @@ echo ""
 
 echo "Adding a checklist to the Desktop for some manual steps to be performed after installation."
 
+# TODO:
+# - consider adopting mysides to manage Finder sidebar shortcuts
+#   see https://macowners.club/posts/sane-defaults-for-macos/
+#
+# - consider adopting dockutil to manage the Dock icons
+#   see https://github.com/keith/dotfiles/blob/d1c41406d1/osx/defaults.sh#L121-L133
+#
+# - consider whether time machine can be enabled programatically
+#   see https://git.herrbischoff.com/awesome-macos-command-line/about/#time-machine
+#
+# - consider enabling remote login by default
+#   sudo launchctl load -w /System/Library/LaunchDaemons/ssh.plist
+#
+# - enable some security settings by default
+#   see https://git.herrbischoff.com/awesome-macos-command-line/about/#security
+
+
 cat <<EOF > ~/Desktop/Post-Installation-Checklist.txt
 Post-Installation Checklist
 ===========================
@@ -13,6 +30,8 @@ Post-Installation Checklist
 - [ ] Sign into iCloud
 - [ ] Sign into Gmail
 - [ ] Configure Time Machine
+- [ ] Enable FileVault
+- [ ] Enable Firewall
 - [ ] Register the following applications:
   - [ ] CleanShot X
   - [ ] Kaleidoscope
@@ -27,8 +46,10 @@ Post-Installation Checklist
   - [ ] The Unarchiver
   - [ ] Things 3
 - [ ] Add preferred applications to the Dock
+- [ ] Configure Finder sidebar
 EOF
 
+# https://git.herrbischoff.com/awesome-macos-command-line/about/#set-wallpaper
 read -p "Would you like to set the Desktop wallpaper? [y/N] " -n 1;
 echo "";
 if [[ $REPLY =~ ^[Yy]$ ]]; then

@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+echo ""
+echo "-----------------------------------------------------------"
+echo "  Installing macOS apps..."
+echo "-----------------------------------------------------------"
+echo ""
+
 # Ask for the administrator password upfront
 sudo -v -p 'Enter password for %p:'
 

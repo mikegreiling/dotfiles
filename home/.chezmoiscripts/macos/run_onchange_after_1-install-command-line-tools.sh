@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+echo ""
+echo "-----------------------------------------------------------"
+echo "  Installing command-line tools..."
+echo "-----------------------------------------------------------"
+echo ""
+
 # Ask for the administrator password upfront
 sudo -v -p 'Enter password for %p:'
 

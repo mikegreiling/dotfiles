@@ -4,19 +4,15 @@
 # fresh macOS installation. It should be idempotent, so there is no harm in
 # running it multiple times.
 #
-# Options:
-#   --no-restart: Don't restart any apps or services after running the script.
-#
 # Verified compatibility with macOS 14 (Sonoma). Some settings may only apply to
 # older versions of macOS, and I do not vet all of these on every OS update.
 # However nothing has broken yet.
 #
-# The contents are cherry-picked from Mathias Bynens macos defaults:
+# The contents are primarily cherry-picked from Mathias Bynens macos defaults:
 # https://mths.be/macos (last updated 2020-10-12)
 #
 # Additional lines borrowed/inspired from:
-# https://github.com/geerlingguy/dotfiles/blob/master/.osx (last accessed 4/1/24)
-# https://github.com/holman/dotfiles (last accessed 4/1/24)
+# https://git.herrbischoff.com/awesome-macos-command-line/about/ (accessed 4/15/24)
 # https://github.com/keith/dotfiles/blob/main/osx/defaults.sh (c140816 - 4/1/24)
 # https://github.com/paulirish/dotfiles/blob/main/.macos (6742581 - 4/1/24)
 #
@@ -40,33 +36,25 @@
 # System Preferences → Privacy & Security → Full Disk Access and toggling full
 # disk access on for the Terminal app.
 
-# Check if the process has Full Disk Access
-process_has_full_disk_access={{ output "bash" "-c" "plutil -lint /Library/Preferences/com.apple.TimeMachine.plist &>/dev/null && echo 'true' || echo 'false'; exit 0;" | trim }}
-
-# Use the SHA256 of this script to determine if it has changed
-template_sha={{ include (joinPath .chezmoi.sourceDir .chezmoi.sourceFile) | sha256sum | quote}}
-suppress_fda_file="${HOME}/.config/chezmoi/suppress-fda-warning"
-suppress_fda_sha=$(cat "${suppress_fda_file}" 2>&- | tr -d '[:space:]')
-
-suppress_fda_warning() {
-	[ "$template_sha" = "$suppress_fda_sha" ]
-}
-enable_suppress_fda_warning() {
-	echo "$template_sha" > "$suppress_fda_file"
-	suppress_fda_sha="$template_sha"
-}
-
-# Ensure the exit status is non-zero if we want to re-run this script again
-# e.g. to continue to prompt the user about full disk access.
-force_rerun_script=false
-
-echo "Configuring macOS system settings."
+echo ""
+echo "-----------------------------------------------------------"
+echo "  Configuring macOS system settings..."
+echo "-----------------------------------------------------------"
 echo ""
 
-if ! $process_has_full_disk_access && ! suppress_fda_warning; then
-	# Ensure we exit with a non-zero status so that chezmoi will re-run this script
-	force_rerun_script=true
+{{- /* Add modTime of trigger file to comment to force chezmoi to re-execute */ -}}
+{{- $trigger_path := (joinPath .chezmoi.homeDir ".config/chezmoi/rerun-macos-defaults") -}}
+{{- $trigger_lstat := ($trigger_path | lstat) }}
+{{ if $trigger_lstat }}{{ $trigger_lstat.modTime | quote | comment "# " }}{{ end }}
 
+make_chezmoi_rerun_this_script() {
+	touch {{ $trigger_path | quote }}
+}
+
+# Check if the process has Full Disk Access
+process_has_full_disk_access=$(plutil -lint /Library/Preferences/com.apple.TimeMachine.plist >/dev/null && echo true || echo false)
+
+if ! $process_has_full_disk_access; then
 	echo "--- WARNING: -------------------------------------------------------------"
 	echo "Several macOS system config changes require Full Disk Access to apply."
 	echo ""
@@ -75,23 +63,19 @@ if ! $process_has_full_disk_access && ! suppress_fda_warning; then
 	echo "You will need to restart the terminal and re-run 'chezmoi apply' after"
 	echo "doing this."
 	echo ""
-	echo "If you are running chezmoi for the first time, you may should allow it to"
+	echo "If you are running chezmoi for the first time, you should allow it to"
 	echo "complete before quitting the terminal to re-run this script."
 	echo "--------------------------------------------------------------------------"
 	echo ""
-
-	read -p "Continue to apply settings which do not require Full Disk Access? [Y/n] " -n 1;
-	echo "";
-	if [[ $REPLY =~ ^[Nn]$ ]]; then
-		echo "Exiting..."
-		exit 1
-	fi;
-
-	read -p "Suppress this warning in the future? [y/N] " -n 1;
+	read -p "Skip settings which require Full Disk Access? [y/N] " -n 1;
 	echo "";
 	if [[ $REPLY =~ ^[Yy]$ ]]; then
-		enable_suppress_fda_warning
-		force_rerun_script=false
+		echo "Continuing to apply settings which do not require Full Disk Access..."
+	else
+		make_chezmoi_rerun_this_script
+		echo "Please enable Full Disk Access and re-run 'chezmoi apply'."
+		echo "Continuing on without applying macOS settings..."
+		exit 0
 	fi;
 fi;
 
@@ -123,7 +107,7 @@ defaults write NSGlobalDomain NSTableViewDefaultSizeMode -int 2
 # Disable the over-the-top focus ring animation
 defaults write NSGlobalDomain NSUseAnimatedFocusRing -bool false
 
-# Adjust toolbar title rollover delay
+# Adjust toolbar title rollover delay (back to pre-macOS 11 behavior)
 defaults write NSGlobalDomain NSToolbarTitleViewRolloverDelay -float 0
 
 # Disable smooth scrolling
@@ -210,6 +194,9 @@ defaults write com.apple.WindowManager EnableStandardClickToShowDesktop -bool fa
 defaults write com.apple.Siri StatusMenuVisible -bool false
 defaults write com.apple.assistant.support "Assistant Enabled" -bool false
 
+# Alert Dialog - Switch to Legacy Horizontal Layout
+defaults write -g NSAlertMetricsGatheringEnabled -bool false
+
 ###############################################################################
 # Trackpad, mouse, keyboard, Bluetooth accessories, and input                 #
 ###############################################################################
@@ -263,8 +250,12 @@ defaults write com.apple.BezelServices kDimTime -int 300
 ###############################################################################
 
 # Require password immediately after sleep or screen saver begins
-defaults write com.apple.screensaver askForPassword -int 1
-defaults write com.apple.screensaver askForPasswordDelay -int 0
+# These no longer work as of macOS 10.12 Sierra and one can alternatively use
+# `sysadminctl` to achieve something similar.
+# See https://github.com/mathiasbynens/dotfiles/issues/922#issuecomment-1322698371
+# TODO: Fix these settings
+# defaults write com.apple.screensaver askForPassword -int 1
+# defaults write com.apple.screensaver askForPasswordDelay -int 0
 
 # Save screenshots to the desktop
 defaults write com.apple.screencapture location -string "${HOME}/Desktop"
@@ -373,6 +364,11 @@ defaults write com.apple.finder OpenWindowForNewRemovableDisk -bool true
 # Use list view in all Finder windows by default
 # Four-letter codes for the other view modes: `icnv`, `clmv`, `glyv`
 defaults write com.apple.finder FXPreferredViewStyle -string "Nlsv"
+
+# Set the finder window toolbar to only have back/forward buttons
+/usr/libexec/PlistBuddy -c "Delete :NSToolbar\\ Configuration\\ Browser:TB\\ Item\\ Identifiers" ~/Library/Preferences/com.apple.finder.plist
+/usr/libexec/PlistBuddy -c "Add :NSToolbar\\ Configuration\\ Browser:TB\\ Item\\ Identifiers array" ~/Library/Preferences/com.apple.finder.plist
+/usr/libexec/PlistBuddy -c "Add :NSToolbar\\ Configuration\\ Browser:TB\\ Item\\ Identifiers:0 string com.apple.finder.BACK" ~/Library/Preferences/com.apple.finder.plist
 
 # Disable the warning before emptying the Trash
 # defaults write com.apple.finder WarnOnEmptyTrash -bool false
@@ -790,6 +786,9 @@ defaults write org.m0k.transmission RandomPort -bool true
 # KeepingYouAwake.app - Prevent ugly highlight color when clicking
 defaults write info.marcel-dierkes.KeepingYouAwake info.marcel-dierkes.KeepingYouAwake.MenuBarIconHighlightDisabled -bool YES
 
+# VSCode - Disable press-and-hold for keys in favor of key repeat (allows VSCodeVim plugin to work properly)
+defaults write com.microsoft.VSCode ApplePressAndHoldEnabled -bool false
+
 ###############################################################################
 # Kill affected applications                                                  #
 ###############################################################################
@@ -800,6 +799,9 @@ set +x
 # Activate some of the above settings without a logout
 /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
 
+echo ""
+echo "Finished configuring macOS system preferences."
+
 function killApps() {
   for app in "cfprefsd" "Dock" "Finder" "Mail" "SystemUIServer" "WindowManager"; do
     killall "${app}" > /dev/null 2>&1
@@ -808,7 +810,7 @@ function killApps() {
 
 # If we're running in an interactive shell, ask the user if they want to reload
 if [ -t 0 -a -t 1 ]; then
-	read -p "Setup completed. Would you like to reload the effected apps? (y/N) " -n 1;
+	read -p "Would you like to automatically reload the effected apps? [y/N] " -n 1;
 	echo "";
 	if [[ $REPLY =~ ^[Yy]$ ]]; then
 		killApps;
@@ -817,17 +819,6 @@ else
 	killApps;
 fi;
 
-printf "Please log out and log back in to make all settings take effect.\n"
-
-# Exit with a non-zero status to cause this script to re-run with chezmoi apply
-if $force_rerun_script; then
-	exit 1
-fi;
-
-# If we've made it this far, we can disable the warning about Full Disk Access
-# until the template itself is changed.
-if $process_has_full_disk_access && ! suppress_fda_warning; then
-	enable_suppress_fda_warning
-fi;
+echo "You may still need to log out and log back in before all settings take effect."
 
 exit 0
