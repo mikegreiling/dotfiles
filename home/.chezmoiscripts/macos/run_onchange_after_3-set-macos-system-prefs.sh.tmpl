@@ -556,7 +556,8 @@ fi
 ###############################################################################
 
 # Use a modified version of the Solarized Dark theme by default in Terminal.app
-osascript <<EOD
+if [[ $(defaults read -app "Terminal" "Default Window Settings") != "Solarized Dark" ]]; then
+	osascript <<EOD
 
 tell application "Terminal"
 
@@ -601,6 +602,7 @@ tell application "Terminal"
 end tell
 
 EOD
+fi
 
 # Only use UTF-8 in Terminal.app
 defaults write -app "Terminal" StringEncodings -array 4
