@@ -12,6 +12,9 @@ sudo -v -p 'Enter password for %p:'
 # Keep-alive: update existing `sudo` time stamp until this script has finished
 while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 
+# Ensure we run our installs with XDG configured
+export XDG_CONFIG_HOME="$HOME/.config"
+
 # Update homebrew and install required packages
 HOMEBREW_NO_ENV_HINTS=1 HOMEBREW_AUTO_UPDATE_SECS=3600 \
 brew bundle install \
