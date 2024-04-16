@@ -1,0 +1,11 @@
+# Load the shell dotfiles
+source ~/.config/exports;
+source ~/.config/aliases;
+source ~/.config/functions;
+
+if type brew &>/dev/null; then
+  FPATH="$(brew --prefix)/share/zsh/site-functions:${FPATH}";
+
+  autoload -Uz compinit;
+  compinit;
+fi
