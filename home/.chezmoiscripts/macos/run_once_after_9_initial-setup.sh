@@ -71,3 +71,11 @@ echo "Remember, some apps and settings will require a restart to take effect."
 echo "If any issues were encountered during installation, be sure to update"
 echo "the dotfiles to correct them for next time."
 echo ""
+
+# Reminder: this script is only ever run once upon initial setup.
+# To clear the state of run_once_ scripts and re-run this script, run:
+# $ chezmoi state delete-bucket --bucket=scriptState
+#
+# To clear the state of run_onchange_ scripts, run:
+# $ chezmoi state delete-bucket --bucket=entryState
+#
