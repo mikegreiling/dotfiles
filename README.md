@@ -51,7 +51,7 @@ Included is a prompt which was shamelessly stolen from [Nicolas Gallagher](https
 
 > ### Custom bash prompt
 >
-> I use a custom bash prompt based on the Solarized color palette and influenced by @gf3's and @cowboy's custom prompts.
+> I use a custom bash prompt based on the [Solarized](https://ethanschoonover.com/solarized/) color palette and influenced by @gf3's and @cowboy's custom prompts.
 >
 > When your current working directory is a Git repository, the prompt will display the checked-out branch's name (and failing that, the commit SHA that HEAD is pointing to). The state of the working tree is reflected in the following way:
 >
