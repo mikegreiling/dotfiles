@@ -10,8 +10,9 @@ echo ""
 # - consider adopting mysides to manage Finder sidebar shortcuts
 #   see https://macowners.club/posts/sane-defaults-for-macos/
 #
-# - consider adopting dockutil to manage the Dock icons
+# - consider adopting dockutil or custom script to manage the Dock icons
 #   see https://github.com/keith/dotfiles/blob/d1c41406d1/osx/defaults.sh#L121-L133
+#   see https://github.com/pmmmwh/dotfiles/blob/8593ff78f9/_lib/%40macos/dock.zsh#L4-L20
 #
 # - consider whether time machine can be enabled programatically
 #   see https://git.herrbischoff.com/awesome-macos-command-line/about/#time-machine
