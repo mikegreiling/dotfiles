@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Shell Aliases
+# This file is sourced by both .bashrc and .zshrc
+# Care should be taken to ensure compatibility is maintained with both shells
+
 # Easier navigation: .., ..., ...., ....., ~ and -
 alias ..="cd .."
 alias ...="cd ../.."

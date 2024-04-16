@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Shell Exports
+# This file is sourced by both .bashrc and .zshrc
+# Care should be taken to ensure compatibility is maintained with both shells
+
 # Create a new directory and enter it
 function mkd() {
 	mkdir -p "$@" && cd "$_";

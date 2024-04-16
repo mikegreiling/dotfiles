@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Shell Exports
+# This file is sourced by both .bashrc and .zshrc
+# Care should be taken to ensure compatibility is maintained with both shells
+
 # XDG directories
 # https://wiki.archlinux.org/title/XDG_Base_Directory
 export XDG_CONFIG_HOME="${HOME}/.config";
