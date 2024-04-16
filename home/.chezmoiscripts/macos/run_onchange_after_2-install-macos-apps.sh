@@ -126,4 +126,8 @@ defaults write org.m0k.transmission RandomPort -bool true
 defaults write info.marcel-dierkes.KeepingYouAwake info.marcel-dierkes.KeepingYouAwake.MenuBarIconHighlightDisabled -bool YES
 
 # VSCode - Disable press-and-hold for keys in favor of key repeat (allows VSCodeVim plugin to work properly)
-defaults write com.microsoft.VSCode ApplePressAndHoldEnabled -bool false
+# see: https://github.com/VSCodeVim/Vim?tab=readme-ov-file#mac
+defaults write com.microsoft.VSCode ApplePressAndHoldEnabled -bool false              # For VS Code
+defaults write com.microsoft.VSCodeInsiders ApplePressAndHoldEnabled -bool false      # For VS Code Insider
+defaults write com.vscodium ApplePressAndHoldEnabled -bool false                      # For VS Codium
+defaults write com.microsoft.VSCodeExploration ApplePressAndHoldEnabled -bool false   # For VS Codium Exploration users
