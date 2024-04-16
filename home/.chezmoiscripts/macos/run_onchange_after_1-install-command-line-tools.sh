@@ -75,13 +75,16 @@ BREW_PREFIX=$(brew --prefix)
 
 # Add brew-installed bash to the list of allowable shells
 if ! fgrep -q "${BREW_PREFIX}/bin/bash" /etc/shells; then
-	echo "Adding ${BREW_PREFIX}/bin/bash to /etc/shells"
+	echo ""
+	echo "Adding ${BREW_PREFIX}/bin/bash to /etc/shells..."
   echo "${BREW_PREFIX}/bin/bash" | sudo tee -a /etc/shells;
 fi;
 
 # Change shell to brew-installed bash
 # TODO: remove this bit if/when we switch to zsh
 if [[ "$SHELL" != "${BREW_PREFIX}/bin/bash" ]]; then
+	echo ""
+	echo "Changing default shell to bash..."
 	chsh -s "${BREW_PREFIX}/bin/bash";
 fi
 

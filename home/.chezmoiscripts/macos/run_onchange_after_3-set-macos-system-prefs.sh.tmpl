@@ -175,15 +175,6 @@ defaults write NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled -bool false
 # Disable auto-correct
 defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool false
 
-# Set a custom wallpaper image. `DefaultDesktop.jpg` is already a symlink, and
-# all wallpapers are in `/Library/Desktop Pictures/`. The default is `Wave.jpg`.
-#rm -rf ~/Library/Application Support/Dock/desktoppicture.db
-#sudo rm -rf /System/Library/CoreServices/DefaultDesktop.jpg
-#sudo ln -s /path/to/your/image /System/Library/CoreServices/DefaultDesktop.jpg
-
-# Set background to dark-grey color
-# osascript -e 'tell application "Finder" to set desktop picture to POSIX file "/System/Library/Desktop Pictures/Solid Colors/Stone.png"'
-
 # Enable "Dark Mode"
 defaults write NSGlobalDomain AppleInterfaceStyle -string "Dark"
 
@@ -231,7 +222,8 @@ if $process_has_full_disk_access; then
 	defaults write com.apple.universalaccess closeViewZoomFollowsFocus -bool true
 fi
 
-# # Disable press-and-hold for keys in favor of key repeat
+# Disable press-and-hold for keys in favor of key repeat
+# (I've opted to do this per-app instead)
 # defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
 
 # Set a blazingly fast keyboard repeat rate
@@ -396,7 +388,7 @@ defaults write com.apple.finder FXInfoPanesExpanded -dict \
 sudo chflags hidden /opt
 
 ###############################################################################
-# Dock, Dashboard, and hot corners                                            #
+# Dock                                                                        #
 ###############################################################################
 
 # Enable highlight hover effect for the grid view of a stack (Dock)
@@ -543,28 +535,25 @@ fi
 if $process_has_full_disk_access; then
 
 	# Disable send and reply animations in Mail.app
-	defaults write com.apple.mail DisableReplyAnimations -bool true
-	defaults write com.apple.mail DisableSendAnimations -bool true
+	defaults write -app "Mail" DisableReplyAnimations -bool true
+	defaults write -app "Mail" DisableSendAnimations -bool true
 
 	# Copy email addresses as `foo@example.com` instead of `Foo Bar <foo@example.com>` in Mail.app
-	defaults write com.apple.mail AddressesIncludeNameOnPasteboard -bool false
+	defaults write -app "Mail" AddressesIncludeNameOnPasteboard -bool false
 
 	# Add the keyboard shortcut ⌘ + = to archive an email in Mail.app
-	defaults write com.apple.mail NSUserKeyEquivalents -dict-add "Archive" "@="
+	defaults write -app "Mail" NSUserKeyEquivalents -dict-add "Archive" "@="
 
 	# Disable inline attachments (just show the icons)
-	# defaults write com.apple.mail DisableInlineAttachmentViewing -bool true
+	# defaults write -app "Mail" DisableInlineAttachmentViewing -bool true
 
 	# Disable automatic spell checking
-	defaults write com.apple.mail SpellCheckingBehavior -string "NoSpellCheckingEnabled"
+	defaults write -app "Mail" SpellCheckingBehavior -string "NoSpellCheckingEnabled"
 fi
 
 ###############################################################################
 # Terminal                                                                    #
 ###############################################################################
-
-# Only use UTF-8 in Terminal.app
-defaults write com.apple.terminal StringEncodings -array 4
 
 # Use a modified version of the Solarized Dark theme by default in Terminal.app
 osascript <<EOD
@@ -613,17 +602,20 @@ end tell
 
 EOD
 
+# Only use UTF-8 in Terminal.app
+defaults write -app "Terminal" StringEncodings -array 4
+
 # Enable “focus follows mouse” for Terminal.app and all X11 apps
 # i.e. hover over a window and start typing in it without clicking first
-# defaults write com.apple.terminal FocusFollowsMouse -bool true
+# defaults write -app "Terminal" FocusFollowsMouse -bool true
 # defaults write org.x.X11 wm_ffm -bool true
 
 # Enable Secure Keyboard Entry in Terminal.app
 # See: https://security.stackexchange.com/a/47786/8918
-defaults write com.apple.terminal SecureKeyboardEntry -bool true
+defaults write -app "Terminal" SecureKeyboardEntry -bool true
 
 # Disable the annoying line marks
-defaults write com.apple.Terminal ShowLineMarks -int 0
+defaults write -app "Terminal" ShowLineMarks -int 0
 
 ###############################################################################
 # Time Machine                                                                #
@@ -640,38 +632,39 @@ defaults write com.apple.TimeMachine DoNotOfferNewDisksForBackup -bool true
 ###############################################################################
 
 # Show the main window when launching Activity Monitor
-defaults write com.apple.ActivityMonitor OpenMainWindow -bool true
+defaults write -app "Activity Monitor" OpenMainWindow -bool true
 
 # Visualize CPU usage in the Activity Monitor Dock icon
-defaults write com.apple.ActivityMonitor IconType -int 5
+defaults write -app "Activity Monitor" IconType -int 5
 
 # Show all processes in Activity Monitor
-defaults write com.apple.ActivityMonitor ShowCategory -int 0
+defaults write -app "Activity Monitor" ShowCategory -int 0
 
 # Sort Activity Monitor results by CPU usage
-defaults write com.apple.ActivityMonitor SortColumn -string "CPUUsage"
-defaults write com.apple.ActivityMonitor SortDirection -int 0
+defaults write -app "Activity Monitor" SortColumn -string "CPUUsage"
+defaults write -app "Activity Monitor" SortDirection -int 0
 
 ###############################################################################
 # TextEdit                                                                    #
 ###############################################################################
 
 # Use plain text mode for new TextEdit documents
-defaults write com.apple.TextEdit RichText -int 0
+defaults write -app "TextEdit" RichText -int 0
+
 # Open and save files as UTF-8 in TextEdit
-defaults write com.apple.TextEdit PlainTextEncoding -int 4
-defaults write com.apple.TextEdit PlainTextEncodingForWrite -int 4
+defaults write -app "TextEdit" PlainTextEncoding -int 4
+defaults write -app "TextEdit" PlainTextEncodingForWrite -int 4
 
 ###############################################################################
 # Disk Utility                                                                #
 ###############################################################################
 
 # Enable the debug menu in Disk Utility
-defaults write com.apple.DiskUtility DUDebugMenuEnabled -bool true
-defaults write com.apple.DiskUtility advanced-image-options -bool true
+defaults write -app "Disk Utility" DUDebugMenuEnabled -bool true
+defaults write -app "Disk Utility" advanced-image-options -bool true
 
 # View -> Show All Devices
-defaults write com.apple.DiskUtility SidebarShowAllDevices -bool true
+defaults write -app "Disk Utility" SidebarShowAllDevices -bool true
 
 ###############################################################################
 # Mac App Store                                                               #
@@ -709,7 +702,7 @@ defaults write com.apple.commerce AutoUpdate -bool true
 ###############################################################################
 
 # Prevent Photos from opening automatically when devices are plugged in
-defaults -currentHost write com.apple.ImageCapture disableHotPlug -bool true
+defaults -currentHost write -app "Image Capture" disableHotPlug -bool true
 
 ###############################################################################
 # Messages                                                                    #
@@ -723,71 +716,6 @@ defaults write com.apple.messageshelper.MessageController SOInputLineSettings -d
 
 # Disable continuous spell checking
 defaults write com.apple.messageshelper.MessageController SOInputLineSettings -dict-add "continuousSpellCheckingEnabled" -bool false
-
-###############################################################################
-# Google Chrome & Google Chrome Canary                                        #
-###############################################################################
-
-# Disable the all too sensitive backswipe on trackpads
-defaults write com.google.Chrome AppleEnableSwipeNavigateWithScrolls -bool false
-defaults write com.google.Chrome.canary AppleEnableSwipeNavigateWithScrolls -bool false
-
-# Disable the all too sensitive backswipe on Magic Mouse
-defaults write com.google.Chrome AppleEnableMouseSwipeNavigateWithScrolls -bool false
-defaults write com.google.Chrome.canary AppleEnableMouseSwipeNavigateWithScrolls -bool false
-
-# Use the system-native print preview dialog
-defaults write com.google.Chrome DisablePrintPreview -bool true
-defaults write com.google.Chrome.canary DisablePrintPreview -bool true
-
-# Expand the print dialog by default
-defaults write com.google.Chrome PMPrintingExpandedStateForPrint2 -bool true
-defaults write com.google.Chrome.canary PMPrintingExpandedStateForPrint2 -bool true
-
-###############################################################################
-# Transmission.app                                                            #
-###############################################################################
-
-# Use `~/Documents/Torrents` to store incomplete downloads
-defaults write org.m0k.transmission UseIncompleteDownloadFolder -bool true
-defaults write org.m0k.transmission IncompleteDownloadFolder -string "${HOME}/Documents/Torrents"
-
-# Use `~/Downloads` to store completed downloads
-defaults write org.m0k.transmission DownloadLocationConstant -bool true
-
-# Don’t prompt for confirmation before downloading
-defaults write org.m0k.transmission DownloadAsk -bool false
-defaults write org.m0k.transmission MagnetOpenAsk -bool false
-
-# Don’t prompt for confirmation before removing non-downloading active transfers
-defaults write org.m0k.transmission CheckRemoveDownloading -bool true
-
-# Trash original torrent files
-defaults write org.m0k.transmission DeleteOriginalTorrent -bool true
-
-# Hide the donate message
-defaults write org.m0k.transmission WarningDonate -bool false
-# Hide the legal disclaimer
-defaults write org.m0k.transmission WarningLegal -bool false
-
-# IP block list.
-# Source: https://giuliomac.wordpress.com/2014/02/19/best-blocklist-for-transmission/
-defaults write org.m0k.transmission BlocklistNew -bool true
-defaults write org.m0k.transmission BlocklistURL -string "http://john.bitsurge.net/public/biglist.p2p.gz"
-defaults write org.m0k.transmission BlocklistAutoUpdate -bool true
-
-# Randomize port on launch
-defaults write org.m0k.transmission RandomPort -bool true
-
-###############################################################################
-# Other third-party apps                                                      #
-###############################################################################
-
-# KeepingYouAwake.app - Prevent ugly highlight color when clicking
-defaults write info.marcel-dierkes.KeepingYouAwake info.marcel-dierkes.KeepingYouAwake.MenuBarIconHighlightDisabled -bool YES
-
-# VSCode - Disable press-and-hold for keys in favor of key repeat (allows VSCodeVim plugin to work properly)
-defaults write com.microsoft.VSCode ApplePressAndHoldEnabled -bool false
 
 ###############################################################################
 # Kill affected applications                                                  #

@@ -22,7 +22,7 @@ echo ""
 # - enable some security settings by default
 #   see https://git.herrbischoff.com/awesome-macos-command-line/about/#security
 
-echo "Adding a checklist to the Desktop for some manual steps to be performed post-installation."
+echo "Adding a checklist to the Desktop for some manual steps to be performed post-installation..."
 echo ""
 
 cat <<EOF > ~/Desktop/Post-Installation-Checklist.txt
@@ -78,4 +78,3 @@ echo ""
 #
 # To clear the state of run_onchange_ scripts, run:
 # $ chezmoi state delete-bucket --bucket=entryState
-#
