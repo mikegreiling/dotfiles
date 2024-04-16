@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 
-echo "Installation completed! Almost done..."
 echo ""
-
-echo "Adding a checklist to the Desktop for some manual steps to be performed after installation."
+echo "-----------------------------------------------------------"
+echo "  Installation completed! Almost done..."
+echo "-----------------------------------------------------------"
+echo ""
 
 # TODO:
 # - consider adopting mysides to manage Finder sidebar shortcuts
@@ -21,6 +22,8 @@ echo "Adding a checklist to the Desktop for some manual steps to be performed af
 # - enable some security settings by default
 #   see https://git.herrbischoff.com/awesome-macos-command-line/about/#security
 
+echo "Adding a checklist to the Desktop for some manual steps to be performed post-installation."
+echo ""
 
 cat <<EOF > ~/Desktop/Post-Installation-Checklist.txt
 Post-Installation Checklist
