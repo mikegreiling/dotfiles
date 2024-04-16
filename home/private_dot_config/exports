@@ -1,5 +1,17 @@
 #!/usr/bin/env bash
 
+# XDG directories
+# https://wiki.archlinux.org/title/XDG_Base_Directory
+export XDG_CONFIG_HOME="${HOME}/.config";
+export XDG_CACHE_HOME="${HOME}/.cache";
+export XDG_DATA_HOME="${HOME}/.local/share";
+export XDG_STATE_HOME="${HOME}/.local/state";
+
+[ -d "$XDG_CONFIG_HOME" ] || mkdir -m 0750 "$XDG_CONFIG_HOME";
+[ -d "$XDG_CACHE_HOME" ]  || mkdir -m 0750 "$XDG_CACHE_HOME";
+[ -d "$XDG_DATA_HOME" ]   || mkdir -m 0750 "$XDG_DATA_HOME";
+[ -d "$XDG_STATE_HOME" ]  || mkdir -m 0750 "$XDG_STATE_HOME";
+
 # Make nano the default editor.
 export EDITOR='nano';
 
@@ -21,7 +33,8 @@ export HISTCONTROL='ignoreboth';
 
 # Prefer US English and use UTF-8.
 export LANG='en_US.UTF-8';
-export LC_ALL='en_US.UTF-8';
+export LC_CTYPE="$LANG";
+export LC_ALL="$LANG";
 
 # Highlight section titles in manual pages.
 export LESS_TERMCAP_md="${yellow}";
@@ -33,5 +46,5 @@ export MANPAGER='less -X';
 # https://stackoverflow.com/a/42265848/96656
 export GPG_TTY=$(tty);
 
-# Hide the “default interactive shell is now zsh” warning on macOS.
+# Hide the "default interactive shell is now zsh" warning on macOS.
 export BASH_SILENCE_DEPRECATION_WARNING=1;
