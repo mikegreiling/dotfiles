@@ -35,3 +35,5 @@ sudo scutil --set HostName {{ .hostname | quote }}
 # see https://en.wikipedia.org/wiki/NetBIOS#NetBIOS_name
 echo "  NetBIOSName   → {{ $safe_netbios_name }}"
 sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server NetBIOSName -string {{ $safe_netbios_name | quote }}
+
+# vim: filetype=sh
