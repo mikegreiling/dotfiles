@@ -59,6 +59,7 @@ Post-Installation Checklist
 - [ ] Add preferred applications to the Dock
 - [ ] Configure Finder sidebar
 - [ ] Install asdf plugins and utilities (e.g. \`asdf plugin-add nodejs\`)
+- [ ] Configure Visual Studio Code to use the 'JetBrainsMono Nerd Font Mono' font
 EOF
 
 # https://git.herrbischoff.com/awesome-macos-command-line/about/#set-wallpaper
