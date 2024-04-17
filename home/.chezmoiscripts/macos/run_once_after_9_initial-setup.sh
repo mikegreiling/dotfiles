@@ -36,6 +36,12 @@ Post-Installation Checklist
 - [ ] Configure Time Machine
 - [ ] Enable FileVault
 - [ ] Enable Firewall
+- [ ] Go to Safari Settings -> Websites -> Location -> and set "When visiting other websites" to "Deny"
+- [ ] Sign into the App Store and download the following apps:
+  - [ ] Calcbot
+  - [ ] DaisyDisk
+  - [ ] The Unarchiver
+  - [ ] Things 3
 - [ ] Register the following applications:
   - [ ] CleanShot X
   - [ ] Kaleidoscope
@@ -44,11 +50,7 @@ Post-Installation Checklist
 - [ ] Sign in to the following apps:
   - [ ] Slack
   - [ ] Zoom
-- [ ] Sign into the App Store and download the following apps:
-  - [ ] Calcbot
-  - [ ] DaisyDisk
-  - [ ] The Unarchiver
-  - [ ] Things 3
+  - [ ] Things
 - [ ] Add preferred applications to the Dock
 - [ ] Configure Finder sidebar
 EOF
