@@ -30,13 +30,17 @@ cat <<EOF > ~/Desktop/Post-Installation-Checklist.txt
 Post-Installation Checklist
 ===========================
 - [ ] Configure TouchID and Apple Watch unlock
+- [ ] Go to System Settings ➜ Desktop & Dock ➜ Windows and:
+    - Check "Ask to keep changes when closing documents"
+    - Uncheck "Close windows when quitting an app"
 - [ ] Setup 1Password and 1Password Safari Extension
+- [ ] Go to Safari Settings ➜ Websites ➜ Location ➜ and:
+    - Set "When visiting other websites" to "Deny"
 - [ ] Sign into iCloud
 - [ ] Sign into Gmail
 - [ ] Configure Time Machine
 - [ ] Enable FileVault
 - [ ] Enable Firewall
-- [ ] Go to Safari Settings -> Websites -> Location -> and set "When visiting other websites" to "Deny"
 - [ ] Sign into the App Store and download the following apps:
   - [ ] Calcbot
   - [ ] DaisyDisk
