@@ -22,6 +22,13 @@ tap "homebrew/bundle"
 tap "homebrew/cask-fonts"
 tap "homebrew/cask-versions"
 
+# Install some fonts
+cask "font-droid-sans-mono-nerd-font"
+cask "font-hack-nerd-font"
+cask "font-jetbrains-mono-nerd-font"
+cask "font-meslo-lg-nerd-font"
+cask "font-sauce-code-pro-nerd-font" # source code pro
+
 # Install some macOS apps and tools
 cask "1password"
 cask "1password-cli"
