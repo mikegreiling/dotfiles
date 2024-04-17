@@ -26,7 +26,7 @@ echo ""
 echo "Adding a checklist to the Desktop for some manual steps to be performed post-installation..."
 echo ""
 
-cat <<EOF > ~/Desktop/Post-Installation-Checklist.txt
+cat <<EOF > ~/Desktop/Post-Installation-Checklist.md
 Post-Installation Checklist
 ===========================
 - [ ] Configure TouchID and Apple Watch unlock
@@ -57,6 +57,7 @@ Post-Installation Checklist
   - [ ] Things
 - [ ] Add preferred applications to the Dock
 - [ ] Configure Finder sidebar
+- [ ] Install asdf plugins and utilities (e.g. \`asdf plugin-add nodejs\`)
 EOF
 
 # https://git.herrbischoff.com/awesome-macos-command-line/about/#set-wallpaper
