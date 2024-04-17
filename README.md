@@ -24,30 +24,19 @@ The `--use-builtin-git on` is necessary if Xcode is not currently installed. On 
 
 You will be prompted to supply the decryption key to install SSH and GPG keys, followed by your full name and email address which will allow git to be configured properly, further followed by an option to override the computer and hostname settings. Once all of that information is collected, it will install the dotfiles and run setup scripts.
 
-### Specify the `$PATH`
-
-If `~/.path` exists, it will be sourced along with the other files, before any feature testing (such as [detecting which version of `ls` is being used](https://github.com/mathiasbynens/dotfiles/blob/aff769fd7522/.aliases#L21-26)) takes place.
-
-Here’s an example `~/.path` file that adds `/usr/local/bin` to the `$PATH`:
-
 ```bash
 export PATH="/usr/local/bin:$PATH"
 ```
 
-## Additional System Setup Instructions
+### Additional System Setup Instructions
 
-Once this is all in place, there are a few other items which must be done manually (included here for my own reference).
+Once chezmoi has run, a checklist with further manual steps will be placed on the Desktop.
 
-1. Go to System Settings ➜ Desktop & Dock ➜ Windows and:
-  - Check "Ask to keep changes when closing documents"
-  - Uncheck "Close windows when quitting an app"  
-    _*I have not yet learned how to do this programmatically_
-2. [Generate your ssh key](https://help.github.com/articles/generating-ssh-keys/) and install it on GitHub.
-3. Enter any license keys necessary for installed apps (Things, Kaleidoscope, Transmit, et al)
+It contains a list of items which cannot be done programatically (yet) like entering license keys, signing in to apps, and populating the dock.
 
-## Prompt Reference
+## Bash Prompt Reference
 
-Included is a prompt which was shamelessly stolen from [Nicolas Gallagher](https://github.com/necolas/dotfiles/).  Here is his descroption:
+Included is a prompt which was borrowed from [Nicolas Gallagher](https://github.com/necolas/dotfiles/).  Here is his descroption:
 
 > ### Custom bash prompt
 >
@@ -63,12 +52,6 @@ Included is a prompt which was shamelessly stolen from [Nicolas Gallagher](https
 > `$` | Stashed files
 >
 > Further details are in the `bash_prompt` file.
->
-> Screenshot:
->
-> ![](http://i.imgur.com/DSJ1G.png)
->
-
 
 ## Author
 
@@ -79,6 +62,7 @@ Included is a prompt which was shamelessly stolen from [Nicolas Gallagher](https
 ## Thanks to…
 
 * [Mathias Bynens](https://mathiasbynens.be/) and the original [dotfiles repository](https://github.com/mathiasbynens/dotfiles) I based mine off of
+* [Tom Payne](https://github.com/twpayne) the creator of [chezmoi](https://www.chezmoi.io) and his own [dotfiles repository](https://github.com/twpayne/dotfiles) which I referenced extensively
 * Katrin Leinweber's [dotfiles repository](https://gitlab.com/katrinleinweber/dotfiles)
 * Paul Irish's [dotfiles repository](https://github.com/paulirish/dotfiles)
 * [Matthew Mueller](https://github.com/MatthewMueller) and his "[Hacker's Guide to Setting Up Your Mac](https://web.archive.org/web/20160119134924/http://lapwinglabs.com/blog/hacker-guide-to-setting-up-your-mac)" article which inspired me to research this
