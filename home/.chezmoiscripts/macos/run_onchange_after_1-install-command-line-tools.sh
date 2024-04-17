@@ -69,6 +69,7 @@ brew "vbindiff"
 brew "vim"
 brew "xh"
 brew "zopfli"
+brew "zsh"
 BREWS
 
 BREW_PREFIX=$(brew --prefix)
@@ -80,12 +81,18 @@ if ! fgrep -q "${BREW_PREFIX}/bin/bash" /etc/shells; then
   echo "${BREW_PREFIX}/bin/bash" | sudo tee -a /etc/shells;
 fi;
 
-# Change shell to brew-installed bash
-# TODO: remove this bit if/when we switch to zsh
-if [[ "$SHELL" != "${BREW_PREFIX}/bin/bash" ]]; then
+# Add brew-installed zsh to the list of allowable shells
+if ! fgrep -q "${BREW_PREFIX}/bin/zsh" /etc/shells; then
 	echo ""
-	echo "Changing default shell to bash..."
-	chsh -s "${BREW_PREFIX}/bin/bash";
+	echo "Adding ${BREW_PREFIX}/bin/zsh to /etc/shells..."
+  echo "${BREW_PREFIX}/bin/zsh" | sudo tee -a /etc/shells;
+fi;
+
+# Change shell to brew-installed zsh
+if [[ "$SHELL" != "${BREW_PREFIX}/bin/zsh" ]]; then
+	echo ""
+	echo "Changing default shell to zsh..."
+	chsh -s "${BREW_PREFIX}/bin/zsh";
 fi
 
 # Save the list of installed packages to a Brewfile for inspection
