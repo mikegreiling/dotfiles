@@ -55,6 +55,7 @@ Post-Installation Checklist
   - [ ] Slack
   - [ ] Zoom
   - [ ] Things
+- [ ] Enable Quick Entry with Autofill within Things 3 and download Things Helper app
 - [ ] Add preferred applications to the Dock
 - [ ] Configure Finder sidebar
 - [ ] Install asdf plugins and utilities (e.g. \`asdf plugin-add nodejs\`)
