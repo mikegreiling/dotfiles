@@ -1,3 +1,6 @@
+# Load our common env exports
+source ~/.config/exports;
+
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
@@ -9,10 +12,16 @@ fi
 setopt interactive_comments   # allow comments in interactive shell
 
 # History options
+setopt hist_expire_dups_first # delete duplicates first when HISTFILE size exceeds HISTSIZE
 setopt hist_find_no_dups      # do not display adjacent duplicates within history
 setopt hist_ignore_dups       # ignore duplicated commands history list
 setopt hist_verify            # show command with history expansion to user before running it
 setopt share_history          # share command history data across terminals
+
+# Increase history size to allow 32³ entries
+export HISTFILE="$HOME/.zsh_history"
+export HISTSIZE=32768
+export SAVEHIST=32768
 
 # Load homebrew-provided autocompletions and zsh plugins
 if type brew &>/dev/null; then
@@ -52,11 +61,21 @@ if type brew &>/dev/null; then
 fi
 
 # Load chezmoi-provided zsh plugins
-HISTORY_BASE="${XDG_CACHE_HOME}/.directory_history"
-source ~/.config/zsh/plugins/per-directory-history/per-directory-history.zsh
+HISTORY_BASE="${XDG_CACHE_HOME:-$HOME/.cache}/.directory_history"
+source ~/.config/zsh/per-directory-history.zsh
 
-# Load the shell dotfiles
-source ~/.config/exports;
+# Ensure the p10k prompt gets refreshed when toggling local/global history
+# see https://github.com/romkatv/powerlevel10k/issues/72#issuecomment-1008262525
+function toggle-per-directory-history-and-redraw-prompt {
+  per-directory-history-toggle-history
+  zle push-line
+  zle accept-line
+}
+
+zle -N toggle-per-directory-history-and-redraw-prompt
+bindkey ${PER_DIRECTORY_HISTORY_TOGGLE:-'^G'} toggle-per-directory-history-and-redraw-prompt
+
+# Load our custom aliases and functions
 source ~/.config/aliases;
 source ~/.config/functions;
 
