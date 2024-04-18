@@ -46,8 +46,10 @@ if type brew &>/dev/null; then
   # Load zsh-autosuggestions
   if [[ -r "$HOMEBREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]]; then
     source $HOMEBREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-    
+
     ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+    bindkey '\t' autosuggest-accept
+    bindkey '^ ' expand-or-complete # re-bind normal zsh completion to ctrl+space
   fi
 
   # Load zsh-history-substring-search (must come after syntax-highlighting)
