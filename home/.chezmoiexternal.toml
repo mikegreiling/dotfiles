@@ -1,5 +1,5 @@
-
-[".config/zsh/plugins/powerlevel10k"]
+[".config/zsh/plugins/per-directory-history"]
     type = "archive"
-    url = "https://github.com/romkatv/powerlevel10k/archive/refs/tags/v1.20.0.tar.gz"
-    stripcomponents = 1
+    url = "https://github.com/jimhester/per-directory-history/archive/master.tar.gz"
+    stripComponents = 1
+    refreshPeriod = "168h"

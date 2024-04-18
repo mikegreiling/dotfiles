@@ -5,21 +5,59 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
+# ZSH options
+setopt interactive_comments   # allow comments in interactive shell
+
+# History options
+# setopt extended_history       # record timestamp of command in HISTFILE
+setopt hist_ignore_dups       # ignore duplicated commands history list
+setopt hist_verify            # show command with history expansion to user before running it
+setopt share_history          # share command history data across terminals
+
 # Load the shell dotfiles
 source ~/.config/exports;
 source ~/.config/aliases;
 source ~/.config/functions;
 
-# https://docs.brew.sh/Shell-Completion#configuring-completions-in-zsh
+HISTORY_BASE="${XDG_CACHE_HOME}/.directory_history"
+
+# Load chezmoi-provided zsh plugins
+source ~/.config/zsh/plugins/per-directory-history/per-directory-history.zsh
+
+# Load homebrew-provided autocompletions and zsh plugins
 if type brew &>/dev/null; then
-  FPATH="$(brew --prefix)/share/zsh/site-functions:${FPATH}";
+  HOMEBREW_PREFIX="$(brew --prefix)";
+
+  # https://docs.brew.sh/Shell-Completion#configuring-completions-in-zsh
+  FPATH="${HOMEBREW_PREFIX}/share/zsh/site-functions:${FPATH}";
 
   autoload -Uz compinit;
   compinit;
+
+  # Load zsh-syntax-highlighting
+  if [[ -r "$HOMEBREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]]; then
+    source $HOMEBREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+  fi
+
+  # Load zsh-autosuggestions
+  if [[ -r "$HOMEBREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]]; then
+    source $HOMEBREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+  fi
+
+  # Load zsh-history-substring-search (must come after syntax-highlighting)
+  if [[ -r "$HOMEBREW_PREFIX/share/zsh-history-substring-search/zsh-history-substring-search.zsh" ]]; then
+    source $HOMEBREW_PREFIX/share/zsh-history-substring-search/zsh-history-substring-search.zsh
+
+    export HISTORY_SUBSTRING_SEARCH_PREFIXED=1
+    bindkey '^[[A' history-substring-search-up
+    bindkey '^[[B' history-substring-search-down
+  fi
+
+  # Load powerlevel10k prompt
+  if [[ -r "$HOMEBREW_PREFIX/share/powerlevel10k/powerlevel10k.zsh-theme" ]]; then
+    source $HOMEBREW_PREFIX/share/powerlevel10k/powerlevel10k.zsh-theme
+
+    # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+    [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+  fi
 fi
-
-# Load powerlevel10k prompt
-source ~/.config/zsh/plugins/powerlevel10k/powerlevel10k.zsh-theme;
-
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh

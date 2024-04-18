@@ -31,6 +31,13 @@ brew "gnupg"
 brew "bash"
 brew "bash-completion@2"
 
+# Install zsh and some zsh plugins
+brew "powerlevel10k"
+brew "zsh"
+brew "zsh-autosuggestions"
+brew "zsh-history-substring-search"
+brew "zsh-syntax-highlighting"
+
 # Install some useful command-line utilities
 brew "ack"
 brew "age"
@@ -69,7 +76,6 @@ brew "vbindiff"
 brew "vim"
 brew "xh"
 brew "zopfli"
-brew "zsh"
 BREWS
 
 BREW_PREFIX=$(brew --prefix)
