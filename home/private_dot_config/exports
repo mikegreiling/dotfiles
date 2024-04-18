@@ -42,7 +42,13 @@ export MANPAGER='less -X';
 
 # Avoid issues with `gpg` as installed via Homebrew.
 # https://stackoverflow.com/a/42265848/96656
-export GPG_TTY=$(tty);
+if [ -n "$TTY" ]; then
+  # zsh
+  export GPG_TTY=$TTY;
+else
+  # bash
+  export GPG_TTY=$(tty);
+fi
 
 # Instruct asdf to support legacy non-deterministic .nvmrc files
 export ASDF_CONFIG_FILE="${XDG_CONFIG_HOME}/asdf/asdfrc"

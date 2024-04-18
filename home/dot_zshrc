@@ -23,6 +23,11 @@ export HISTFILE="$HOME/.zsh_history"
 export HISTSIZE=32768
 export SAVEHIST=32768
 
+# Load our custom aliases and functions
+source ~/.config/aliases;
+source ~/.config/functions;
+source ~/.config/zsh/functions.zsh;
+
 # Load homebrew-provided autocompletions and zsh plugins
 if type brew &>/dev/null; then
   HOMEBREW_PREFIX="$(brew --prefix)";
@@ -60,24 +65,18 @@ if type brew &>/dev/null; then
   fi
 fi
 
-# Load chezmoi-provided zsh plugins
+# Load per-directory-history plugin
 HISTORY_BASE="${XDG_CACHE_HOME:-$HOME/.cache}/.directory_history"
+PER_DIRECTORY_HISTORY_PRINT_MODE_CHANGE=false
 source ~/.config/zsh/per-directory-history.zsh
 
 # Ensure the p10k prompt gets refreshed when toggling local/global history
-# see https://github.com/romkatv/powerlevel10k/issues/72#issuecomment-1008262525
-function toggle-per-directory-history-and-redraw-prompt {
+function toggle-per-directory-history {
   per-directory-history-toggle-history
-  zle push-line
-  zle accept-line
+  refresh-prompt
 }
-
-zle -N toggle-per-directory-history-and-redraw-prompt
-bindkey ${PER_DIRECTORY_HISTORY_TOGGLE:-'^G'} toggle-per-directory-history-and-redraw-prompt
-
-# Load our custom aliases and functions
-source ~/.config/aliases;
-source ~/.config/functions;
+zle -N toggle-per-directory-history
+bindkey ${PER_DIRECTORY_HISTORY_TOGGLE:-'^G'} toggle-per-directory-history
 
 # Ensure our git alias has the same autocompletion
 compdef g=git
