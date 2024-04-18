@@ -9,20 +9,10 @@ fi
 setopt interactive_comments   # allow comments in interactive shell
 
 # History options
-# setopt extended_history       # record timestamp of command in HISTFILE
+setopt hist_find_no_dups      # do not display adjacent duplicates within history
 setopt hist_ignore_dups       # ignore duplicated commands history list
 setopt hist_verify            # show command with history expansion to user before running it
 setopt share_history          # share command history data across terminals
-
-# Load the shell dotfiles
-source ~/.config/exports;
-source ~/.config/aliases;
-source ~/.config/functions;
-
-HISTORY_BASE="${XDG_CACHE_HOME}/.directory_history"
-
-# Load chezmoi-provided zsh plugins
-source ~/.config/zsh/plugins/per-directory-history/per-directory-history.zsh
 
 # Load homebrew-provided autocompletions and zsh plugins
 if type brew &>/dev/null; then
@@ -57,7 +47,18 @@ if type brew &>/dev/null; then
   if [[ -r "$HOMEBREW_PREFIX/share/powerlevel10k/powerlevel10k.zsh-theme" ]]; then
     source $HOMEBREW_PREFIX/share/powerlevel10k/powerlevel10k.zsh-theme
 
-    # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-    [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+    [[ ! -f ~/.config/zsh/p10k.zsh ]] || source ~/.config/zsh/p10k.zsh
   fi
 fi
+
+# Load chezmoi-provided zsh plugins
+HISTORY_BASE="${XDG_CACHE_HOME}/.directory_history"
+source ~/.config/zsh/plugins/per-directory-history/per-directory-history.zsh
+
+# Load the shell dotfiles
+source ~/.config/exports;
+source ~/.config/aliases;
+source ~/.config/functions;
+
+# Ensure our git alias has the same autocompletion
+compdef g=git
