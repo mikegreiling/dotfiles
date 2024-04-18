@@ -46,13 +46,15 @@ if type brew &>/dev/null; then
   # Load zsh-autosuggestions
   if [[ -r "$HOMEBREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]]; then
     source $HOMEBREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+    
+    ZSH_AUTOSUGGEST_STRATEGY=(history completion)
   fi
 
   # Load zsh-history-substring-search (must come after syntax-highlighting)
   if [[ -r "$HOMEBREW_PREFIX/share/zsh-history-substring-search/zsh-history-substring-search.zsh" ]]; then
     source $HOMEBREW_PREFIX/share/zsh-history-substring-search/zsh-history-substring-search.zsh
 
-    export HISTORY_SUBSTRING_SEARCH_PREFIXED=1
+    HISTORY_SUBSTRING_SEARCH_PREFIXED=1
     bindkey '^[[A' history-substring-search-up
     bindkey '^[[B' history-substring-search-down
   fi
