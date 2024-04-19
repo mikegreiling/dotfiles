@@ -32,6 +32,7 @@ cask "font-sauce-code-pro-nerd-font" # source code pro
 # Install some macOS apps and tools
 cask "1password"
 cask "1password-cli"
+cask "betterdisplay"
 cask "firefox"
 cask "google-chrome"
 cask "kaleidoscope"
