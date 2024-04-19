@@ -38,6 +38,11 @@ alias ld="ls -lF ${colorflag} | grep --color=never '^d'"
 # Always use color output for `ls`
 alias ls="command ls ${colorflag}"
 
+# Alias some common git commands. Git itself is aliased as "g" in ./functions, but on some commands I occasionally forget the space.
+alias gca="!git add -A && git commit -av"
+alias gl="git log --pretty=oneline -n 20 --graph --abbrev-commit"
+alias gs="git status"
+
 # Always enable colored `grep` output
 # Note: `GREP_OPTIONS="--color=auto"` is deprecated, hence the alias usage.
 alias grep='grep --color=auto'
