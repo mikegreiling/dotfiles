@@ -4,3 +4,9 @@
 [".config/zsh/per-directory-history.zsh"]
     type = "file"
     url = "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/d17ca487a4/plugins/per-directory-history/per-directory-history.zsh"
+
+[".config/tmux/plugins/tpm"]
+    type = "archive"
+    url = "https://github.com/tmux-plugins/tpm/archive/refs/tags/v3.1.0.zip"
+    exact = true
+    stripComponents = 1
