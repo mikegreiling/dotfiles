@@ -38,8 +38,8 @@ brew "bash-completion@2"
 brew "powerlevel10k"
 brew "zsh"
 brew "zsh-autosuggestions"
+brew "zsh-fast-syntax-highlighting"
 brew "zsh-history-substring-search"
-brew "zsh-syntax-highlighting"
 
 # Install some useful command-line utilities
 brew "ack"

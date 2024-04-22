@@ -38,9 +38,9 @@ if type brew &>/dev/null; then
   autoload -Uz compinit;
   compinit;
 
-  # Load zsh-syntax-highlighting
-  if [[ -r "$HOMEBREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]]; then
-    source $HOMEBREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+  # Load zdharma-continuum/fast-syntax-highlighting
+  if [[ -r "$HOMEBREW_PREFIX/share/zsh-fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh" ]]; then
+    source $HOMEBREW_PREFIX/share/zsh-fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh
   fi
 
   # Load zsh-autosuggestions
