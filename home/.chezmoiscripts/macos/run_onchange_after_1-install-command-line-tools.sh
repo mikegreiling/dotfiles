@@ -81,6 +81,7 @@ brew "vbindiff"
 brew "vim"
 brew "xh"
 brew "zopfli"
+brew "zoxide"
 BREWS
 
 BREW_PREFIX=$(brew --prefix)

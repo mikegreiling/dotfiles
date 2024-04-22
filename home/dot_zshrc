@@ -84,3 +84,6 @@ bindkey ${PER_DIRECTORY_HISTORY_TOGGLE:-'^G'} toggle-per-directory-history
 
 # Ensure our git alias has the same autocompletion
 compdef g=git
+
+# Replace cd command with zoxide
+eval "$(zoxide init --cmd cd zsh)"
