@@ -48,8 +48,16 @@ if type brew &>/dev/null; then
     source $HOMEBREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 
     ZSH_AUTOSUGGEST_STRATEGY=(history completion)
-    bindkey '^[[Z' autosuggest-accept # shift+tab
-    # bindkey '^[[Z' expand-or-complete
+    bindkey '\t' autosuggest-accept # tab
+    bindkey '^[[Z' expand-or-complete # shift+tab
+
+    # remove forward-char, vi-forward-char from accept choices, use as partial instead
+    export ZSH_AUTOSUGGEST_ACCEPT_WIDGETS=(
+      end-of-line
+      vi-end-of-line
+      vi-add-eol
+    )
+    ZSH_AUTOSUGGEST_PARTIAL_ACCEPT_WIDGETS+=(forward-char vi-forward-char)
   fi
 
   # Load zsh-history-substring-search (must come after syntax-highlighting)
@@ -90,7 +98,40 @@ zle -N toggle-per-directory-history
 bindkey ${PER_DIRECTORY_HISTORY_TOGGLE:-'^G'} toggle-per-directory-history
 
 # Ensure our git alias has the same autocompletion
-compdef g=git
+[[ "${+functions[compdef]}" -ne 0 ]] && compdef g=git
 
-# Replace cd command with zoxide
-eval "$(zoxide init --cmd cd zsh)"
+# Replace cd command with zoxide and apply fix to autocomplete
+## TODO: consider rewriting __zoxide_z_complete to fix autocomplete behavior
+[[ -x "$(command -v zoxide)" ]] && eval "$(zoxide init --cmd cd zsh)"
+
+# Format zsh completion menu
+local char_arrow="›"
+local char_newline=$'\n'
+
+setopt menu_complete
+setopt auto_list
+
+local completion_descriptions="${char_newline}%B%F{85} ${char_arrow} %f%%F{green}%d%b%f"
+local completion_warnings="${char_newline}%F{yellow} ${char_arrow} %fno matches for %F{green}%d%f"
+local completion_error="${char_newline}%B%F{red} ${char_arrow} %f%e %d error"
+
+zstyle ':completion:*' completer _expand _complete _ignored _approximate
+zstyle ':completion:*' use-cache o/n
+zstyle ':completion:*' cache-path "$XDG_CACHE_HOME/zsh/.zcompcache"
+zstyle ':completion:*' verbose yes
+zstyle ':completion:*' menu select
+zstyle ':completion:*' matcher-list "m:{a-z}={A-Z}"
+zstyle ':completion:*' group-name ''
+
+zstyle ':completion:*:*:*:*:descriptions' format $completion_descriptions
+zstyle ':completion:*:*:*:*:corrections' format $completion_error
+zstyle ':completion:*:*:*:*:default' list-colors ${(s.:.)LS_COLORS} "ma=38;5;253;48;5;23"
+zstyle ':completion:*:*:*:*:warnings' format $completion_warnings
+zstyle ':completion:*:*:*:*:messages' format "%d"
+
+zstyle ':completion:*:expand:*' tag-order all-expansions
+zstyle ':completion:*:approximate:*' max-errors "reply=( $(( ($#PREFIX+$#SUFFIX)/3 )) numeric )"
+zstyle ':completion:*:*:-subscript-:*' tag-order indexes parameters
+zstyle ':completion:*:functions' ignored-patterns "_*"
+
+zstyle -e ':completion:*:(ssh|scp|sftp|rsh|rsync):hosts' hosts 'reply=(${=${${(f)"$(cat {/etc/ssh_,~/.ssh/known_}hosts(|2)(N) /dev/null)"}%%[# ]*}//,/ })'
