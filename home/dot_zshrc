@@ -56,7 +56,14 @@ if type brew &>/dev/null; then
   if [[ -r "$HOMEBREW_PREFIX/share/zsh-history-substring-search/zsh-history-substring-search.zsh" ]]; then
     source $HOMEBREW_PREFIX/share/zsh-history-substring-search/zsh-history-substring-search.zsh
 
+    # Limit matches to those which start with the current input
     HISTORY_SUBSTRING_SEARCH_PREFIXED=1
+
+    # Improve highlighting readability
+    HISTORY_SUBSTRING_SEARCH_HIGHLIGHT_FOUND="bg=cyan,fg=16,bold"
+    HISTORY_SUBSTRING_SEARCH_HIGHLIGHT_NOT_FOUND="bg=red,fg=16,bold"
+
+    # Bind to up and down arrow keys
     bindkey '^[[A' history-substring-search-up
     bindkey '^[[B' history-substring-search-down
   fi
