@@ -548,6 +548,9 @@ if $process_has_full_disk_access; then
 	# Add the keyboard shortcut ⌘ + = to archive an email in Mail.app
 	defaults write -app "Mail" NSUserKeyEquivalents -dict-add "Archive" "@="
 
+	# Sort conversations in descending order
+	defaults write -app "Mail" ConversationViewSortDescending -bool true
+
 	# Disable inline attachments (just show the icons)
 	# defaults write -app "Mail" DisableInlineAttachmentViewing -bool true
 
