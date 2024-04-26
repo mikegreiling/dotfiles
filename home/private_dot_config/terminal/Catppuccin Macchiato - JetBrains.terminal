@@ -1262,6 +1262,8 @@
 	ADIANwBJAEwAUQBTAFoAYABrAHgAfgCLAKAApwDSAPwA/gEAAQIBCQEOARQBFgEYARoN
 	Zg1rDXYNfw2MDY8NnA2lDaoNsgAAAAAAAAIBAAAAAAAAACgAAAAAAAAAAAAAAAAAAA21
 	</data>
+	<key>CursorBlink</key>
+	<false/>
 	<key>CursorColor</key>
 	<data>
 	YnBsaXN0MDDUAQIDBAUGBwpYJHZlcnNpb25ZJGFyY2hpdmVyVCR0b3BYJG9iamVjdHMS
@@ -1336,13 +1338,15 @@
 	ADIANwBJAEwAUQBTAFoAYABrAHgAfgCLAKAApwDSAPwA/gEAAQIBCQEOARQBFgEYARoN
 	Zg1rDXYNfw2MDY8NnA2lDaoNsgAAAAAAAAIBAAAAAAAAACgAAAAAAAAAAAAAAAAAAA21
 	</data>
+	<key>CursorType</key>
+	<integer>0</integer>
 	<key>DisableANSIColor</key>
 	<false/>
 	<key>Font</key>
 	<data>
 	YnBsaXN0MDDUAQIDBAUGBwpYJHZlcnNpb25ZJGFyY2hpdmVyVCR0b3BYJG9iamVjdHMS
 	AAGGoF8QD05TS2V5ZWRBcmNoaXZlctEICVRyb290gAGkCwwVFlUkbnVsbNQNDg8QERIT
-	FFZOU1NpemVYTlNmRmxhZ3NWTlNOYW1lViRjbGFzcyNAJgAAAAAAABAQgAKAA18QGEpl
+	FFZOU1NpemVYTlNmRmxhZ3NWTlNOYW1lViRjbGFzcyNAMQAAAAAAABAQgAKAA18QGEpl
 	dEJyYWluc01vbm9ORk0tUmVndWxhctIXGBkaWiRjbGFzc25hbWVYJGNsYXNzZXNWTlNG
 	b250ohkbWE5TT2JqZWN0CBEaJCkyN0lMUVNYXmdud36FjpCSlK+0v8jP0gAAAAAAAAEB
 	AAAAAAAAABwAAAAAAAAAAAAAAAAAAADb
@@ -1587,9 +1591,17 @@
 	<true/>
 	<key>UseBrightBold</key>
 	<false/>
+	<key>WindowTitle</key>
+	<string>Terminal</string>
+	<key>columnCount</key>
+	<integer>80</integer>
 	<key>name</key>
-	<string>Catppuccin Macchiato</string>
+	<string>Catppuccin Macchiato - JetBrains</string>
+	<key>rowCount</key>
+	<integer>24</integer>
 	<key>type</key>
 	<string>Window Settings</string>
+	<key>useOptionAsMetaKey</key>
+	<true/>
 </dict>
 </plist>
