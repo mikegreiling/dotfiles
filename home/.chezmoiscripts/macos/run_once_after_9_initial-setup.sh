@@ -22,6 +22,9 @@ echo ""
 #
 # - enable some security settings by default
 #   see https://git.herrbischoff.com/awesome-macos-command-line/about/#security
+#
+# - see if there is a reliably way to enable night shift programmatically
+#   see https://github.com/LukeChannings/dotfiles/blob/7cb3171b5354761c9aef7b6f1094019ef8701a17/install.macos#L411-L433
 
 echo "Adding a checklist to the Desktop for some manual steps to be performed post-installation..."
 echo ""
@@ -30,6 +33,7 @@ cat <<EOF > ~/Desktop/Post-Installation-Checklist.md
 Post-Installation Checklist
 ===========================
 - [ ] Configure TouchID and Apple Watch unlock
+- [ ] Configure NightShift settings
 - [ ] Go to System Settings ➜ Desktop & Dock ➜ Windows and:
     - Check "Ask to keep changes when closing documents"
     - Uncheck "Close windows when quitting an app"
