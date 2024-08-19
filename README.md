@@ -34,25 +34,6 @@ Once chezmoi has run, a checklist with further manual steps will be placed on th
 
 It contains a list of items which cannot be done programatically (yet) like entering license keys, signing in to apps, and populating the dock.
 
-## Bash Prompt Reference
-
-Included is a prompt which was borrowed from [Nicolas Gallagher](https://github.com/necolas/dotfiles/).  Here is his descroption:
-
-> ### Custom bash prompt
->
-> I use a custom bash prompt based on the [Solarized](https://ethanschoonover.com/solarized/) color palette and influenced by @gf3's and @cowboy's custom prompts.
->
-> When your current working directory is a Git repository, the prompt will display the checked-out branch's name (and failing that, the commit SHA that HEAD is pointing to). The state of the working tree is reflected in the following way:
->
-> Sym | Key
-> ----|---------------------------------
-> `+` | Uncommitted changes in the index
-> `!` | Unstaged changes
-> `?` | Untracked files
-> `$` | Stashed files
->
-> Further details are in the `bash_prompt` file.
-
 ## Author
 
 | [![twitter/mikegreiling](http://gravatar.com/avatar/33f90637d77f8d4da67faafd3af6597e?s=70)](http://twitter.com/mikegreiling "Follow @mikegreiling on Twitter") |
