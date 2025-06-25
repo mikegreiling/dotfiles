@@ -1,11 +1,22 @@
 # Load our common env exports
 source ~/.config/exports;
 
+# --- Determine if we should load the full custom prompt ---
+# This is set to false for non-interactive shells like the one used by the
+# Cursor AI agent to prevent prompt decorations from interfering with command
+# completion tracking. We use a variable to avoid reordering the whole file.
+_zsh_load_custom_prompt=true
+if [[ "$TERM_PROGRAM" == "vscode" && "$PAGER" == 'head -n 10000 | cat' ]]; then
+  _zsh_load_custom_prompt=false
+fi
+
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+if [[ "$_zsh_load_custom_prompt" == true ]]; then
+  if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+    source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+  fi
 fi
 
 # ZSH options
@@ -77,10 +88,12 @@ if type brew &>/dev/null; then
   fi
 
   # Load powerlevel10k prompt
-  if [[ -r "$HOMEBREW_PREFIX/share/powerlevel10k/powerlevel10k.zsh-theme" ]]; then
-    source $HOMEBREW_PREFIX/share/powerlevel10k/powerlevel10k.zsh-theme
+  if [[ "$_zsh_load_custom_prompt" == true ]]; then
+    if [[ -r "$HOMEBREW_PREFIX/share/powerlevel10k/powerlevel10k.zsh-theme" ]]; then
+      source $HOMEBREW_PREFIX/share/powerlevel10k/powerlevel10k.zsh-theme
 
-    [[ ! -f ~/.config/zsh/p10k.zsh ]] || source ~/.config/zsh/p10k.zsh
+      [[ ! -f ~/.config/zsh/p10k.zsh ]] || source ~/.config/zsh/p10k.zsh
+    fi
   fi
 fi
 
