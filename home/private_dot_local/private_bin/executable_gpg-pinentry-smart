@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# Smart pinentry script that uses GUI when running in Claude Code,
+# terminal interface otherwise.
+#
+# This script detects the CLAUDECODE environment variable set by Claude Code
+# and switches between pinentry-mac (GUI) and pinentry-curses (terminal).
+
+# Check if running within Claude Code environment
+if [ "$CLAUDECODE" = "1" ]; then
+    # Check if pinentry-mac is available
+    if command -v pinentry-mac >/dev/null 2>&1; then
+        exec pinentry-mac "$@"
+    else
+        echo "Error: pinentry-mac is not installed. Install it with: brew install pinentry-mac" >&2
+        exit 1
+    fi
+else
+    exec /opt/homebrew/bin/pinentry-curses "$@"
+fi
