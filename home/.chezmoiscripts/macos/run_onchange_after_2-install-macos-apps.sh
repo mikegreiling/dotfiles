@@ -16,11 +16,8 @@ while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 HOMEBREW_NO_ENV_HINTS=1 HOMEBREW_AUTO_UPDATE_SECS=3600 \
 brew bundle install \
 	--quiet \
-	--no-lock \
 	--file=/dev/stdin <<BREWS
 tap "homebrew/bundle"
-tap "homebrew/cask-fonts"
-tap "homebrew/cask-versions"
 
 # Install some fonts
 cask "font-atkinson-hyperlegible"
@@ -50,6 +47,9 @@ cask "vlc"
 cask "visual-studio-code"
 cask "xbar"
 cask "zoom"
+
+# Install some command-line tools that interface with macOS
+brew "pinentry-mac"
 
 # Pin CleanShot X to v4.5.1 as that is the latest version my license supports
 cask "https://raw.githubusercontent.com/Homebrew/homebrew-cask/cfa5ab5a9291d080b8c82fd06d28f27b665bf136/Casks/cleanshot.rb"
