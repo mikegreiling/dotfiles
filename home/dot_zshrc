@@ -151,3 +151,8 @@ zstyle ':completion:*:*:-subscript-:*' tag-order indexes parameters
 zstyle ':completion:*:functions' ignored-patterns "_*"
 
 zstyle -e ':completion:*:(ssh|scp|sftp|rsh|rsync):hosts' hosts 'reply=(${=${${(f)"$(cat {/etc/ssh_,~/.ssh/known_}hosts(|2)(N) /dev/null)"}%%[# ]*}//,/ })'
+
+# Load claude (if installed)
+if [[ -f "$HOME/.claude/local/claude" ]]; then
+  alias claude="~/.claude/local/claude"
+fi
