@@ -43,6 +43,8 @@ personal access token to gain broader permissions. If a gitlab tool call
 responds with a 403 or 401 error response, prompt the user to configure a
 personal access token.
 
+If you do not know the user's username, ask for it. Do not guess.
+
 ### GitLab Merge Request (MR) Guidelines
 
 #### Merge Request Titles

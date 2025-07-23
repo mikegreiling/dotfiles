@@ -53,6 +53,10 @@ Example: `mg-SPR-4400-add-risky-accounts-table`
 
 If any of this is ambiguous, ask me for clarification.
 
+### B-Stock GitLab Account
+
+My B-Stock GitLab username is `mike.greiling` (ID: 421)
+
 ### B-Stock Atlassian Account
 
 We use Jira issues to track work across B-Stock engineering teams. These issues
