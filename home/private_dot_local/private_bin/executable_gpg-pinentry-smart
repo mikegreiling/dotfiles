@@ -3,11 +3,43 @@
 # Smart pinentry script that uses GUI when running in Claude Code,
 # terminal interface otherwise.
 #
-# This script detects the CLAUDECODE environment variable set by Claude Code
-# and switches between pinentry-mac (GUI) and pinentry-curses (terminal).
+# This script detects the Claude Code environment through multiple methods:
+# 1. CLAUDECODE environment variable set by Claude Code
+# 2. PINENTRY_USER_DATA environment variable (can be set by Claude Code)
+# 3. TTY-based detection to find processes using the current TTY
+
+# Function to check if running in Claude Code environment
+is_claude_code() {
+    # Method 1: Check CLAUDECODE environment variable (most reliable)
+    if [ "$CLAUDECODE" = "1" ]; then
+        return 0
+    fi
+
+    # Method 2: Check PINENTRY_USER_DATA for Claude Code marker
+    if [ "$PINENTRY_USER_DATA" = "claude-code" ]; then
+        return 0
+    fi
+
+    # Method 3: Check processes using the current TTY for Claude Code
+    if [ -n "$GPG_TTY" ]; then
+        # Find processes using the same TTY as the GPG operation
+        local tty_processes=$(ps -t $(basename "$GPG_TTY") -o pid,comm,args 2>/dev/null)
+
+        # Check if any process on this TTY is Claude Code
+        if echo "$tty_processes" | grep -q -i claude; then
+            return 0
+        fi
+
+        # Additional check: look for specific Claude Code patterns in command args
+        if echo "$tty_processes" | grep -q "claude.*code\|code.*claude"; then
+            return 0
+        fi
+    fi
+    return 1
+}
 
 # Check if running within Claude Code environment
-if [ "$CLAUDECODE" = "1" ]; then
+if is_claude_code; then
     # Check if pinentry-mac is available
     if command -v pinentry-mac >/dev/null 2>&1; then
         exec pinentry-mac "$@"
