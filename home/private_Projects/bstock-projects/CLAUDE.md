@@ -1,0 +1,201 @@
+---
+atlassian:
+  cloud_id: "8fd1c100-2018-43ac-bdc1-ca69369799c3"
+  instance_url: "https://bstock.atlassian.net"
+---
+
+# B-Stock Projects Memory
+
+This file contains B-Stock specific configuration and cached values for all
+projects within the bstock-projects directory.
+
+
+## Git source control workflows
+
+When creating a new branch:
+- First, fetch the latest changes from `origin/main` if we have not done so
+  recently and base the new branch on this unless prompted to do otherwise
+- Incorporate the Jira ticket ID for this work (if known) into the branch name
+  along with a short, succinct, kebab-case descriptor of the changes.
+  - If the Jira ticket for current work is not known or uncertain, ask.
+  - If a Jira ticket does not yet exist, ask whether we should create one.
+- The full branch name should not exceed 42 characters.
+
+When pushing a branch:
+- Unless pormpted otherwise, use the `--no-verify` flag to bypass automated
+  linting. Linting should have already been done by Claude. If it has not, do
+  this manually when appropriate.
+
+After pushing the branch:
+- A GitLab merge request should be created for the branch in the appropriate
+  project if there is not already one in place. The response from the server
+  following the `git push` should indicate whether a MR already exists.
+
+## GitLab workflows
+
+### GitLab MCP tools
+
+Claude has access to "gitlab" MCP tools to perform actions on B-Stock's self-
+hosted GitLab server. The MCP server is configured in each B-Stock project's
+root `.mcp.json` file with a default token that has read-only access. Users
+SHOULD provide their own `BSTOCK_GITLAB_TOKEN` environment variable with a
+personal access token to gain broader permissions. If a gitlab tool call
+responds with a 403 or 401 error response, prompt the user to configure a
+personal access token.
+
+### GitLab Merge Request (MR) Guidelines
+
+#### Merge Request Titles
+
+Merge Requests on B-Stock projects SHOULD ALWAYS start with a semantic version
+prefix in its title:
+- `MAJOR:` - Breaking changes that require major version bump
+- `MINOR:` - New features or functionality (non-breaking)  
+- `PATCH:` - Bug fixes or minor improvements
+- `NO-RELEASE:` - Changes that don't require a release (docs, tests, etc.)
+
+Following this prefix, MR titles should contain the Jira ticket ID (or IDs)
+associated with the work in this branch. If no Jira ticket is associated with
+this work, ask for clarification or offer to create a Jira ticket first.
+
+Following this, the title should contain a brief, succinct description of the
+work done in this branch. The full title of the MR SHOULD NOT EXCEED 128
+characters.
+
+**Example MR Title:**
+```
+MINOR: JIRA-123 Brief description of changes
+```
+
+If Claude encounters a MR title for which the semantic version prefix is wrong,
+the Jira ticket is wrong or incomplete, or the description is outdated, it
+should suggest an update.
+
+#### Merge Request Assignee
+
+Merge Requests SHOULD ALWAYS HAVE an assignee. If the MR does not have an
+assignee, it should be set to the creator of the MR unless otherwise specified.
+
+#### Merge Request Body
+
+The Merge Request body should use the default Merge Request template as a base.
+Fill out the appropaite body section with a description of the changes to be
+reviewed. Keep in mind, the audience for this text is other engineers who will
+be reviewing the code in this branch.
+
+### Changelog Requirements
+
+MOST B-Stock projects contain a `CHANGELOG.md` file in their root directory
+
+- `MAJOR` and `MINOR` changes MUST include entries within `CHANGELOG.md`
+- `PATCH` and `NO-RELEASE` changes CAN OPTIONALLY include changelog updates
+- The `{VERSION_DATE}` token will be replaced with the current version and date
+  via an automated CI job after a branch has been merged
+
+##### CHANGELOG.md Entry Format:
+```markdown
+## {VERSION_DATE}
+### [Breaking|Nonbreaking]
+- [TICKET-ID](https://bstock.atlassian.net/browse/TICKET-ID) Brief description of changes
+  - Detailed bullet point 1
+  - Detailed bullet point 2 (if needed)
+```
+
+If a MR is created for a branch with `MAJOR` or `MINOR` in its title and there
+is not a corresponding `CHANGELOG.md` entry, a CI job will fail.
+
+
+## Atlassian worlflows
+
+### Atlassian MCP tools
+
+Claude should have access to atlassian tools to interact with Jira tickets and
+Confluence pages. If these are unavailable to Claude, the user likely needs to
+authenticate with atlassian using the `/mcp` slash command.
+
+Common Metadata Fields:
+- **Story Points**: `customfield_10049`
+- **Sprint**: `customfield_10018`
+- **Epic Link**: `customfield_10013`
+
+Common API limitations:
+- **Story Points**: Cannot be updated programatically via standard edit API
+- **Issue Links**: Cannot create ticket relationships programmatically
+  - e.g. "blocks/is blocked by"
+
+When a task cannot be accomplished due to API limitations:
+- Provide manual instructions with specific steps  
+- Include resource URLs to relevant interfaces
+- Offer to open URLs using the `open` command if on macOS
+- Document the limitation within `CLAUDE.md` for future reference
+
+### Atlassian Jira Workflows
+
+Jira is a ticketing system used to track work across B-Stock engineering teams.
+Jira tickets are formatted with 2-4 letters matching the project, a dash, and a
+3-4 digit number. (**Example**: `SPR-2048`).
+
+#### Common Jira Projects
+- **SPR** (Team Sprinters)
+- **MULA** (Team MULA) 
+- **TBD** (Team TBD)
+- **ZRO** (Team ZERO)
+- **WRH** (Team WRH)
+- **GLOB** (3MP Global)
+- **BUGS** (Bug Triage Project)
+
+#### Jira Ticket Status Workflow
+
+Tickets must go through a specific set of status "transitions" to ultimately get
+to their "completed" (Done) state. What follows is the normal sequence of status
+values and transitions for tickets in the following projects: `SPR`, `MULA`,
+`TBD`, `ZRO`, `WRH`, `GLOB`. Other projects (like `BUGS`) follow completely
+different statuses and transition patterns.
+
+##### Complete Workflow Sequence (To Do → Done)
+The standard path to mark a ticket as "Done":
+
+1. **To Do** → **In Progress** (transition: "Start Work", id: 11)
+   - Begin working on the ticket
+
+2. **In Progress** → **Technical Review** (transition: "Merge Request", id: 21)
+   - When ticket's work (GitLab merge requests) is ready for code review
+
+3. **Technical Review** → **Merged** (transition: "Merge", id: 31)
+   - When ALL associated merge requests have been merged or closed
+
+4. **Merged** → **Quality Review** (transition: "Ready for QA", id: 41)
+   - Ticket awaits QA engineer feedback
+
+5. **Quality Review** → **Done** (transition: "QA BYPASS", id: 211)
+   - Use QA BYPASS when bypassing QA process (requires "nontestable" label)
+
+##### QA Workflow Decision Logic
+When transitioning to **Quality Review**:
+
+- **If "nontestable" label exists**: Use "QA BYPASS" to go directly to Done
+- **If no "nontestable" label**: Check for "Acceptance Criteria" section in description
+  - **Missing Acceptance Criteria**: Prompt to add QA testing instructions to ticket description
+  - **Has Acceptance Criteria**: Leave in Quality Review for QA engineer to use "QA PASS"
+
+##### Important QA Workflow Rules
+- **QA PASS** (id: 51): Only QA engineers can use this transition - developers should NOT use this
+- **QA BYPASS** (id: 211): Should only be used when bypassing normal QA process
+  - ALWAYS prompt for confirmation before using QA BYPASS
+  - ALWAYS ask to apply "nontestable" label when using QA BYPASS
+  - Only use for tickets that don't require QA testing
+  - Can be used immediately if "nontestable" label already exists
+
+##### Alternative Transitions Available
+- **MR Fail**: Goes back to In Progress from Technical Review or Merged
+- **Rework**: Goes back to In Progress from Done or Quality Review  
+- **QA Block**: Goes to Blocked status from Quality Review
+- **Stop Work**: Goes to To Do from In Progress
+- **Work Block**: Goes to Blocked from In Progress or To Do
+
+##### Reverting from Done
+If a ticket needs to be reopened from Done status:
+- **Rework** (id: 181): Back to In Progress
+- **Reopen** (id: 81): To Reopened status
+- **QA** (id: 231): Back to Quality Review
+

@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "gitlab": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@zereight/mcp-gitlab"
+      ],
+      "env": {
+        "GITLAB_PERSONAL_ACCESS_TOKEN": "${BSTOCK_GITLAB_TOKEN:-gN2z4zdSo7BGw8ayAkgR}",
+        "GITLAB_API_URL": "https://gitlab.bstock.io/api/v4/",
+        "USE_PIPELINE": "${USE_PIPELINE:-true}"
+      }
+    },
+    "atlassian": {
+      "type": "sse",
+      "url": "https://mcp.atlassian.com/v1/sse"
+    }
+  }
+}
