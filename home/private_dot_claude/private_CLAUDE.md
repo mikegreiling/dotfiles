@@ -26,6 +26,17 @@ to apply changes. Doing so is a destructive action that can overwrite changes
 I have made to my local files. Utilize `chezmoi status` first and inform me
 about potential blockers.
 
+## Bash/terminal command quirks
+
+Claude Code will block Claude from executing `cd` to directories that I have not
+already added as an approved "working directory". If this happens Claude will
+receive an error like: `Error: cd to '/path/to/directory' was blocked.`
+
+When this happens, we can add this directory into the whitelist by utilizing the
+`List(/path/to/directory)` tool which will prompt me to add the directory as a
+working directory for the session and then attempt to execute the `Bash` command
+again.
+
 ## Git workflow
 
 Default git branches are usually `main` or `master`. Do NOT ever commit changes
