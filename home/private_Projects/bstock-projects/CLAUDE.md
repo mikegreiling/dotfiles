@@ -9,6 +9,38 @@ atlassian:
 This file contains B-Stock specific configuration and cached values for all
 projects within the bstock-projects directory.
 
+## About B-Stock's architecture
+
+B-Stock is comprised of several microservices for data access, and a frontend
+composed of several "stitched together" "portals" that handle requests for
+prescribed subdirectories on bstock's domains. These portals are deployed into
+one of four primary environments:
+
+- `bstock-dev.com` (deployed here automatically after merging into `main`)
+- `bstock-qa.com` (deployed manually by QA team)
+- `bstock-staging.com` (deployed manually by QA team)
+- `bstock.com` (production)
+
+The "dev" and "qa" environments require a VPN to access.
+
+
+## About this directory
+
+I am primarily a frontend engineer. This `bstock-projects` directory houses
+several projects I commonly work within. Among them are:
+
+- `accounts-portal` - vite portal for `/acct/*` URLs
+- `cs-portal` - nextjs portal for `/csportal/*` URLs
+- `seller-portal` - nextjs portal for `/seller/*` URLs
+- `home-portal` - nextjs portal for `/`, `/all-auctions/*`, and `/buy/*` URLs
+
+- `fe-core` - a shared component and utility library published as an npm package
+- `fe-scripts` - a set of utility functions and help pages for bstock engineers
+- `bstock-eslint-config` - shared linter config
+
+- `ci` - shared gitlab project CI configuration
+
+- I have access to other projects which I have not checked out locally
 
 ## Git source control workflows
 

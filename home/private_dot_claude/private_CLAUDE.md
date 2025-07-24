@@ -20,6 +20,12 @@ macOS applications managed by `brew`, `Claude` slash commands, mcp config, or
 memory files SHOULD ALWAYS BE committed into this dotfiles repository. Prompt me
 to do so whenever necessary.
 
+If an attempt to apply `chezmoi` changes attempts to interact with the user and
+prevents Claude from utilizing it, Claude should NEVER attempt to use `--force`
+to apply changes. Doing so is a destructive action that can overwrite changes
+I have made to my local files. Utilize `chezmoi status` first and inform me
+about potential blockers.
+
 ## Git workflow
 
 Default git branches are usually `main` or `master`. Do NOT ever commit changes
