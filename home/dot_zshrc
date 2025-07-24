@@ -2,11 +2,11 @@
 source ~/.config/exports;
 
 # --- Determine if we should load the full custom prompt ---
-# This is set to false for non-interactive shells like the one used by the
-# Cursor AI agent to prevent prompt decorations from interfering with command
-# completion tracking. We use a variable to avoid reordering the whole file.
+# This is set to false for non-interactive shells like the one used by LLM
+# agents (Claude, Cursor, etc.) to prevent prompt decorations from interfering
+# with command completion tracking. We use a variable to avoid reordering the whole file.
 _zsh_load_custom_prompt=true
-if [[ "$TERM_PROGRAM" == "vscode" && "$PAGER" == 'head -n 10000 | cat' ]]; then
+if _is_llm_agent; then
   _zsh_load_custom_prompt=false
 fi
 
@@ -113,9 +113,12 @@ bindkey ${PER_DIRECTORY_HISTORY_TOGGLE:-'^G'} toggle-per-directory-history
 # Ensure our git alias has the same autocompletion
 [[ "${+functions[compdef]}" -ne 0 ]] && compdef g=git
 
-# Replace cd command with zoxide and apply fix to autocomplete
+# Replace cd command with zoxide for smart directory jumping
+# Disabled for LLM agents as zoxide's __zoxide_z function causes "command not found" errors
 ## TODO: consider rewriting __zoxide_z_complete to fix autocomplete behavior
-[[ -x "$(command -v zoxide)" ]] && eval "$(zoxide init --cmd cd zsh)"
+if ! _is_llm_agent && [[ -x "$(command -v zoxide)" ]]; then
+  eval "$(zoxide init --cmd cd zsh)"
+fi
 
 # Load asdf shims
 [ -s "/opt/homebrew/opt/asdf/libexec/asdf.sh" ] && \. "/opt/homebrew/opt/asdf/libexec/asdf.sh"

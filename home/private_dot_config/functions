@@ -206,3 +206,9 @@ function o() {
 function tre() {
 	tree -aC -I '.git|node_modules|bower_components' --dirsfirst "$@" | less -FRNX;
 }
+
+# Detect if the current shell session is being used by an LLM agent
+# This helps disable interactive features that may interfere with automated tools
+function _is_llm_agent() {
+	[[ "$CLAUDECODE" == "1" || ("$TERM_PROGRAM" == "vscode" && "$PAGER" == 'head -n 10000 | cat') || "$_IS_LLM_AGENT" == "1" ]]
+}
