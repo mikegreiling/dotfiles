@@ -4,3 +4,4 @@ Library
 {{ end }}
 
 key.txt.age
+.config/private_exports
