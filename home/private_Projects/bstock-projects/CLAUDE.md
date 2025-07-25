@@ -11,18 +11,13 @@ projects within the bstock-projects directory.
 
 ## About B-Stock's architecture
 
-B-Stock is comprised of several microservices for data access, and a frontend
-composed of several "stitched together" "portals" that handle requests for
-prescribed subdirectories on bstock's domains. These portals are deployed into
-one of four primary environments:
+B-Stock uses microservices + frontend portals deployed to four environments:
 
-- `bstock-dev.com` (deployed here automatically after merging into `main`)
-- `bstock-qa.com` (deployed manually by QA team)
-- `bstock-staging.com` (deployed manually by QA team)
+- `bstock-dev.com` (auto-deployed after merging to `main`)
+- `bstock-qa.com`, `bstock-staging.com` (manual deployment)
 - `bstock.com` (production)
 
-The "dev" and "qa" environments require a VPN to access.
-
+Dev/QA environments require VPN access.
 
 ## About this directory
 
@@ -42,9 +37,28 @@ several projects I commonly work within. Among them are:
 
 - I have access to other projects which I have not checked out locally
 
+## Managing Project Context
+
+All projects within this directory should have their own `CLAUDE.md` memory file
+containing important context for that project.
+
+Before executing ANY Bash commands or MCP tools relating to these projects,
+Claude MUST FIRST LOAD THE CLAUDE.md FILE FOR THAT PROJECT INTO ITS MEMORY:
+
+1. Check if the CLAUDE.md for that project exists within Claude's system context
+2. If not, read it explicitly using `Read(./project-name/CLAUDE.md)` to load
+   the project-specific context into the context window.
+3. Then proceed with the requested operation.
+
+**Example:**
+If I prompt you to create a new branch in `fe-core`, and you do not already have
+knowledge of the contents of `fe-core/CLAUDE.md`, you MUST read that file PRIOR
+TO executing something like `Bash(cd fe-core && git checkout -b new-branch)`.
+
 ## Git source control workflows
 
 When creating a new branch:
+
 - First, fetch the latest changes from `origin/main` if we have not done so
   recently and base the new branch on this unless prompted to do otherwise
 - Incorporate the Jira ticket ID for this work (if known) into the branch name
@@ -54,11 +68,13 @@ When creating a new branch:
 - The full branch name should not exceed 42 characters.
 
 When pushing a branch:
+
 - Unless pormpted otherwise, use the `--no-verify` flag to bypass automated
   linting. Linting should have already been done by Claude. If it has not, do
   this manually when appropriate.
 
 After pushing the branch:
+
 - A GitLab merge request should be created for the branch in the appropriate
   project if there is not already one in place. The response from the server
   following the `git push` should indicate whether a MR already exists.
@@ -83,8 +99,9 @@ If you do not know the user's username, ask for it. Do not guess.
 
 Merge Requests on B-Stock projects SHOULD ALWAYS start with a semantic version
 prefix in its title:
+
 - `MAJOR:` - Breaking changes that require major version bump
-- `MINOR:` - New features or functionality (non-breaking)  
+- `MINOR:` - New features or functionality (non-breaking)
 - `PATCH:` - Bug fixes or minor improvements
 - `NO-RELEASE:` - Changes that don't require a release (docs, tests, etc.)
 
@@ -97,6 +114,7 @@ work done in this branch. The full title of the MR SHOULD NOT EXCEED 128
 characters.
 
 **Example MR Title:**
+
 ```
 MINOR: JIRA-123 Brief description of changes
 ```
@@ -127,9 +145,12 @@ MOST B-Stock projects contain a `CHANGELOG.md` file in their root directory
   via an automated CI job after a branch has been merged
 
 ##### CHANGELOG.md Entry Format:
+
 ```markdown
 ## {VERSION_DATE}
+
 ### [Breaking|Nonbreaking]
+
 - [TICKET-ID](https://bstock.atlassian.net/browse/TICKET-ID) Brief description of changes
   - Detailed bullet point 1
   - Detailed bullet point 2 (if needed)
@@ -137,7 +158,6 @@ MOST B-Stock projects contain a `CHANGELOG.md` file in their root directory
 
 If a MR is created for a branch with `MAJOR` or `MINOR` in its title and there
 is not a corresponding `CHANGELOG.md` entry, a CI job will fail.
-
 
 ## Atlassian worlflows
 
@@ -148,17 +168,20 @@ Confluence pages. If these are unavailable to Claude, the user likely needs to
 authenticate with atlassian using the `/mcp` slash command.
 
 Common Metadata Fields:
+
 - **Story Points**: `customfield_10049`
 - **Sprint**: `customfield_10018`
 - **Epic Link**: `customfield_10013`
 
 Common API limitations:
+
 - **Story Points**: Cannot be updated programatically via standard edit API
 - **Issue Links**: Cannot create ticket relationships programmatically
   - e.g. "blocks/is blocked by"
 
 When a task cannot be accomplished due to API limitations:
-- Provide manual instructions with specific steps  
+
+- Provide manual instructions with specific steps
 - Include resource URLs to relevant interfaces
 - Offer to open URLs using the `open` command if on macOS
 - Document the limitation within `CLAUDE.md` for future reference
@@ -170,8 +193,9 @@ Jira tickets are formatted with 2-4 letters matching the project, a dash, and a
 3-4 digit number. (**Example**: `SPR-2048`).
 
 #### Common Jira Projects
+
 - **SPR** (Team Sprinters)
-- **MULA** (Team MULA) 
+- **MULA** (Team MULA)
 - **TBD** (Team TBD)
 - **ZRO** (Team ZERO)
 - **WRH** (Team WRH)
@@ -187,6 +211,7 @@ values and transitions for tickets in the following projects: `SPR`, `MULA`,
 different statuses and transition patterns.
 
 ##### Complete Workflow Sequence (To Do → Done)
+
 The standard path to mark a ticket as "Done":
 
 1. **To Do** → **In Progress** (transition: "Start Work", id: 11)
@@ -205,6 +230,7 @@ The standard path to mark a ticket as "Done":
    - Use QA BYPASS when bypassing QA process (requires "nontestable" label)
 
 ##### QA Workflow Decision Logic
+
 When transitioning to **Quality Review**:
 
 - **If "nontestable" label exists**: Use "QA BYPASS" to go directly to Done
@@ -213,6 +239,7 @@ When transitioning to **Quality Review**:
   - **Has Acceptance Criteria**: Leave in Quality Review for QA engineer to use "QA PASS"
 
 ##### Important QA Workflow Rules
+
 - **QA PASS** (id: 51): Only QA engineers can use this transition - developers should NOT use this
 - **QA BYPASS** (id: 211): Should only be used when bypassing normal QA process
   - ALWAYS prompt for confirmation before using QA BYPASS
@@ -221,15 +248,17 @@ When transitioning to **Quality Review**:
   - Can be used immediately if "nontestable" label already exists
 
 ##### Alternative Transitions Available
+
 - **MR Fail**: Goes back to In Progress from Technical Review or Merged
-- **Rework**: Goes back to In Progress from Done or Quality Review  
+- **Rework**: Goes back to In Progress from Done or Quality Review
 - **QA Block**: Goes to Blocked status from Quality Review
 - **Stop Work**: Goes to To Do from In Progress
 - **Work Block**: Goes to Blocked from In Progress or To Do
 
 ##### Reverting from Done
+
 If a ticket needs to be reopened from Done status:
+
 - **Rework** (id: 181): Back to In Progress
 - **Reopen** (id: 81): To Reopened status
 - **QA** (id: 231): Back to Quality Review
-

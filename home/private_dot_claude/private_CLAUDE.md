@@ -87,6 +87,7 @@ For B-Stock projects, my Atlassian (Jira/Confluence) User Account ID is:
 `712020:102e13ca-76c4-4a0c-89e1-c9fc45369c5d`
 
 This ID should be used when:
+
 - Assigning tickets to me in Jira
 - Filtering tickets by assignee
 - Creating tickets with me as the creator
@@ -129,72 +130,31 @@ and is completely distinct from the "done" status.
 
 ## GPG Signing Configuration
 
-Mike's system uses a smart pinentry script that switches between GUI and terminal interfaces:
-
-- **Claude Code environment**: Uses `pinentry-mac` for GUI password prompts
-- **Regular terminal**: Uses `pinentry-curses` for terminal prompts
-
-### Common GPG Signing Errors
-
-If you encounter this error when committing:
-```
-error: gpg failed to sign the data:
-gpg: signing failed: No pinentry
-fatal: failed to write commit object
-```
-
-This means `pinentry-mac` is not installed. Install it with:
-```bash
-brew install pinentry-mac
-```
-
-The smart pinentry script is located at `~/.local/bin/gpg-pinentry-smart` and is
-managed via chezmoi dotfiles.
+If commit fails with `gpg: signing failed: No pinentry`, install: `brew install pinentry-mac`
 
 ### Browser URL Opening
+
 Claude can open URLs in the user's default browser using the macOS `open` command:
-- Use: `open "https://example.com"` 
+
+- Use: `open "https://example.com"`
 - Always offer to open relevant URLs when providing manual workaround instructions
 - This works for Jira tickets, GitLab merge requests, documentation, etc.
 
 ## Self-Improvement and API Learning
 
-### MCP Tool API Discovery
-When using MCP tools (GitLab, Atlassian/Jira/Confluence, etc.), Claude should:
-
-1. **Document API Quirks**: When encountering API limitations, unexpected behaviors, or special field restrictions, suggest updating the appropriate CLAUDE.md file with the discovery
-2. **Cache Metadata**: Suggest storing frequently-used but stable values (project IDs, field IDs, cloud IDs, etc.) in the appropriate context file
-3. **Record Workarounds**: Document successful workarounds for API limitations
-4. **Suggest Context Updates**: Proactively suggest when discoveries would benefit future sessions
+When using MCP tools (GitLab, Atlassian/Jira/Confluence, etc.), Claude SHOULD
+ALWAYS document API quirks, cache stable values, and record workarounds in
+appropriate CLAUDE.md files. Claude MUST suggest storing frequently-used stable
+values (project IDs, field IDs, cloud IDs) in context files to optimize future
+workflows.
 
 ### Context File Organization
-- **User-space** (`~/.claude/CLAUDE.md`): General behavior directives, personal team info, and cross-project patterns
-- **Organization-space** (`~/Projects/bstock-projects/CLAUDE.md`): Company-specific metadata, APIs, and patterns
-- **Project-space** (`project/CLAUDE.md`): Project-specific configurations and technical metadata only
 
-### Frontmatter Standards
-Use YAML frontmatter for structured metadata. Examples:
+- **User-space** (`~/.claude/CLAUDE.md`): Personal behavior, team info
+- **Organization-space** (`~/Projects/bstock-projects/CLAUDE.md`): Company metadata, APIs
+- **Project-space** (`project/CLAUDE.md`): Project-specific technical metadata
 
-**Project-level** (checked into source control):
-```yaml
----
-gitlab:
-  project_id: "544"
-  namespace: "b-stock/code/three-mp/fe/fe-scripts"
----
-```
+Use YAML frontmatter for structured metadata (project_id, cloud_id, etc.).
 
-**Organization-level** (B-Stock specific):
-```yaml
----
-atlassian:
-  cloud_id: "8fd1c100-2018-43ac-bdc1-ca69369799c3"
-  instance_url: "https://bstock.atlassian.net"
----
-```
-
-DO NOT GUESS PROJECT ID VALUES. The example above, gitlab `project_id: "544"` is
-for the `fe-scripts` project ONLY. If the context you have been provided with
-does not contain the `project_id` for the working project, notify me, introspect
-the project ID using the GitLab MCP tools, and suggest adding this to the
-context documents.
+DO NOT GUESS PROJECT ID VALUES. If context lacks a needed project_id, introspect
+using MCP tools and suggest adding to context documents.
