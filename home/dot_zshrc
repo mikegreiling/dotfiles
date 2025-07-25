@@ -1,6 +1,11 @@
 # Load our common env exports
 source ~/.config/exports;
 
+# Detect if the current shell session is being used by an LLM agent
+function _is_llm_agent() {
+	[[ "$CLAUDECODE" == "1" || ("$TERM_PROGRAM" == "vscode" && "$PAGER" == 'head -n 10000 | cat') || "$_IS_LLM_AGENT" == "1" ]]
+}
+
 # --- Determine if we should load the full custom prompt ---
 # This is set to false for non-interactive shells like the one used by LLM
 # agents (Claude, Cursor, etc.) to prevent prompt decorations from interfering
