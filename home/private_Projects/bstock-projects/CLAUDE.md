@@ -37,6 +37,11 @@ several projects I commonly work within. Among them are:
 
 - I have access to other projects which I have not checked out locally
 
+Whenever I refer to "my projects", I am usually referring to the four portals,
+plus `fe-core`. So if I say, do X or Y in all of my projects, I mean to say that
+I'd like Claude to perform that action within the aforementioned projects'
+sub-directories.
+
 ## Managing Project Context
 
 All projects within this directory should have their own `CLAUDE.md` memory file
@@ -54,6 +59,21 @@ Claude MUST FIRST LOAD THE CLAUDE.md FILE FOR THAT PROJECT INTO ITS MEMORY:
 If I prompt you to create a new branch in `fe-core`, and you do not already have
 knowledge of the contents of `fe-core/CLAUDE.md`, you MUST read that file PRIOR
 TO executing something like `Bash(cd fe-core && git checkout -b new-branch)`.
+
+## Working in Project Directories
+
+When working within a project directories, always prefer to `cd` into the
+directory _rather than_ operating on files in that project from another location
+
+The Claude permissions whitelist does not understand these command arguments and
+will ask me to approve all of your commands.
+
+**For Example:**
+Do not:  
+`git -C /path/to/project/directory status`
+
+Instead do this:  
+`cd /path/to/project/directory && git status`
 
 ## Git source control workflows
 
