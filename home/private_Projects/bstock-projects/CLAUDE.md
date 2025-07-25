@@ -127,7 +127,10 @@ If you do not know the user's username, ask for it. Do not guess.
 
 #### GitLab MCP Tool Limitations
 
-**Coverage Parsing Issue**: The GitLab MCP tools (`get_pipeline`, `retry_pipeline`) have a parsing bug where they expect pipeline coverage to be a number, but some GitLab pipelines return coverage as a string (like "85.5%" or "N/A"). This causes these tools to fail with the error:
+**Coverage Parsing Issue**: The GitLab MCP tools (`get_pipeline`,
+`retry_pipeline`) have a parsing bug where they expect pipeline coverage to be a
+number, but some GitLab pipelines return coverage as a string (like "85.5%" or
+"N/A"). This causes these tools to fail with the error:
 
 ```
 MCP error -32603: Invalid arguments: coverage: Expected number, received string
@@ -136,9 +139,12 @@ MCP error -32603: Invalid arguments: coverage: Expected number, received string
 **Workarounds**:
 
 - Use `list_pipelines` to check pipeline status instead of `get_pipeline`
-- The `retry_pipeline` tool actually WORKS despite the error message - the pipeline retry action succeeds, but the response parsing fails. Use the tool and ignore the coverage-related error message.
+- The `retry_pipeline` tool actually WORKS despite the error message - the
+  pipeline retry action succeeds, but the response parsing fails. Use the tool
+  and ignore the coverage-related error message.
 - Manual pipeline retry through GitLab UI is an alternative if you prefer
-- For projects with coverage reporting enabled, expect parsing errors but the actions still work
+- For projects with coverage reporting enabled, expect parsing errors but the
+  actions still work
 
 ### GitLab Merge Request (MR) Guidelines
 
@@ -172,7 +178,8 @@ should suggest an update.
 
 #### Merge Request Assignee
 
-When creating MRs, **ALWAYS ADD** the creator of the MR as an assignee unless otherwise specified.
+When creating MRs, **ALWAYS ADD** the creator of the MR as an assignee unless
+otherwise specified.
 
 #### Merge Request Body
 
@@ -196,7 +203,6 @@ MOST B-Stock projects contain a `CHANGELOG.md` file in their root directory
 ## {VERSION_DATE}
 
 ### [Breaking|Nonbreaking]
-
 - [TICKET-ID](https://bstock.atlassian.net/browse/TICKET-ID) Brief description of changes
   - Detailed bullet point 1
   - Detailed bullet point 2 (if needed)
@@ -310,7 +316,9 @@ If a ticket needs to be reopened from Done status:
 
 ##### Closing Tickets (Distinct from "Done")
 
-When a ticket needs to be **Closed** (not "Done"), this indicates the work will not be completed or is no longer relevant. The "Closed" status is distinct from "Done" and has a different workflow path:
+When a ticket needs to be **Closed** (not "Done"), this indicates the work will
+not be completed or is no longer relevant. The "Closed" status is distinct from
+"Done" and has a different workflow path:
 
 **Path to Close a Ticket:**
 
@@ -326,5 +334,6 @@ When a ticket needs to be **Closed** (not "Done"), this indicates the work will 
 
 - **"Done"** = Work completed successfully and delivered
 - **"Closed"** = Work not completed or no longer needed
-- Always use "Close" when explicitly requested instead of following the normal Done workflow
+- Always use "Close" when explicitly requested instead of following the normal
+  Done workflow
 - The Close transition is only available from "To Do" status
