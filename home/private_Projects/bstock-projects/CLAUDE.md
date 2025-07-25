@@ -134,6 +134,7 @@ MCP error -32603: Invalid arguments: coverage: Expected number, received string
 ```
 
 **Workarounds**:
+
 - Use `list_pipelines` to check pipeline status instead of `get_pipeline`
 - The `retry_pipeline` tool actually WORKS despite the error message - the pipeline retry action succeeds, but the response parsing fails. Use the tool and ignore the coverage-related error message.
 - Manual pipeline retry through GitLab UI is an alternative if you prefer
@@ -221,7 +222,6 @@ Common Metadata Fields:
 
 Common API limitations:
 
-- **Story Points**: Cannot be updated programatically via standard edit API
 - **Issue Links**: Cannot create ticket relationships programmatically
   - e.g. "blocks/is blocked by"
 
@@ -324,6 +324,7 @@ When a ticket needs to be **Closed** (not "Done"), this indicates the work will 
    - Common resolutions include "Won't Do", "Duplicate", "Cannot Reproduce", etc.
 
 **Important Distinctions:**
+
 - **"Done"** = Work completed successfully and delivered
 - **"Closed"** = Work not completed or no longer needed
 - Always use "Close" when explicitly requested instead of following the normal Done workflow
