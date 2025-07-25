@@ -33,8 +33,6 @@ several projects I commonly work within. Among them are:
 - `fe-scripts` - a set of utility functions and help pages for bstock engineers
 - `bstock-eslint-config` - shared linter config
 
-- `ci` - shared gitlab project CI configuration
-
 - I have access to other projects which I have not checked out locally
 
 Whenever I refer to "my projects", I am usually referring to the four portals,
@@ -75,6 +73,20 @@ Do not:
 Instead do this:  
 `cd /path/to/project/directory && git status`
 
+## Sub-Agent Tasks in Project Directories
+
+When planning to using the `Task` tool to perform parallel actions in multiple
+projects, and those actions will utilize MCP tools like GitLab or Atlassian,
+please first ensure that those MCP tools are enabled and authenticated. The
+GitLab MCP tool might be configured with a default read-only token if the user
+has not provided a personal `BSTOCK_GITLAB_TOKEN`, so if that environment var is
+not visible to you, it may mean you cannot do things like create merge requests,
+review code, or write notes. If the Atlassian tools are not available to you,
+it might mean the user needs to authenticate using the `/mcp` command first.
+
+Perform these checks PRIOR TO running the `Task` command and prompt the user to
+fix any missing MCP functionality first.
+
 ## Git source control workflows
 
 When creating a new branch:
@@ -112,6 +124,20 @@ responds with a 403 or 401 error response, prompt the user to configure a
 personal access token.
 
 If you do not know the user's username, ask for it. Do not guess.
+
+#### GitLab MCP Tool Limitations
+
+**Coverage Parsing Issue**: The GitLab MCP tools (`get_pipeline`, `retry_pipeline`) have a parsing bug where they expect pipeline coverage to be a number, but some GitLab pipelines return coverage as a string (like "85.5%" or "N/A"). This causes these tools to fail with the error:
+
+```
+MCP error -32603: Invalid arguments: coverage: Expected number, received string
+```
+
+**Workarounds**:
+- Use `list_pipelines` to check pipeline status instead of `get_pipeline`
+- The `retry_pipeline` tool actually WORKS despite the error message - the pipeline retry action succeeds, but the response parsing fails. Use the tool and ignore the coverage-related error message.
+- Manual pipeline retry through GitLab UI is an alternative if you prefer
+- For projects with coverage reporting enabled, expect parsing errors but the actions still work
 
 ### GitLab Merge Request (MR) Guidelines
 
@@ -282,3 +308,23 @@ If a ticket needs to be reopened from Done status:
 - **Rework** (id: 181): Back to In Progress
 - **Reopen** (id: 81): To Reopened status
 - **QA** (id: 231): Back to Quality Review
+
+##### Closing Tickets (Distinct from "Done")
+
+When a ticket needs to be **Closed** (not "Done"), this indicates the work will not be completed or is no longer relevant. The "Closed" status is distinct from "Done" and has a different workflow path:
+
+**Path to Close a Ticket:**
+
+1. **From any status** → **To Do** (use appropriate transition to get back to To Do)
+   - Use "Stop Work" (id: 111) from In Progress
+   - Use "Rework" or other appropriate transitions from other statuses
+
+2. **To Do** → **Closed** (transition: "Close", id: 191)
+   - This marks the ticket as Closed with appropriate resolution
+   - Common resolutions include "Won't Do", "Duplicate", "Cannot Reproduce", etc.
+
+**Important Distinctions:**
+- **"Done"** = Work completed successfully and delivered
+- **"Closed"** = Work not completed or no longer needed
+- Always use "Close" when explicitly requested instead of following the normal Done workflow
+- The Close transition is only available from "To Do" status
