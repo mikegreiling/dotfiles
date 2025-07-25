@@ -172,8 +172,7 @@ should suggest an update.
 
 #### Merge Request Assignee
 
-Merge Requests SHOULD ALWAYS HAVE an assignee. If the MR does not have an
-assignee, it should be set to the creator of the MR unless otherwise specified.
+When creating MRs, **ALWAYS ADD** the creator of the MR as an assignee unless otherwise specified.
 
 #### Merge Request Body
 

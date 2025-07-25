@@ -74,6 +74,11 @@ If any of this is ambiguous, ask me for clarification.
 
 My B-Stock GitLab username is `mike.greiling` (ID: 421)
 
+#### GitLab Workflow Reminders
+
+- When creating merge requests, always assign them to the creator (which will be me when using my token)
+- My GitLab user ID of 421 is only applicable to B-Stock's GitLab instance, not GitLab.com
+
 ### B-Stock Atlassian Account
 
 We use Jira issues to track work across B-Stock engineering teams. These issues
