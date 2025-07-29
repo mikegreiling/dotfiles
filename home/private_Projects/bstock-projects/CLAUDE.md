@@ -73,6 +73,12 @@ Do not:
 Instead do this:  
 `cd /path/to/project/directory && git status`
 
+### Managing Dependencies
+
+**IMPORTANT**: Run `npm ci` when creating new branches or when encountering linter/test failures unrelated to your changes:
+- Dependencies can become out of sync when switching between branches
+- Always run `npm ci` after creating a new branch unless you just did this for the HEAD commit the branch is based on
+
 ## Sub-Agent Tasks in Project Directories
 
 When planning to using the `Task` tool to perform parallel actions in multiple
@@ -146,6 +152,32 @@ MCP error -32603: Invalid arguments: coverage: Expected number, received string
 - For projects with coverage reporting enabled, expect parsing errors but the
   actions still work
 
+**Merge Request Configuration API**: The GitLab MCP tools support configuring MR settings:
+
+- **Delete Source Branch**: Use parameter `remove_source_branch: true`
+  - This sets `force_remove_source_branch: true` in the MR
+  - Checkbox will be checked in GitLab UI: "Delete source branch"
+- **Squash Commits**: Use parameter `squash: true`
+  - This sets `squash: true` in the MR
+  - Checkbox will be checked in GitLab UI: "Squash commits"
+  - **Note**: Not all projects allow users to modify squash settings due to project permissions
+
+**Default MR Creation Settings**: When creating new merge requests with `create_merge_request`, Claude should ALWAYS include these parameters by default unless instructed otherwise:
+
+- `remove_source_branch: true`
+- `squash: true`
+
+This ensures the "Delete source branch" and "Squash commits" checkboxes are pre-checked when the MR is created.
+
+**Merge Request Merging Limitation**: The GitLab MCP tools do NOT support merging merge requests programmatically. The standard GitLab API has a `PUT /projects/:id/merge_requests/:merge_request_iid/merge` endpoint, but the MCP server doesn't implement it.
+
+**Workaround for Merging**:
+
+- Configure MR settings using the methods above
+- Use the macOS `open` command to open the MR URL in the browser: `open "https://gitlab.bstock.io/..."`
+- User must manually click the "Merge" button in the GitLab web interface
+- After manual merge, Claude can handle cleanup (verify merge, pull latest, delete local branches)
+
 ### GitLab Merge Request (MR) Guidelines
 
 #### Merge Request Titles
@@ -203,6 +235,7 @@ MOST B-Stock projects contain a `CHANGELOG.md` file in their root directory
 ## {VERSION_DATE}
 
 ### [Breaking|Nonbreaking]
+
 - [TICKET-ID](https://bstock.atlassian.net/browse/TICKET-ID) Brief description of changes
   - Detailed bullet point 1
   - Detailed bullet point 2 (if needed)
@@ -229,6 +262,9 @@ Common API limitations:
 
 - **Issue Links**: Cannot create ticket relationships programmatically
   - e.g. "blocks/is blocked by"
+- **Sprint Assignment Format**: The `customfield_10018` (Sprint) field expects a direct number, not an array
+  - ❌ Wrong: `{"customfield_10018": [2331]}`
+  - ✅ Correct: `{"customfield_10018": 2331}`
 
 When a task cannot be accomplished due to API limitations:
 

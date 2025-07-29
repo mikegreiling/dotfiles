@@ -76,8 +76,10 @@ My B-Stock GitLab username is `mike.greiling` (ID: 421)
 
 #### GitLab Workflow Reminders
 
-- When creating merge requests, always assign them to the creator (which will be me when using my token)
-- My GitLab user ID of 421 is only applicable to B-Stock's GitLab instance, not GitLab.com
+- When creating merge requests, always assign them to the creator (which will be
+  me when using my token)
+- My GitLab user ID of 421 is only applicable to B-Stock's GitLab instance, not
+  GitLab.com
 
 ### B-Stock Atlassian Account
 
@@ -135,7 +137,8 @@ and is completely distinct from the "done" status.
 
 ## GPG Signing Configuration
 
-If commit fails with `gpg: signing failed: No pinentry`, install: `brew install pinentry-mac`
+If commit fails with `gpg: signing failed: No pinentry`, inspect our custom
+pinentry script and ensure that `pinentry-mac` is installed via homebrew.
 
 ### Browser URL Opening
 
@@ -163,3 +166,11 @@ Use YAML frontmatter for structured metadata (project_id, cloud_id, etc.).
 
 DO NOT GUESS PROJECT ID VALUES. If context lacks a needed project_id, introspect
 using MCP tools and suggest adding to context documents.
+
+## MCP Tool Availability
+
+If I prompt you to utilize an MCP tool to accomplish a task (GitLab, Atlassian,
+or Context7 being common examples) and you DO NOT have these tools available,
+tell me this so I can fix them. DO NOT EVER fall back to attempting to use the
+GitLab or Atlassian APIs directly via cURL or other similar methods unless I
+have explicitly instructed you to do so.
