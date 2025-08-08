@@ -53,6 +53,40 @@ New branches SHOULD BE based on the latest HEAD of the default branch. Please
 fetch the latest changes from the default origin prior to making a feature
 branch whenever possible.
 
+After pulling the latest changes from the default branch and creating a new
+feature branch, ALWAYS run the appropriate dependency update command for the
+project to ensure dependencies are up to date:
+
+- **Node.js projects**: Run `npm ci` to install exact dependency versions
+- **PHP projects**: Run `composer install` to update PHP dependencies  
+- **Ruby projects**: Run `bundle install` to update gem dependencies
+- **Python projects**: Run `pip install -r requirements.txt` or equivalent
+- **Other package managers**: Use the appropriate install/update command
+
+This prevents dependency-related build failures and ensures the new branch has
+the correct dependency versions that match the current state of the default
+branch.
+
+#### Dependency-Related Error Resolution
+
+When encountering failures in linting, type checking, compilation, or other
+build-time errors, ALWAYS consider that the failures could be related to
+mismatched dependencies. Before investigating code-level solutions, run the
+appropriate dependency update command to see if that addresses the issue:
+
+- **First step**: Run `npm ci`, `composer install`, `bundle install`, etc.
+- **Then verify**: Re-run the failing command (lint, typecheck, build, test)
+- **If still failing**: Then investigate code-level solutions
+
+This is especially important when:
+- Switching between branches with different dependency versions
+- Working on branches that have been inactive for extended periods
+- Encountering unexpected type errors or linting failures
+- Build errors that don't seem related to recent code changes
+
+Many apparent code issues are actually resolved by ensuring dependencies are
+properly synchronized.
+
 ### B-Stock Branch Naming (personal preference applies to bstock-projects)
 
 For B-Stock projects, use this specific naming convention:
@@ -172,5 +206,140 @@ using MCP tools and suggest adding to context documents.
 If I prompt you to utilize an MCP tool to accomplish a task (GitLab, Atlassian,
 or Context7 being common examples) and you DO NOT have these tools available,
 tell me this so I can fix them. DO NOT EVER fall back to attempting to use the
-GitLab or Atlassian APIs directly via cURL or other similar methods unless I
-have explicitly instructed you to do so.
+GitLab or Atlassian APIs directly via `curl` other similar methods, and never
+rely on equivalent CLI tools like `gh` or `glab` unless I have explicitly
+instructed you to do so.
+
+### IDE Connection Detection and Management
+
+**IDE MCP Tools** (`mcp__ide__*`): These tools provide real-time integration with IDEs like Cursor for diagnostics, code execution, and file management. 
+
+**Connection Detection**: Claude should proactively detect whether IDE MCP tools are available by checking for the presence of `mcp__ide__getDiagnostics` in the available function list.
+
+**When IDE Tools Are Unavailable**:
+- **Error Response**: Attempting to use IDE tools when disconnected results in: `Error: No such tool available: mcp__ide__getDiagnostics`
+- **Automatic Detection**: Claude should detect this state and inform the user
+- **User Prompt**: "I notice the IDE diagnostics tools are not available. Please connect your IDE (e.g., run `/ide` command in Cursor) to enable advanced linting and diagnostics workflows."
+
+**Workflow Fallbacks When IDE Disconnected**:
+- **Primary**: Use traditional linting commands (`npm run lint`, `npm run type-check`)
+- **Secondary**: Use file-based approaches (`Read` + manual analysis)
+- **Inform User**: Always explain why IDE-based workflows are unavailable and suggest connection
+
+**Connection State Examples**:
+```bash
+# IDE Connected - tools available
+mcp__ide__getDiagnostics()  # ✅ Works
+
+# IDE Disconnected - tools unavailable  
+mcp__ide__getDiagnostics()  # ❌ "Error: No such tool available"
+```
+
+**Smart Workflow Selection**: Claude should automatically choose the most appropriate workflow based on tool availability:
+- **IDE Connected**: Use IDE diagnostics workflows for real-time violation detection
+- **IDE Disconnected**: Use npm scripts and file analysis for code quality checks
+
+## IDE Diagnostics Workflow
+
+### Using mcp__ide__getDiagnostics for ESLint/TypeScript Violation Detection
+
+The `mcp__ide__getDiagnostics` tool provides real-time access to IDE diagnostics (ESLint and TypeScript violations) and is extremely effective for systematic violation fixing workflows.
+
+#### Tool Behavior and File State Detection
+
+**Key Finding**: The `getDiagnostics` tool behavior varies between specific file queries and global queries:
+
+**Specific File Query** (`getDiagnostics("file:///path/to/file")`):
+- **CANNOT differentiate** between these states:
+  1. File has never been opened in the IDE
+  2. File is open but not yet processed by language servers  
+  3. File is open but has no violations to report
+- All three states return: `{"uri": "file:///.../file.tsx", "diagnostics": []}`
+
+**Global Query** (`getDiagnostics()` without URI):
+- **CAN detect file state** by showing ALL currently tracked files
+- **Shows files with no violations** - files appear in the list even with empty diagnostics arrays
+- **Reliable file state detection** - if a file appears in global diagnostics, it's open and processed
+
+**File State Detection Strategy**: Use global diagnostics to check if a file is currently open/processed by the IDE.
+
+#### Workflow Implications
+
+**Recommended IDE Diagnostics Workflow:**
+1. **Open file with delay**: Use `cursor <file-path> && sleep 2` to ensure the file is loaded and processed
+2. **Verify file is tracked**: Check that the file appears in global diagnostics (`getDiagnostics()`)
+3. **Query specific diagnostics**: Use `mcp__ide__getDiagnostics` with the file URI to get violations
+4. **Fix violations systematically**: Address each diagnostic one by one  
+5. **Verify completion**: Re-check diagnostics to confirm all violations resolved
+
+**Important Workflow Rules:**
+- **Always open files with delay** using `cursor file && sleep 2` to ensure processing completion
+- **Verify file state** by checking it appears in global diagnostics before proceeding
+- **Use global diagnostics** to see all currently tracked files (even those without violations)
+- **Don't rely on empty specific diagnostics** alone - always verify file is in global list first
+
+#### Example Workflow
+
+```bash
+# 1. Open file with delay to ensure processing
+cursor /path/to/component.tsx && sleep 2
+
+# 2. Verify file is being tracked (should appear in global list)
+getDiagnostics()  # Check that our file appears in the list
+
+# 3. Check specific file diagnostics  
+getDiagnostics("file:///path/to/component.tsx")
+
+# 4. Fix violations found
+
+# 5. Re-check to confirm resolution
+getDiagnostics("file:///path/to/component.tsx")
+```
+
+#### File State Detection Helper
+
+```bash
+# Check if a file is currently open/tracked by the IDE:
+# 1. Get global diagnostics
+global_diags = getDiagnostics()
+
+# 2. Look for the file URI in the results
+if "file:///path/to/your/file.tsx" in [item.uri for item in global_diags]:
+    print("File is open and being tracked")
+else:
+    print("File is not currently tracked - need to open it first")
+```
+
+#### Diagnostic Response Format
+
+**When violations exist:**
+```json
+{
+  "uri": "file:///path/to/file.tsx",
+  "diagnostics": [
+    {
+      "range": {"start": {"line": 45, "character": 12}, "end": {...}},
+      "severity": 2,
+      "message": "Forbidden non-null assertion.",
+      "source": "eslint(@typescript-eslint/no-non-null-assertion)"
+    }
+  ]
+}
+```
+
+**When no violations (or file not processed):**
+```json
+{
+  "uri": "file:///path/to/file.tsx", 
+  "diagnostics": []
+}
+```
+
+#### Best Practices
+
+1. **Open files explicitly** before checking diagnostics
+2. **Use global diagnostics** to see which files are currently being tracked
+3. **Don't rely on empty diagnostics** as proof of no violations
+4. **Verify file state** by ensuring it appears in global diagnostics list
+5. **Close files when done** to avoid cluttering the global diagnostics response
+

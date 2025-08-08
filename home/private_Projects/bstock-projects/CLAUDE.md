@@ -76,8 +76,99 @@ Instead do this:
 ### Managing Dependencies
 
 **IMPORTANT**: Run `npm ci` when creating new branches or when encountering linter/test failures unrelated to your changes:
+
 - Dependencies can become out of sync when switching between branches
 - Always run `npm ci` after creating a new branch unless you just did this for the HEAD commit the branch is based on
+
+### Development Servers
+
+**NEVER RUN DEV SERVERS YOURSELF.** Development servers are long-running processes that block the terminal indefinitely. Instead, instruct the user to start them in a separate terminal window.
+
+**Examples:**
+
+- ❌ `Bash(npm run dev)` - Never do this
+- ✅ "Please run `npm run dev` in a separate terminal to start the development server"
+
+### Performance Optimization for Long-Running Commands
+
+**Long-running commands** like `npm run lint`, `npm run eslint`, or `npx eslint` can take significant time to complete. When there's a reasonable chance Claude will need to reference the output multiple times, cache the results to improve performance:
+
+**Cache command output using temporary files:**
+
+```bash
+# Generate unique temporary file to prevent collisions
+TEMP_FILE=$(mktemp /tmp/lint_output.XXXXXX)
+npm run lint > "$TEMP_FILE" 2>&1
+
+# Or use a descriptive filename with random suffix
+npm run lint > "tmp/lint_$(date +%s).txt" 2>&1
+```
+
+**Then operate on the cached file:**
+
+```bash
+# Search for specific patterns
+grep "error" "$TEMP_FILE"
+grep "warning" "$TEMP_FILE" | head -10
+
+# Count issues by type
+grep -c "error\|Error" "$TEMP_FILE"
+```
+
+**Benefits:**
+- Avoid re-running expensive commands
+- Enable efficient pattern searching with `grep`
+- Allow multiple analysis passes on the same output
+- Prevent command timeout issues with large codebases
+
+**When to use caching:**
+- Commands taking >30 seconds to complete
+- When you need to analyze output multiple times
+- For commands with large output that benefit from grep/filtering
+- During iterative debugging workflows
+
+**Important: Handling Commands That Exit With Non-Zero Status**
+
+Commands like `npm run lint` exit with non-zero status when errors are found, which breaks `&&` chains. The output is still captured, but subsequent commands don't execute:
+
+```bash
+# ❌ This won't echo because lint has errors (non-zero exit)
+npm run lint > /tmp/lint.txt 2>&1 && echo "Done"
+
+# ✅ This works - output is captured regardless of exit status
+npm run lint > /tmp/lint.txt 2>&1
+echo $? # Shows exit code (non-zero if errors)
+ls -la /tmp/lint.txt # Verify file was created
+
+# ✅ Alternative: Use ; instead of && to run commands regardless
+npm run lint > /tmp/lint.txt 2>&1; echo "Output saved to /tmp/lint.txt"
+```
+
+**Verification Pattern:**
+```bash
+# Always verify the file was created and contains expected content
+ls -la /tmp/lint.txt
+head -n 5 /tmp/lint.txt
+```
+
+## IDE-Based Diagnostics Workflow
+
+**For efficient ESLint/TypeScript violation resolution, use IDE diagnostics instead of expensive CLI commands.**
+
+See user-space CLAUDE.md for complete IDE workflow documentation including step-by-step processes, tool behavior analysis, and file state detection strategies.
+
+### Integration with Cached Output for B-Stock Projects
+
+Combine cached lint output with IDE diagnostics for comprehensive analysis:
+
+```bash
+# Cache full codebase analysis for overview
+npm run lint > /tmp/lint.txt 2>&1
+
+# Then use IDE diagnostics for targeted real-time fixes
+cursor /path/to/specific/file.tsx
+# Use mcp__ide__getDiagnostics for immediate feedback
+```
 
 ## Sub-Agent Tasks in Project Directories
 
@@ -94,6 +185,17 @@ Perform these checks PRIOR TO running the `Task` command and prompt the user to
 fix any missing MCP functionality first.
 
 ## Git source control workflows
+
+### Commit Message Formatting
+
+**Individual commits within a branch** do NOT require semantic version prefixes (MAJOR:, MINOR:, etc.). Use standard descriptive commit messages.
+
+**GitLab Merge Request titles** MUST include semantic version prefixes because these titles become the squash-merge commit message and trigger automated versioning.
+
+**Examples:**
+- ✅ Branch commit: `Add TypeScript strict mode configuration`
+- ✅ Branch commit: `Fix failing tests in ManifestTable component`  
+- ✅ MR title: `MINOR: SPR-4490 Enable noUncheckedIndexedAccess foundation for fe-core`
 
 When creating a new branch:
 
