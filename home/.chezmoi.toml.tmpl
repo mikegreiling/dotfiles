@@ -122,14 +122,30 @@
 {{- end -}}
 
 {{- /* This retains the value passed with --source on chezmoi init, which is used in the ../install.sh script */ -}}
+{{- /* 
+IMPORTANT: TOML Section Ordering Rule
+=====================================
+In TOML, all top-level key-value pairs MUST come before any [section] headers.
+If a key-value pair appears after a section header, it becomes part of that section.
+
+CORRECT order:
+  key1 = "value"
+  key2 = "value"
+  [section1]
+  ...
+
+INCORRECT order (causes parsing errors):
+  [section1]
+  key1 = "value"  # This becomes part of section1, not top-level!
+
+This was the cause of the "encryption not set" warning - the encryption key
+was being parsed as part of the [hooks] section instead of top-level.
+*/ -}}
 sourceDir = {{ .chezmoi.workingTree | quote }}
 
-[hooks.read-source-state.pre]
-  command = "{{ .chezmoi.sourceDir }}/.chezmoihooks/pre-source-state.sh"
-
 verbose = true
-
 encryption = "age"
+
 [age]
   identity = "~/.config/chezmoi/key.txt"
   recipient = "age1j78rq7y3x5hx3x7lra4p44jkfzsme3v3vnhj6t9cpf8dywwwaeksqfgtx4"
@@ -147,3 +163,6 @@ encryption = "age"
   email = {{ $email | quote }}
   computer_name = {{ $computer_name | quote }}
   hostname = {{ $hostname | quote }}
+
+[hooks.read-source-state.pre]
+  command = "{{ .chezmoi.sourceDir }}/.chezmoihooks/pre-source-state.sh"
