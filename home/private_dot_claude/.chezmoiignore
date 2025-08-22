@@ -1,0 +1,5 @@
+# Ignore ephemeral log files but preserve directory structure
+logs/sessions/*/
+!logs/sessions/.keep
+logs/sessions/**/*.json
+logs/sessions/**/*.log

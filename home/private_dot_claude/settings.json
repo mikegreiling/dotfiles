@@ -1,4 +1,100 @@
 {
+  "permissions": {
+    "allow": [
+      "Read(~/.claude/bstock-current-sprint-cache.md)",
+      "Edit(~/.claude/bstock-current-sprint-cache.md)",
+      "Read(~/.claude/**)",
+      "Read(~/Projects/bstock-projects/**/CLAUDE.md)",
+      "Read(~/Projects/bstock-projects/**/package.json)",
+      "Read(~/Projects/bstock-projects/**/.mcp.json)",
+      "Bash(git status)",
+      "Bash(git branch)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(npm ci)",
+      "Bash(npm run lint:*)",
+      "Bash(npm run test:*)",
+      "Bash(npm run type-check:*)",
+      "mcp__atlassian__atlassianUserInfo",
+      "mcp__atlassian__getAccessibleAtlassianResources",
+      "mcp__atlassian__getConfluenceSpaces",
+      "mcp__atlassian__getConfluencePage",
+      "mcp__atlassian__getPagesInConfluenceSpace",
+      "mcp__atlassian__getConfluencePageAncestors",
+      "mcp__atlassian__getConfluencePageFooterComments",
+      "mcp__atlassian__getConfluencePageInlineComments",
+      "mcp__atlassian__getConfluencePageDescendants",
+      "mcp__atlassian__searchConfluenceUsingCql",
+      "mcp__atlassian__getJiraIssue",
+      "mcp__atlassian__getTransitionsForJiraIssue",
+      "mcp__atlassian__lookupJiraAccountId",
+      "mcp__atlassian__searchJiraIssuesUsingJql",
+      "mcp__atlassian__getJiraIssueRemoteIssueLinks",
+      "mcp__atlassian__getVisibleJiraProjects",
+      "mcp__atlassian__getJiraProjectIssueTypesMetadata",
+      "mcp__gitlab__search_repositories",
+      "mcp__gitlab__get_file_contents",
+      "mcp__gitlab__get_merge_request",
+      "mcp__gitlab__get_merge_request_diffs",
+      "mcp__gitlab__list_merge_request_diffs",
+      "mcp__gitlab__get_branch_diffs",
+      "mcp__gitlab__mr_discussions",
+      "mcp__gitlab__list_draft_notes",
+      "mcp__gitlab__get_draft_note",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/agent-logger.py",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/agent-logger.py",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/agent-logger.py",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/agent-logger.py",
+            "timeout": 5000
+          }
+        ]
+      }
+    ]
+  },
   "statusLine": {
     "type": "command",
     "command": "bash ~/.claude/statusline-script.sh"
