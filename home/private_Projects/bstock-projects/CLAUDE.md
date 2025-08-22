@@ -2,6 +2,29 @@
 atlassian:
   cloud_id: "8fd1c100-2018-43ac-bdc1-ca69369799c3"
   instance_url: "https://bstock.atlassian.net"
+gitlab:
+  # 3MP Service Project IDs (cacheable values)
+  three_mp_services:
+    account: "522"
+    auction: "582"
+    contract: "759"
+    dispute: "504"
+    docserv: "565"
+    erp: "605"
+    ingestion: "661"
+    integration: "770"
+    listing: "628"
+    location: "546"
+    offering: "735"
+    order: "515"
+    order_process: "722"
+    payments_methods: "520"
+    payments_transactions: "519"
+    risk: "802"
+    saved_search: "798"
+    search: "603"
+    shipment: "524"
+    subscription: "577"
 ---
 
 # B-Stock Projects Memory
@@ -82,12 +105,23 @@ Instead do this:
 
 ### Development Servers
 
-**NEVER RUN DEV SERVERS YOURSELF.** Development servers are long-running processes that block the terminal indefinitely. Instead, instruct the user to start them in a separate terminal window.
+Use the `run_in_background` parameter for long-running processes like development servers to avoid blocking the terminal.
 
 **Examples:**
 
-- ❌ `Bash(npm run dev)` - Never do this
-- ✅ "Please run `npm run dev` in a separate terminal to start the development server"
+- ✅ `Bash(npm run dev, run_in_background=true)` - Runs in background, allows continued work
+- ❌ `Bash(npm run dev)` - Blocks terminal indefinitely
+- ✅ Use `BashOutput` tool to monitor background process output when needed
+
+### Build Commands
+
+**NEVER RUN BUILD COMMANDS.** Build commands are expensive, time-consuming operations that are not necessary for development work. They should only be run by CI/CD systems or when explicitly requested by the user.
+
+**Examples:**
+
+- ❌ `Bash(npm run build)` - Never do this
+- ❌ `Bash(npm run build:prod)` - Never do this
+- ✅ Use type-checking and linting commands instead for code validation
 
 ### Performance Optimization for Long-Running Commands
 
@@ -116,12 +150,14 @@ grep -c "error\|Error" "$TEMP_FILE"
 ```
 
 **Benefits:**
+
 - Avoid re-running expensive commands
 - Enable efficient pattern searching with `grep`
 - Allow multiple analysis passes on the same output
 - Prevent command timeout issues with large codebases
 
 **When to use caching:**
+
 - Commands taking >30 seconds to complete
 - When you need to analyze output multiple times
 - For commands with large output that benefit from grep/filtering
@@ -145,6 +181,7 @@ npm run lint > /tmp/lint.txt 2>&1; echo "Output saved to /tmp/lint.txt"
 ```
 
 **Verification Pattern:**
+
 ```bash
 # Always verify the file was created and contains expected content
 ls -la /tmp/lint.txt
@@ -170,6 +207,46 @@ cursor /path/to/specific/file.tsx
 # Use mcp__ide__getDiagnostics for immediate feedback
 ```
 
+## B-Stock Microservices API Documentation
+
+### Accessing Swagger Documentation for 3MP Services
+
+All B-Stock microservices following the `@b-stock/SERVICE_NAME-api-client` naming convention have swagger.json documentation available in their GitLab repositories.
+
+**Standard Convention Pattern:**
+
+- **API Client Package**: `@b-stock/SERVICE_NAME-api-client`
+- **GitLab Repository**: `b-stock/code/three-mp/svc/SERVICE_NAME`
+- **Project ID**: Available in YAML frontmatter above
+
+**Steps to Retrieve Swagger Documentation:**
+
+1. **Use cached project ID** from YAML frontmatter above (preferred for performance)
+2. **Get swagger file** using GitLab MCP tools:
+   ```
+   mcp__gitlab__get_file_contents({
+     project_id: "PROJECT_ID_FROM_CACHE",
+     file_path: "swagger.json",
+     ref: "main"
+   })
+   ```
+
+**If service not in cache:**
+
+1. **Search for repository**: `mcp__gitlab__search_repositories({ search: "SERVICE_NAME" })`
+2. **Extract project_id** from results (add to cache for future use)
+3. **Get swagger file** using the project_id as above
+
+**Naming Convention Exceptions:**
+
+- **`ingestion`**: Uses `ingestion-nestjs` (ID: 661) as the active service. The `ingestion-old` repository is archived.
+- **`saved-search`**: Uses the 3MP version (ID: 798) at `b-stock/code/three-mp/svc/saved-search`, not the legacy version at `b-stock/code/svc/saved-search`.
+- **Payment services**: Located under nested paths:
+  - `payments-methods` → `b-stock/code/three-mp/svc/payments/methods`
+  - `payments-transactions` → `b-stock/code/three-mp/svc/payments/transactions`
+
+All services follow the same `swagger.json` at repository root pattern regardless of these path variations.
+
 ## Sub-Agent Tasks in Project Directories
 
 When planning to using the `Task` tool to perform parallel actions in multiple
@@ -184,6 +261,14 @@ it might mean the user needs to authenticate using the `/mcp` command first.
 Perform these checks PRIOR TO running the `Task` command and prompt the user to
 fix any missing MCP functionality first.
 
+### MCP Tool Verification Checklist
+Before planning workflows that use MCP tools, Claude MUST:
+
+1. **Test GitLab MCP availability**: `mcp__gitlab__search_repositories`
+2. **Test Atlassian MCP availability**: `mcp__atlassian__getVisibleJiraProjects`
+3. **If unavailable**: Prompt user to run `/mcp` command first
+4. **Check token permissions**: GitLab may be read-only without `BSTOCK_GITLAB_TOKEN`
+
 ## Git source control workflows
 
 ### Commit Message Formatting
@@ -193,8 +278,9 @@ fix any missing MCP functionality first.
 **GitLab Merge Request titles** MUST include semantic version prefixes because these titles become the squash-merge commit message and trigger automated versioning.
 
 **Examples:**
+
 - ✅ Branch commit: `Add TypeScript strict mode configuration`
-- ✅ Branch commit: `Fix failing tests in ManifestTable component`  
+- ✅ Branch commit: `Fix failing tests in ManifestTable component`
 - ✅ MR title: `MINOR: SPR-4490 Enable noUncheckedIndexedAccess foundation for fe-core`
 
 When creating a new branch:
@@ -335,9 +421,7 @@ MOST B-Stock projects contain a `CHANGELOG.md` file in their root directory
 
 ```markdown
 ## {VERSION_DATE}
-
 ### [Breaking|Nonbreaking]
-
 - [TICKET-ID](https://bstock.atlassian.net/browse/TICKET-ID) Brief description of changes
   - Detailed bullet point 1
   - Detailed bullet point 2 (if needed)
