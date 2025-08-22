@@ -26,6 +26,9 @@ to apply changes. Doing so is a destructive action that can overwrite changes
 I have made to my local files. Utilize `chezmoi status` first and inform me
 about potential blockers.
 
+**IMPORTANT**: `chezmoi` should NEVER be used at all whatsoever without first
+reading the comprehensive guidelines in `~/.local/share/chezmoi/CLAUDE.md`.
+
 ## Bash/terminal command quirks
 
 Claude Code will block Claude from executing `cd` to directories that I have not
