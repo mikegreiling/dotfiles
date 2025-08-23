@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "jq -r '.tool_input.file_path' | { read file_path; npx -y --prefix=\"$file_path\" prettier --write --ignore-unknown \"$file_path\" && echo \"✓ Formatted $file_path with prettier\"; }"
+            "command": "jq -r '.tool_input.file_path' | { read file_path; config_path=$(npx --prefix=\"$file_path\" prettier --find-config-path \"$file_path\" 2>/dev/null); if [ -n \"$config_path\" ]; then (cd \"$(realpath \"$(dirname \"$config_path\")\")\" && npx --prefix=\"$file_path\" prettier --write --ignore-unknown \"$file_path\" && echo \"✓ Formatted with prettier\"); fi; }"
           }
         ]
       }
