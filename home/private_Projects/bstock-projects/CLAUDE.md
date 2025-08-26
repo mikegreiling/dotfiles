@@ -408,6 +408,67 @@ Fill out the appropaite body section with a description of the changes to be
 reviewed. Keep in mind, the audience for this text is other engineers who will
 be reviewing the code in this branch.
 
+### Package Version Management
+
+**CRITICAL: NEVER MANUALLY UPDATE THE PROJECT "VERSION" KEY IN PACKAGE.JSON**
+
+- The project's own version number (the "version" key) in `package.json` is managed automatically by CI/CD systems
+- Manual updates to the project version will cause CI failures and deployment issues
+- Version bumps are triggered by semantic version prefixes in MR titles (MAJOR:, MINOR:, PATCH:)
+- The automated versioning system uses semantic-release to determine appropriate version numbers
+- **Claude MUST NOT modify the "version" field in package.json files under any circumstances**
+
+**Note**: This restriction applies ONLY to the project's own "version" field. Claude can and should update dependency versions in "dependencies", "devDependencies", and "peerDependencies" when instructed.
+
+#### Automated Release Pipeline Process
+
+When a feature branch with semantic version prefix (MAJOR:, MINOR:, PATCH:) is merged into `main`, the following automated pipeline sequence occurs:
+
+**Pipeline 1 - Version Bump:**
+1. **`bump_version` job** executes in "version" stage after linting, testing, and build jobs pass
+2. Uses `semantic-release` npm package to:
+   - Update `package.json` and `package-lock.json` version numbers
+   - Replace `{VERSION_DATE}` tokens in `CHANGELOG.md` with actual version and date
+   - Create commit with message format: `chore(release): X.Y.Z`
+   - Create and push new git tag for the release
+   - Push changes back to `main` branch
+
+**Pipeline 2 - Package Publication:**
+1. **`publish-package` job** executes automatically after version bump commit
+2. Builds and publishes the new package version to B-Stock npm registry
+3. Makes new version available for consumption by portal projects
+
+#### Monitoring Package Releases with GitLab MCP Tools
+
+To verify package publication status, use GitLab MCP tools to inspect pipeline jobs:
+
+```javascript
+// 1. List recent pipelines on main branch
+mcp__gitlab__list_pipelines({ project_id: "PROJECT_ID", ref: "main", per_page: 5 })
+
+// 2. Check for successful bump_version job (indicates semantic-release completed)
+mcp__gitlab__list_pipeline_jobs({ project_id: "PROJECT_ID", pipeline_id: "PIPELINE_ID" })
+// Look for: stage: "version", name: "bump_version", status: "success"
+
+// 3. Find subsequent pipeline with chore(release) commit (the publishing pipeline)
+// Look for commit.title: "chore(release): X.Y.Z" by semantic-release-bot
+
+// 4. Verify publish-package job completion
+mcp__gitlab__list_pipeline_jobs({ project_id: "PROJECT_ID", pipeline_id: "PUBLISH_PIPELINE_ID" })
+// Look for: stage: "build", name: "publish-package", status: "success"
+```
+
+**Key Pipeline Identifiers for Monitoring:**
+- **Version bump pipeline**: Contains `bump_version` job in "version" stage
+- **Publishing pipeline**: Contains `publish-package` job in "build" stage
+- **Release commit**: Title format `chore(release): X.Y.Z` by `semantic-release-bot`
+
+**Common Projects to Monitor:**
+- `fe-core` (project_id: "506")
+- `bstock-eslint-config` (project_id: "525")
+
+This process ensures all package publications are traceable and verifiable through GitLab pipeline inspection.
+
 ### Changelog Requirements
 
 MOST B-Stock projects contain a `CHANGELOG.md` file in their root directory
