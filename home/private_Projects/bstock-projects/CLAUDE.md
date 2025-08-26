@@ -536,6 +536,45 @@ Jira tickets are formatted with 2-4 letters matching the project, a dash, and a
 - **GLOB** (3MP Global)
 - **BUGS** (Bug Triage Project)
 
+#### Jira Ticket Creation Guidelines
+
+**Parent Epic Assignment**: Most Jira tickets outside of the `BUGS` project should have a parent epic to ensure visibility to managers and product leads. When creating a new ticket, always ask what parent epic it belongs to.
+
+**Common Catch-All Epic**: For technical debt, performance improvement, or developer experience tickets, use the "Optimization Cabal" epic at **GLOB-1987** as a common parent.
+
+**Default Project Assignment**: When creating Jira tickets that are not immediately assigned to the user, default to the `GLOB` project unless specified otherwise.
+
+##### Ticket Title Formatting Conventions
+
+Jira ticket titles should follow these formatting patterns observed in the Optimization Cabal epic (GLOB-1987):
+
+**Project/Service Tags**: Use bracketed tags to indicate the affected project(s) or service(s):
+- `[SPIKE]` - Research or prototyping work that is not QA-testable
+- `[fe-core]` - Frontend core shared library
+- `[AP]` - Accounts Portal
+- `[BP]` - Buyer Portal  
+- `[SP]` - Seller Portal
+- `[CSP]` - CS Portal
+- `[HP]` - Home Portal
+- `[FE]` - General frontend work
+- `[Account svc]`, `[Search svc]` - Backend services
+- `[SP/CSP]`, `[FE Portals]` - Multiple projects
+
+**Multiple Tags**: Can combine multiple tags for cross-cutting work:
+- `[SPIKE] [Notification]` - Research work on notifications
+- `[Potential to split][FE Portals]` - Large work that may need division
+
+**Title Structure**: After tags, use descriptive titles that clearly state the work:
+- Start with action verbs when possible (Fix, Update, Remove, Audit, etc.)
+- Be specific about what is being changed
+- Keep total title length reasonable
+
+**Examples from GLOB-1987 children**:
+- `[SPIKE] Evaluate parallelized tests through Jira/Vitest sharding in CI`
+- `[fe-core] Fix logging context token + trace details` 
+- `[SP] Update deprecated 'legacyBehavior' Next Link component`
+- `[SP/CSP] Audit Inventory/Listing/Order/Dispute columns for consistency`
+
 #### Jira Ticket Status Workflow
 
 Tickets must go through a specific set of status "transitions" to ultimately get
