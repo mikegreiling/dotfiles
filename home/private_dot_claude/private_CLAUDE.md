@@ -50,6 +50,13 @@ commits that Claude makes should be made in feature branches. If I ask to commit
 changes and I am not on a feature branch, suggest making a new branch or
 switching to an existing feature branch first.
 
+### Force Push Safety
+
+**NEVER use `git push --force`**. ALWAYS use `git push --force-with-lease` instead. 
+The `--force-with-lease` option ensures the push fails if someone else has pushed 
+changes in the meantime, preventing accidental overwrites. When instructed to 
+"force push," interpret this as a request to use `--force-with-lease`.
+
 ### Git branches
 
 New branches SHOULD BE based on the latest HEAD of the default branch. Please
@@ -61,7 +68,7 @@ feature branch, ALWAYS run the appropriate dependency update command for the
 project to ensure dependencies are up to date:
 
 - **Node.js projects**: Run `npm ci` to install exact dependency versions
-- **PHP projects**: Run `composer install` to update PHP dependencies  
+- **PHP projects**: Run `composer install` to update PHP dependencies
 - **Ruby projects**: Run `bundle install` to update gem dependencies
 - **Python projects**: Run `pip install -r requirements.txt` or equivalent
 - **Other package managers**: Use the appropriate install/update command
@@ -215,7 +222,7 @@ instructed you to do so.
 
 ### IDE Connection Detection and Management
 
-**IDE MCP Tools** (`mcp__ide__*`): These tools provide real-time integration with IDEs like Cursor for diagnostics, code execution, and file management. 
+**IDE MCP Tools** (`mcp__ide__*`): These tools provide real-time integration with IDEs like Cursor for diagnostics, code execution, and file management.
 
 **Connection Detection**: Claude should proactively detect whether IDE MCP tools are available by checking for the presence of `mcp__ide__getDiagnostics` in the available function list.
 
@@ -234,7 +241,7 @@ instructed you to do so.
 # IDE Connected - tools available
 mcp__ide__getDiagnostics()  # ✅ Works
 
-# IDE Disconnected - tools unavailable  
+# IDE Disconnected - tools unavailable
 mcp__ide__getDiagnostics()  # ❌ "Error: No such tool available"
 ```
 
@@ -244,7 +251,7 @@ mcp__ide__getDiagnostics()  # ❌ "Error: No such tool available"
 
 ## IDE Diagnostics Workflow
 
-### Using mcp__ide__getDiagnostics for ESLint/TypeScript Violation Detection
+### Using `mcp__ide__getDiagnostics` for ESLint/TypeScript Violation Detection
 
 The `mcp__ide__getDiagnostics` tool provides real-time access to IDE diagnostics (ESLint and TypeScript violations) and is extremely effective for systematic violation fixing workflows.
 
@@ -255,7 +262,7 @@ The `mcp__ide__getDiagnostics` tool provides real-time access to IDE diagnostics
 **Specific File Query** (`getDiagnostics("file:///path/to/file")`):
 - **CANNOT differentiate** between these states:
   1. File has never been opened in the IDE
-  2. File is open but not yet processed by language servers  
+  2. File is open but not yet processed by language servers
   3. File is open but has no violations to report
 - All three states return: `{"uri": "file:///.../file.tsx", "diagnostics": []}`
 
@@ -272,7 +279,7 @@ The `mcp__ide__getDiagnostics` tool provides real-time access to IDE diagnostics
 1. **Open file with delay**: Use `cursor <file-path> && sleep 2` to ensure the file is loaded and processed
 2. **Verify file is tracked**: Check that the file appears in global diagnostics (`getDiagnostics()`)
 3. **Query specific diagnostics**: Use `mcp__ide__getDiagnostics` with the file URI to get violations
-4. **Fix violations systematically**: Address each diagnostic one by one  
+4. **Fix violations systematically**: Address each diagnostic one by one
 5. **Verify completion**: Re-check diagnostics to confirm all violations resolved
 
 **Important Workflow Rules:**
@@ -290,7 +297,7 @@ cursor /path/to/component.tsx && sleep 2
 # 2. Verify file is being tracked (should appear in global list)
 getDiagnostics()  # Check that our file appears in the list
 
-# 3. Check specific file diagnostics  
+# 3. Check specific file diagnostics
 getDiagnostics("file:///path/to/component.tsx")
 
 # 4. Fix violations found
@@ -333,7 +340,7 @@ else:
 **When no violations (or file not processed):**
 ```json
 {
-  "uri": "file:///path/to/file.tsx", 
+  "uri": "file:///path/to/file.tsx",
   "diagnostics": []
 }
 ```
@@ -345,4 +352,3 @@ else:
 3. **Don't rely on empty diagnostics** as proof of no violations
 4. **Verify file state** by ensuring it appears in global diagnostics list
 5. **Close files when done** to avoid cluttering the global diagnostics response
-
