@@ -83,7 +83,7 @@ TO executing something like `Bash(cd fe-core && git checkout -b new-branch)`.
 
 ## Working in Project Directories
 
-When working within a project directories, always prefer to `cd` into the
+When working within a project directory, always prefer to `cd` into the
 directory _rather than_ operating on files in that project from another location
 
 The Claude permissions whitelist does not understand these command arguments and
