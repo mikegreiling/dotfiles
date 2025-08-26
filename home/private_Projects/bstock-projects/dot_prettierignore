@@ -1,0 +1,38 @@
+# Consolidated .prettierignore for bstock-projects
+# This file consolidates patterns from all project-specific .prettierignore files
+
+# Hidden files and directories (all projects)
+.*
+.*/**
+
+# Documentation and markdown files
+*.md
+**/*.md
+
+# JSON files (most projects ignore these)
+*.json
+**/*.json
+
+# YAML files (home-portal, cs-portal, ingestion-nestjs)
+**/*.yml
+**/*.yaml
+
+# Build outputs and directories
+*/common-ci
+*/common-ci/**
+*/coverage
+*/coverage/**
+*/dist
+*/dist/**
+*/docs/typedoc
+*/docs/typedoc/**
+*/storybook-static
+*/storybook-static/**
+
+# Project-specific directories
+*/helm
+*/helm/**
+*/public
+*/public/**
+*/server-build
+*/server-build/**
