@@ -40,6 +40,31 @@ When this happens, we can add this directory into the whitelist by utilizing the
 working directory for the session and then attempt to execute the `Bash` command
 again.
 
+## Package Management - CRITICAL RULES
+
+**NEVER DELETE package-lock.json FILES - EVER!**
+
+Lock files (package-lock.json, yarn.lock, composer.lock, etc.) are critical to maintaining reproducible builds and dependency integrity. They contain the exact resolved versions of all dependencies and their sub-dependencies.
+
+**CRITICAL RULES:**
+- **NEVER run `rm package-lock.json`** - This destroys dependency version history
+- **NEVER suggest deleting lock files** to "fix" dependency conflicts  
+- **NEVER regenerate lock files from scratch** unless explicitly instructed by the user
+
+**Correct approaches for lock file conflicts:**
+- Use `git checkout HEAD package-lock.json` to reset to previous state
+- Run `npm install` to update lock file based on package.json changes
+- Use `npm ci` for clean installs from existing lock files
+- Manually resolve conflicts in lock files when necessary
+
+**Why this matters:**
+- Lock files ensure all environments use identical dependency versions
+- Deleting them can introduce subtle bugs from version differences
+- They provide security by preventing supply chain attacks via version pinning
+- CI/CD systems rely on lock files for reproducible builds
+
+This rule applies to ALL package managers: npm, yarn, composer, bundler, pip, etc.
+
 ## Git workflow
 
 Default git branches are usually `main` or `master`. Do NOT ever commit changes
