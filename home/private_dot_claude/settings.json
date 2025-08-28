@@ -113,12 +113,12 @@
       "mcp__gitlab__update_merge_request_note",
       "mcp__ide__getDiagnostics"
     ],
+    "deny": [
+      "Bash(chezmoi cd:*)"
+    ],
     "ask": [
       "Bash(chezmoi apply:*)",
       "Bash(rm:*)"
-    ],
-    "deny": [
-      "Bash(chezmoi cd:*)"
     ]
   },
   "hooks": {
