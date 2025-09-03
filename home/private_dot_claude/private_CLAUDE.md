@@ -40,6 +40,45 @@ When this happens, we can add this directory into the whitelist by utilizing the
 working directory for the session and then attempt to execute the `Bash` command
 again.
 
+### Bash Command Working Directory Persistence
+
+**CRITICAL INSIGHT**: The `cd` command DOES persist between separate Bash tool calls. Each Bash tool call maintains the working directory state from the previous call.
+
+**Common Anti-Pattern to Avoid**:
+```bash
+# First command (succeeds)
+cd project-name && git status
+
+# Second command (fails - we're already in project-name!)
+cd project-name && git fetch
+# Error: no such file or directory: project-name
+```
+
+**Two Solution Strategies**:
+
+**Strategy A - Absolute Paths** (Most Reliable):
+```bash
+# Always use full absolute paths
+cd /full/path/to/project && git status
+cd /full/path/to/project && git fetch
+```
+
+**Strategy B - Working Directory Awareness** (Most Efficient):
+```bash
+# First command changes directory
+cd project-name && git status
+
+# Subsequent commands work in that directory  
+git fetch && git branch --list
+```
+
+**When to Use Each Strategy**:
+- **Absolute Paths**: When working across multiple projects or when uncertain about current location
+- **Directory Awareness**: When working within a single project for multiple consecutive operations
+- **Verification**: Use `pwd` when uncertain about current working directory
+
+**Key Takeaway**: Never assume you need to `cd` into the same directory twice in a sequence of Bash commands.
+
 ## Package Management - CRITICAL RULES
 
 **NEVER DELETE package-lock.json FILES - EVER!**
@@ -244,6 +283,19 @@ tell me this so I can fix them. DO NOT EVER fall back to attempting to use the
 GitLab or Atlassian APIs directly via `curl` other similar methods, and never
 rely on equivalent CLI tools like `gh` or `glab` unless I have explicitly
 instructed you to do so.
+
+### Jira API Response Optimization
+
+**CRITICAL**: When using `mcp__atlassian__getJiraIssue`, ALWAYS include the `fields` parameter to limit the response size and avoid context window bloat:
+
+```javascript
+mcp__atlassian__getJiraIssue({
+  issueIdOrKey: "SPR-1234",
+  fields: ["summary", "status", "created", "updated", "description", "assignee"]
+})
+```
+
+**Why this matters**: Jira issue responses can exceed 40,000+ tokens due to extensive metadata (comments, change history, attachments, custom fields, worklogs, etc.). Using field limiting reduces responses to manageable sizes while retaining essential information for analysis.
 
 ### IDE Connection Detection and Management
 

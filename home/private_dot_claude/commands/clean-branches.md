@@ -27,18 +27,20 @@ Intelligently identifies and cleans up stale local git branches by analyzing mer
 
 ### 2. Repository Preparation  
 - Fetch latest changes from origin with prune
-- Discover all local branches (excluding main/master)
+- Discover all local branches
 - Identify currently checked out branch
 
 ### 3. Complete Branch Analysis (Phase 1)
-- Use git-branch-cleanup agent in parallel for ALL branches
+- **PARALLEL EXECUTION**: Use multiple git-branch-cleanup agent calls in a SINGLE MESSAGE for all non-default branches
+- **EXCLUDE DEFAULT BRANCHES**: NEVER analyze main/master branches - they are protected and never deleted
 - Provide each parallel agent with only one branch to analyze
 - This agent will gather comprehensive analysis including:
   - Merge evidence and GitLab MR correlation
   - Activity patterns and staleness indicators  
   - Risk assessment and safety factors
 - Categorize branches: SAFE-DELETE, PROBABLE-DELETE, MANUAL-REVIEW
-- **CRITICAL**: Complete analysis of ALL branches before proceeding to Phase 2
+- **CRITICAL**: Complete analysis of ALL non-default branches before proceeding to Phase 2
+- **PARALLEL TOOL CALLS**: Execute all branch analyses using multiple tool calls within a single Claude response message
 - Do NOT delete any branches during this phase
 
 ### 4. Execute Deletions (Phase 2)
@@ -77,11 +79,15 @@ Intelligently identifies and cleans up stale local git branches by analyzing mer
 ## Implementation
 
 ### Critical Requirements
-- **Phase Separation**: Complete ALL branch analysis before ANY deletions
+- **Phase Separation**: Complete ALL non-default branch analysis before ANY deletions
+- **Parallel Analysis**: Use multiple Task tool calls in a single message for true parallel execution
 - **Single Deletion Command**: Use `~/.claude/delete-branches.sh` for all deletions
 - **NO BASH FOR REPORTS**: NEVER use bash commands, multi-line scripts, or command output for report generation. The final report must be pure text output from Claude, not bash-generated content that gets truncated.
-- **Comprehensive Detail**: Every branch must be listed with full analysis
+- **Avoid Complex Grep**: Use simple `git branch` and filter branches programmatically in analysis logic rather than using grep with regex alternation patterns that trigger manual approval
+- **Comprehensive Detail**: Every non-default branch must be listed with full analysis
+- **Default Branch Exclusion**: NEVER analyze or attempt to delete main/master branches
 - **Terminology**: Use "SAFE-DELETE" not "AUTO-DELETE"
+- **Working Directory Management**: Bash `cd` commands persist between tool calls - avoid redundant directory changes
 
 ### CRITICAL: Report Generation Rules
 - ❌ FORBIDDEN: Multi-line bash scripts for formatting or generating reports
@@ -89,6 +95,42 @@ Intelligently identifies and cleans up stale local git branches by analyzing mer
 - ❌ FORBIDDEN: Complex bash functions or heredocs for report generation
 - ✅ REQUIRED: Pure text output from Claude with all branch details
 - ✅ REQUIRED: Multi-line key:value format for readability
+
+### Working Directory Management
+
+**CRITICAL REMINDER**: Bash tool calls maintain working directory state between commands. The `cd` command persists across separate Bash invocations.
+
+**Anti-Pattern to Avoid**:
+```bash
+# First command (changes to project directory)
+cd project-name && git fetch --prune
+
+# Second command (fails - already in project-name!)  
+cd project-name && git branch --list
+# Error: no such file or directory: project-name
+```
+
+**Two Solution Strategies**:
+
+**Strategy A - Absolute Paths** (Recommended for multi-project workflows):
+```bash
+cd /full/path/to/project && git fetch --prune
+cd /full/path/to/project && git branch --list
+```
+
+**Strategy B - Directory Awareness** (Recommended for single-project cleanup):
+```bash
+# Initial directory change
+cd project-name && git fetch --prune
+
+# Subsequent commands work in established directory
+git branch --list && git branch --show-current
+```
+
+**Implementation Guidance**:
+- Use `pwd` to verify current working directory when uncertain
+- Avoid repeating `cd PROJECT_NAME` commands in sequence
+- Consider absolute paths when working across multiple repositories
 
 ### Tools Used
 This command leverages:
