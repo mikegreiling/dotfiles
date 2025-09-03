@@ -85,9 +85,9 @@
 	po = push -u origin HEAD
 
 	# Same as po, but with force and no-verify options applied
-	pof = push -u origin HEAD --force
+	pof = push -u origin HEAD --force-with-lease
 	pon = push -u origin HEAD --no-verify
-	ponf = push -u origin HEAD --force --no-verify
+	ponf = push -u origin HEAD --force-with-lease --no-verify
 
 [apply]
 
