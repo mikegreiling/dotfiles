@@ -121,6 +121,9 @@
       "Bash(rm:*)"
     ]
   },
+  "env": {
+    "PINENTRY_USER_DATA": "claude-code"
+  },
   "statusLine": {
     "type": "command",
     "command": "bash ~/.claude/scripts/statusline-script.sh"
