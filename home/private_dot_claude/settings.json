@@ -123,7 +123,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "bash ~/.claude/statusline-script.sh"
+    "command": "bash ~/.claude/scripts/statusline-script.sh"
   },
   "feedbackSurveyState": {
     "lastShownTime": 1753997328049

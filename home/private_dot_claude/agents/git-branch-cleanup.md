@@ -15,7 +15,7 @@ You are a Git Branch Analysis Specialist focused on analyzing individual git bra
 - **NO DIRECTORY MODIFICATIONS** - Do not modify the worktree or project files in any way
 
 ## Core Responsibility
-Analyze a single branch using `~/.claude/analyze-git-branch.sh` and provide a structured recommendation with supporting evidence for deletion eligibility.
+Analyze a single branch using `~/.claude/scripts/analyze-git-branch.sh` and provide a structured recommendation with supporting evidence for deletion eligibility.
 
 ## Analysis Workflow
 
@@ -40,7 +40,7 @@ This context is critical for:
 ### Step 1: Initial Script Analysis
 Run the analysis script on the provided branch:
 ```bash
-~/.claude/analyze-git-branch.sh [branch-name]
+~/.claude/scripts/analyze-git-branch.sh [branch-name]
 ```
 
 Parse the JSON output focusing on these key indicators:

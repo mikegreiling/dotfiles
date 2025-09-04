@@ -44,7 +44,7 @@ Intelligently identifies and cleans up stale local git branches by analyzing mer
 - Do NOT delete any branches during this phase
 
 ### 4. Execute Deletions (Phase 2)
-- **SAFE-DELETE branches**: Delete using `~/.claude/delete-branches.sh branch1 branch2 ...`
+- **SAFE-DELETE branches**: Delete using `~/.claude/scripts/delete-branches.sh branch1 branch2 ...`
 - Pass ALL SAFE-DELETE branches to the script in a single command
 - **Current Branch Handling**: Special logic for currently checked out branch
   - Verify clean working directory or handle uncommitted changes
@@ -81,7 +81,7 @@ Intelligently identifies and cleans up stale local git branches by analyzing mer
 ### Critical Requirements
 - **Phase Separation**: Complete ALL non-default branch analysis before ANY deletions
 - **Parallel Analysis**: Use multiple Task tool calls in a single message for true parallel execution
-- **Single Deletion Command**: Use `~/.claude/delete-branches.sh` for all deletions
+- **Single Deletion Command**: Use `~/.claude/scripts/delete-branches.sh` for all deletions
 - **NO BASH FOR REPORTS**: NEVER use bash commands, multi-line scripts, or command output for report generation. The final report must be pure text output from Claude, not bash-generated content that gets truncated.
 - **Avoid Complex Grep**: Use simple `git branch` and filter branches programmatically in analysis logic rather than using grep with regex alternation patterns that trigger manual approval
 - **Comprehensive Detail**: Every non-default branch must be listed with full analysis
@@ -134,9 +134,9 @@ git branch --list && git branch --show-current
 
 ### Tools Used
 This command leverages:
-- **Analysis Script**: `~/.claude/analyze-git-branch.sh` for comprehensive branch data
+- **Analysis Script**: `~/.claude/scripts/analyze-git-branch.sh` for comprehensive branch data
 - **Cleanup Agent**: `git-branch-cleanup` for parallel analysis and intelligent categorization
-- **Deletion Script**: `~/.claude/delete-branches.sh` for safe branch deletion with logging
+- **Deletion Script**: `~/.claude/scripts/delete-branches.sh` for safe branch deletion with logging
 - **GitLab MCP Tools**: For merge request correlation and verification
 - **Project Context**: Reads CLAUDE.md for project-specific configuration
 
