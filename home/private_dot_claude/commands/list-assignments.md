@@ -57,6 +57,8 @@ To accomplish this task, Claude should:
      priority)
    - Include current "status" for each ticket
    - Show ticket summary/description content
+   - Display story points (when available) as "X points" format
+   - Show epic link (when available) as "Epic: TICKET-ID" format
 
 ### API Response Size Management
 
@@ -75,9 +77,11 @@ When retrieving assignments, Claude should:
 4. **Limit Non-Sprint Results**: Show maximum 5 non-sprint tickets (excluding
    completed ones)
 5. **Minimal Fields**: Only request essential fields: `["summary", "status",
-"issuetype", "priority", "created", "updated", "customfield_10018"]`
+"issuetype", "priority", "created", "updated", "customfield_10018", "customfield_10013", "customfield_10049"]`
 6. **Sprint Information**: Include sprint field (`customfield_10018`) to display
    sprint name or "Backlog" for non-sprint tickets
+7. **Story Points & Epic Info**: Include story points (`customfield_10049`) and epic 
+   link (`customfield_10013`) in ticket summaries for workload estimation and epic tracking
 
 ### Notes on Memory Management
 

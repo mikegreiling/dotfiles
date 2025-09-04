@@ -1,6 +1,7 @@
 # Claude Built-ins
 local
 ide
+plugins
 projects
 shell-snapshots
 statsig
