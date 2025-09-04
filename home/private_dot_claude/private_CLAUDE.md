@@ -213,7 +213,7 @@ This ID should be used when:
 - **Project ID**: `10059`
 - **Board ID**: `59`
 
-@bstock-current-sprint-cache.md
+@caches/bstock-current-sprint-cache.md
 
 ## Jira/GitLab ticket workflow
 

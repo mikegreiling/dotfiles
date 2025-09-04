@@ -5,3 +5,5 @@ Library
 
 key.txt.age
 .config/private_exports
+
+**/.DS_Store

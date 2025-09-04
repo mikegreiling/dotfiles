@@ -8,7 +8,7 @@ assignments.
 
 ## Caching Behavior
 
-- **Cache Duration**: Assignment data is cached for 48 hours in `~/.claude/bstock-current-sprint-cache.md`
+- **Cache Duration**: Assignment data is cached for 48 hours in `~/.claude/caches/bstock-current-sprint-cache.md`
 - **Cache Override**: Pass `force`, `refresh`, or `refetch` as `$ARGUMENTS` to bypass cache and fetch fresh data
 - **Cache Display**: When using cached data, show the timestamp of when data was last fetched
 
@@ -17,7 +17,7 @@ assignments.
 To accomplish this task, Claude should:
 
 1. **Check Cache First**:
-   - Read `~/.claude/bstock-current-sprint-cache.md` to check for cached assignment data
+   - Read `~/.claude/caches/bstock-current-sprint-cache.md` to check for cached assignment data
    - If `$ARGUMENTS` contains `force`, `refresh`, or `refetch`, skip cache and proceed to API calls
    - If cache exists and is less than 48 hours old, display cached results with timestamp
    - If cache is stale (>48 hours) or doesn't exist, proceed to API calls
@@ -28,7 +28,7 @@ To accomplish this task, Claude should:
 
 3. **Update Memory**: If active sprint is not in Claude's memory, or if the
    sprint information in Claude's memory is outdated, update
-   `~/.claude/bstock-current-sprint-cache.md` to retain this information (inform
+   `~/.claude/caches/bstock-current-sprint-cache.md` to retain this information (inform
    user of this action and make the change). If the cache file doesn't exist,
    create it.
 
@@ -42,7 +42,7 @@ To accomplish this task, Claude should:
    - Sort by `updated` descending to show most recently updated first
 
 6. **Cache Results**: After successful API retrieval, append assignment data to
-   `~/.claude/bstock-current-sprint-cache.md` with current timestamp for future
+   `~/.claude/caches/bstock-current-sprint-cache.md` with current timestamp for future
    48-hour cache period
 
 7. **Present Summary**: Display tickets with summaries, prioritized as follows:
@@ -85,6 +85,6 @@ When retrieving assignments, Claude should:
   current sprint in Claude's memory is past its end date, use this as a hint to
   validate these assumptions before proceeding.
 - My team's current sprint name, ID, and start/end dates SHOULD BE contained in
-  Claude's memory files, sourced from `~/.claude/bstock-current-sprint-cache.md`
+  Claude's memory files, sourced from `~/.claude/caches/bstock-current-sprint-cache.md`
 - If Claude's memory is outdated or references a closed sprint, update this file
   to include the now-current sprint.

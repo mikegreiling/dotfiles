@@ -176,7 +176,7 @@ This command leverages:
 - Status: Recent activity, unclear merge status - requires investigation
 
 🛡️ RECOVERY INFORMATION:
-- Recovery Log: ~/.claude/clean-branch-log.txt
+- Recovery Log: ~/.claude/logs/clean-branch-log.txt
 - All deleted branch SHAs preserved for emergency restoration
 - Use format: git checkout -b branch-name-recovery <SHA>
 ```

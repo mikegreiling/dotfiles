@@ -1,5 +1,13 @@
-# Ignore ephemeral log files but preserve directory structure
-logs/sessions/*/
-!logs/sessions/.keep
-logs/sessions/**/*.json
-logs/sessions/**/*.log
+# Claude Built-ins
+local
+ide
+projects
+shell-snapshots
+statsig
+todos
+.credentials.json
+settings.local.json
+
+# Custom Directories
+caches
+logs

@@ -3,7 +3,7 @@
 # delete-branches.sh - Safely delete git branches with logging
 # Usage: delete-branches.sh branch1 [branch2 ...]
 
-LOGFILE="$HOME/.claude/clean-branch-log.txt"
+LOGFILE="$HOME/.claude/logs/clean-branch-log.txt"
 REPO_PATH=$(pwd)
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 
