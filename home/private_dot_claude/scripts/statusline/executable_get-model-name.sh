@@ -19,13 +19,13 @@ case "$model_name" in
         echo "Sonnet 4 (1M)"
         ;;
     "Claude 3.5 Sonnet"*)
-        echo "Claude 3.5 Sonnet"
+        echo "Sonnet 3.5"
         ;;
     "Claude 3 Opus"*)
-        echo "Claude 3 Opus" 
+        echo "Opus 3" 
         ;;
     "Claude 3 Haiku"*)
-        echo "Claude 3 Haiku"
+        echo "Haiku 3"
         ;;
     *)
         # Default: use original name for unknown models
