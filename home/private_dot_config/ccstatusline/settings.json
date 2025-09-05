@@ -1,0 +1,85 @@
+{
+  "version": 3,
+  "lines": [
+    [
+      {
+        "id": "1",
+        "type": "custom-command",
+        "color": "blue",
+        "commandPath": "~/.claude/scripts/statusline/get-model-name.sh",
+        "preserveColors": false,
+        "timeout": 1000
+      },
+      {
+        "id": "1a",
+        "type": "custom-text",
+        "customText": " "
+      },
+      {
+        "id": "1b",
+        "type": "context-length",
+        "color": "brightBlack",
+        "rawValue": true
+      }
+    ],
+    [
+      {
+        "id": "3", 
+        "type": "custom-command",
+        "color": "yellow",
+        "commandPath": "~/.claude/scripts/statusline/get-jira-ticket.sh",
+        "preserveColors": false,
+        "timeout": 5000
+      },
+      {
+        "id": "4",
+        "type": "separator"
+      },
+      {
+        "id": "5",
+        "type": "custom-command",
+        "color": "green", 
+        "commandPath": "~/.claude/scripts/statusline/get-project-info.sh",
+        "preserveColors": false,
+        "timeout": 1000
+      },
+      {
+        "id": "6",
+        "type": "separator"
+      },
+      {
+        "id": "7",
+        "type": "custom-command",
+        "color": "cyan",
+        "commandPath": "~/.claude/scripts/statusline/format-path.sh",
+        "preserveColors": false,
+        "timeout": 1000
+      },
+      {
+        "id": "8", 
+        "type": "separator"
+      },
+      {
+        "id": "9",
+        "type": "custom-command",
+        "color": "magenta",
+        "commandPath": "~/.claude/scripts/statusline/get-git-status.sh", 
+        "preserveColors": false,
+        "timeout": 1000
+      }
+    ]
+  ],
+  "flexMode": "full",
+  "compactThreshold": 60,
+  "colorLevel": 2,
+  "inheritSeparatorColors": false,
+  "globalBold": false,
+  "powerline": {
+    "enabled": false,
+    "separators": ["\uE0B0"],
+    "separatorInvertBackground": [false],
+    "startCaps": [],
+    "endCaps": [],
+    "autoAlign": false
+  }
+}
