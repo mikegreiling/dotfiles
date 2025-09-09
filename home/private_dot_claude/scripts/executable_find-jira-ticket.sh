@@ -3,7 +3,10 @@
 # Jira Ticket Detection Script
 # Extracts JIRA ticket from Claude transcript file
 # 
-# Usage: ./find-jira-ticket.sh <transcript_file_path> [current_dir]
+# Usage: ./find-jira-ticket.sh [--limit N] <transcript_file_path> [current_dir]
+#
+# Options:
+#   --limit N    Process only the last N user prompts (default: 25)
 #
 # Priority:
 # 1. Most frequent JIRA pattern from user prompts
@@ -14,13 +17,18 @@
 find_jira_ticket() {
     local transcript_path="$1"
     local current_dir="$2"
+    local prompt_limit="$3"
     local jira_pattern='(SPR|MULA|TBD|ZRO|WRH|GLOB|BUGS)-[0-9]{1,5}'
     
     # First, try to extract JIRA patterns from user prompts in transcript
     if [[ -f "$transcript_path" ]]; then
         local user_jira_patterns=""
         
-        # Parse transcript and extract user message content
+        # Calculate approximate lines to tail based on prompt limit
+        # Estimate ~12 lines per user prompt (conservative estimate including tool calls, responses, etc.)
+        local tail_lines=$((prompt_limit * 12))
+        
+        # Parse transcript and extract user message content, limiting to recent lines
         while IFS= read -r line; do
             [[ -z "$line" ]] && continue
             
@@ -44,7 +52,7 @@ find_jira_ticket() {
                     user_jira_patterns+="$text_content "
                 fi
             fi
-        done < "$transcript_path"
+        done < <(tail -n "$tail_lines" "$transcript_path")
         
         # Find most frequent JIRA pattern from user messages
         if [[ -n "$user_jira_patterns" ]]; then
@@ -72,16 +80,46 @@ find_jira_ticket() {
     echo ""
 }
 
+# Parse command line arguments
+prompt_limit=25  # Default limit
+transcript_path=""
+current_dir=""
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --limit)
+            if [[ -n "$2" && "$2" =~ ^[0-9]+$ ]]; then
+                prompt_limit="$2"
+                shift 2
+            else
+                echo "Error: --limit requires a positive integer" >&2
+                exit 1
+            fi
+            ;;
+        *)
+            if [[ -z "$transcript_path" ]]; then
+                transcript_path="$1"
+            elif [[ -z "$current_dir" ]]; then
+                current_dir="$1"
+            else
+                echo "Error: Too many arguments" >&2
+                exit 1
+            fi
+            shift
+            ;;
+    esac
+done
+
 # Main script logic
-if [[ $# -lt 1 ]]; then
-    echo "Usage: $0 <transcript_file_path> [current_dir]" >&2
+if [[ -z "$transcript_path" ]]; then
+    echo "Usage: $0 [--limit N] <transcript_file_path> [current_dir]" >&2
+    echo "  --limit N: Process only the last N user prompts (default: 25)" >&2
     echo "  transcript_file_path: Path to Claude transcript file" >&2
     echo "  current_dir: Optional directory for git branch fallback (defaults to current working directory)" >&2
     exit 1
 fi
 
-transcript_path="$1"
-current_dir="${2:-$(pwd)}"
+current_dir="${current_dir:-$(pwd)}"
 
 # Check if transcript file exists
 if [[ ! -f "$transcript_path" ]]; then
@@ -96,5 +134,5 @@ if ! command -v jq >/dev/null 2>&1; then
 fi
 
 # Find and output the JIRA ticket
-ticket=$(find_jira_ticket "$transcript_path" "$current_dir")
+ticket=$(find_jira_ticket "$transcript_path" "$current_dir" "$prompt_limit")
 echo "$ticket"

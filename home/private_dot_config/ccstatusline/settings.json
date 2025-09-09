@@ -20,11 +20,32 @@
         "type": "context-length",
         "color": "brightBlack",
         "rawValue": true
+      },
+      {
+        "id": "c0ee6fe6-67d0-4977-901b-d8efb49f5336",
+        "type": "separator"
+      },
+      {
+        "id": "6759ef93-f461-4152-bb23-2bcdb2c28c9b",
+        "type": "session-cost",
+        "color": "brightRed"
+      },
+      {
+        "id": "session-separator",
+        "type": "separator"
+      },
+      {
+        "id": "session-id",
+        "type": "custom-command",
+        "color": "brightBlack",
+        "commandPath": "~/.claude/scripts/statusline/get-session-id.sh",
+        "preserveColors": false,
+        "timeout": 1000
       }
     ],
     [
       {
-        "id": "3", 
+        "id": "3",
         "type": "custom-command",
         "color": "yellow",
         "commandPath": "~/.claude/scripts/statusline/get-jira-ticket.sh",
@@ -38,7 +59,7 @@
       {
         "id": "5",
         "type": "custom-command",
-        "color": "green", 
+        "color": "green",
         "commandPath": "~/.claude/scripts/statusline/get-project-info.sh",
         "preserveColors": false,
         "timeout": 1000
@@ -56,14 +77,14 @@
         "timeout": 1000
       },
       {
-        "id": "8", 
+        "id": "8",
         "type": "separator"
       },
       {
         "id": "9",
         "type": "custom-command",
         "color": "magenta",
-        "commandPath": "~/.claude/scripts/statusline/get-git-status.sh", 
+        "commandPath": "~/.claude/scripts/statusline/get-git-status.sh",
         "preserveColors": false,
         "timeout": 1000
       }
@@ -76,8 +97,12 @@
   "globalBold": false,
   "powerline": {
     "enabled": false,
-    "separators": ["\uE0B0"],
-    "separatorInvertBackground": [false],
+    "separators": [
+      ""
+    ],
+    "separatorInvertBackground": [
+      false
+    ],
     "startCaps": [],
     "endCaps": [],
     "autoAlign": false
