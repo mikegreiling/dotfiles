@@ -51,6 +51,7 @@ several projects I commonly work within. Among them are:
 - `cs-portal` - nextjs portal for `/csportal/*` URLs
 - `seller-portal` - nextjs portal for `/seller/*` URLs
 - `home-portal` - nextjs portal for `/`, `/all-auctions/*`, and `/buy/*` URLs
+- `cops-portal` - nextjs portal for `/cops/*` URLs (Client Operations)
 
 - `fe-core` - a shared component and utility library published as an npm package
 - `fe-scripts` - a set of utility functions and help pages for bstock engineers
@@ -58,7 +59,7 @@ several projects I commonly work within. Among them are:
 
 - I have access to other projects which I have not checked out locally
 
-Whenever I refer to "my projects", I am usually referring to the four portals,
+Whenever I refer to "my projects", I am usually referring to the five portals,
 plus `fe-core`. So if I say, do X or Y in all of my projects, I mean to say that
 I'd like Claude to perform that action within the aforementioned projects'
 sub-directories.
