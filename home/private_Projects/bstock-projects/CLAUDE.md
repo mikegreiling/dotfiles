@@ -294,12 +294,6 @@ When creating a new branch:
   - If a Jira ticket does not yet exist, ask whether we should create one.
 - The full branch name should not exceed 42 characters.
 
-When pushing a branch:
-
-- Unless pormpted otherwise, use the `--no-verify` flag to bypass automated
-  linting. Linting should have already been done by Claude. If it has not, do
-  this manually when appropriate.
-
 After pushing the branch:
 
 - A GitLab merge request should be created for the branch in the appropriate
