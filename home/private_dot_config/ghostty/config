@@ -1,0 +1,4 @@
+theme = Catppuccin Mocha
+shell-integration-features = sudo
+keybind = shift+enter=text:\n
+
