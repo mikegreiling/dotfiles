@@ -4,12 +4,25 @@
 # Reads JSON from stdin and outputs formatted path
 # Usage: echo '{"workspace":{"current_dir":"/path/to/dir"}}' | ./format-path.sh
 
+# TEMPORARY DEBUG: Return the actual path to see if logic is working
+json_input=$(cat)
+current_dir=$(echo "$json_input" | jq -r '.workspace.current_dir')
+
+# Quick test - just return the path portion after fe-core
+if [[ "$current_dir" == "/Users/mike/Projects/bstock-projects/fe-core"/* ]]; then
+    relative_path="${current_dir#/Users/mike/Projects/bstock-projects/fe-core/}"
+    echo "$relative_path"
+else
+    # Return nothing for fe-core root
+    exit 0
+fi
+exit 0
+
 json_input=$(cat)
 current_dir=$(echo "$json_input" | jq -r '.workspace.current_dir')
 
 # Check if jq extraction succeeded
 if [[ "$current_dir" == "null" ]]; then
-    echo ""
     exit 0
 fi
 
@@ -63,4 +76,6 @@ format_path() {
 }
 
 formatted_path=$(format_path)
-echo "$formatted_path"
+if [[ -n "$formatted_path" ]]; then
+    echo "$formatted_path"
+fi
