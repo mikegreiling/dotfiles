@@ -54,6 +54,9 @@ fi
 export ASDF_CONFIG_FILE="${XDG_CONFIG_HOME}/asdf/asdfrc"
 export ASDF_NODEJS_LEGACY_FILE_DYNAMIC_STRATEGY=latest_installed
 
+# Cursor CLI: Bypass cursor-agent and use direct app execution
+export CURSOR_CLI_BLOCK_CURSOR_AGENT=true
+
 # Source private exports if they exist
 if [ -f "${XDG_CONFIG_HOME}/private_exports" ]; then
   source "${XDG_CONFIG_HOME}/private_exports";
