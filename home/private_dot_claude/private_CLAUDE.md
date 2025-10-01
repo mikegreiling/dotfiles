@@ -277,12 +277,17 @@ using MCP tools and suggest adding to context documents.
 
 ## MCP Tool Availability
 
-If I prompt you to utilize an MCP tool to accomplish a task (GitLab, Atlassian,
-or Context7 being common examples) and you DO NOT have these tools available,
-tell me this so I can fix them. DO NOT EVER fall back to attempting to use the
-GitLab or Atlassian APIs directly via `curl` other similar methods, and never
-rely on equivalent CLI tools like `gh` or `glab` unless I have explicitly
-instructed you to do so.
+**CRITICAL MCP CONNECTION REQUIREMENT**: If you are attempting to create, update, edit, or transition a Jira ticket AND you do not have access to Atlassian's MCP tools (such as `mcp__atlassian__createJiraIssue`, `mcp__atlassian__editJiraIssue`, `mcp__atlassian__transitionJiraIssue`, `mcp__atlassian__getJiraIssue`), then you MUST STOP WHAT YOU ARE DOING AND PROMPT THE USER TO FIX THE MCP CONNECTION instead of proceeding with manual alternatives.
+
+The same requirement applies to GitLab operations requiring MCP tools like `mcp__gitlab__create_merge_request`, `mcp__gitlab__get_merge_request`, etc.
+
+**DO NOT EVER:**
+- Fall back to manual ticket creation instructions
+- Use GitLab or Atlassian APIs directly via `curl` or similar methods
+- Rely on equivalent CLI tools like `gh` or `glab` unless explicitly instructed
+- Proceed with workflows that depend on MCP tools when they are unavailable
+
+**INSTEAD:** Immediately prompt the user to run `/mcp` to authenticate the required services before continuing with the requested workflow.
 
 ### Jira API Response Optimization
 

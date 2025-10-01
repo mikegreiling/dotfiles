@@ -267,8 +267,10 @@ Before planning workflows that use MCP tools, Claude MUST:
 
 1. **Test GitLab MCP availability**: `mcp__gitlab__search_repositories`
 2. **Test Atlassian MCP availability**: `mcp__atlassian__getVisibleJiraProjects`
-3. **If unavailable**: Prompt user to run `/mcp` command first
+3. **If unavailable**: IMMEDIATELY STOP and prompt user to run `/mcp` command first
 4. **Check token permissions**: GitLab may be read-only without `BSTOCK_GITLAB_TOKEN`
+
+**CRITICAL**: If any MCP tools required for the workflow are unavailable (especially Jira ticket operations like `mcp__atlassian__createJiraIssue`), Claude MUST NOT proceed with manual alternatives. Instead, Claude MUST prompt the user to authenticate MCP services first.
 
 ## Git source control workflows
 
@@ -507,6 +509,11 @@ Common API limitations:
 - **Sprint Assignment Format**: The `customfield_10018` (Sprint) field expects a direct number, not an array
   - ❌ Wrong: `{"customfield_10018": [2331]}`
   - ✅ Correct: `{"customfield_10018": 2331}`
+- **Story Points on Bug Issue Types**: The `customfield_10049` (Story Points) field cannot be set via API on Bug issue types in the SPR project
+  - ✅ Works: Story, Task, Epic issue types
+  - ❌ Fails: Bug issue type (returns "Bad Request")
+  - **Workaround**: Story points must be set manually in Jira UI for Bug tickets
+  - Note: This is a project configuration limitation where API permissions differ from UI permissions
 
 When a task cannot be accomplished due to API limitations:
 

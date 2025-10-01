@@ -15,6 +15,9 @@ fi
 
 # Format the model name for more concise display
 case "$model_name" in
+    "Sonnet 4.5 (with 1M token context)")
+        echo "Sonnet 4.5 (1M)"
+        ;;
     "Sonnet 4 (with 1M token context)")
         echo "Sonnet 4 (1M)"
         ;;
@@ -22,7 +25,7 @@ case "$model_name" in
         echo "Sonnet 3.5"
         ;;
     "Claude 3 Opus"*)
-        echo "Opus 3" 
+        echo "Opus 3"
         ;;
     "Claude 3 Haiku"*)
         echo "Haiku 3"
