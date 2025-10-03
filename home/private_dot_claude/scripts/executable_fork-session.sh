@@ -8,7 +8,7 @@ set -euo pipefail
 # Determine which command to use
 CLAUDE_BIN="$HOME/.claude/local/claude"
 if [[ "${1:-}" == "--mcp" ]]; then
-  COMMAND="$CLAUDE_BIN --strict-mcp-config --mcp-config ~/.claude/.mcp-bstock-chores.json"
+  COMMAND="$CLAUDE_BIN --strict-mcp-config --mcp-config $HOME/.claude/.mcp-bstock-chores.json"
   shift
 else
   COMMAND="$CLAUDE_BIN --strict-mcp-config"
