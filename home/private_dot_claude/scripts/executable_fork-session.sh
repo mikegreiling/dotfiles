@@ -55,8 +55,8 @@ FILENAME=$(basename "$MATCHED_FILE")
 if [[ "$FILENAME" =~ ([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}) ]]; then
   SESSION_ID="${BASH_REMATCH[1]}"
   echo "Found session: $SESSION_ID"
-  echo "Resuming with $COMMAND..."
-  exec "$COMMAND" --resume "$SESSION_ID"
+  echo "Resuming with claude..."
+  exec $COMMAND --resume "$SESSION_ID"
 else
   echo "Error: Could not extract session ID from filename: $FILENAME"
   exit 1
