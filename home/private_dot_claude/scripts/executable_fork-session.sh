@@ -6,11 +6,12 @@
 set -euo pipefail
 
 # Determine which command to use
+CLAUDE_BIN="$HOME/.claude/local/claude"
 if [[ "${1:-}" == "--mcp" ]]; then
-  COMMAND="claude --strict-mcp-config --mcp-config ~/.claude/.mcp-bstock-chores.json"
+  COMMAND="$CLAUDE_BIN --strict-mcp-config --mcp-config ~/.claude/.mcp-bstock-chores.json"
   shift
 else
-  COMMAND="claude --strict-mcp-config"
+  COMMAND="$CLAUDE_BIN --strict-mcp-config"
 fi
 
 # Check for hex substring argument
