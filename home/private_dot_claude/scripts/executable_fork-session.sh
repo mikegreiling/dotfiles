@@ -6,16 +6,17 @@
 set -euo pipefail
 
 # Determine which command to use
-COMMAND="claude"
 if [[ "${1:-}" == "--mcp" ]]; then
-  COMMAND="cldmcp"
+  COMMAND="claude --strict-mcp-config --mcp-config ~/.claude/.mcp-bstock-chores.json"
   shift
+else
+  COMMAND="claude --strict-mcp-config"
 fi
 
 # Check for hex substring argument
 if [[ $# -eq 0 ]]; then
   echo "Usage: $(basename "$0") [--mcp] <8-char-hex-substring>"
-  echo "  --mcp: Use 'cldmcp' instead of 'claude'"
+  echo "  --mcp: Use MCP configuration"
   exit 1
 fi
 
