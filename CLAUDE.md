@@ -53,7 +53,34 @@ git commit -m "Update CLAUDE.md"  # Commit
 git push                          # Push to remote
 ```
 
-### 5. Status Checking Protocol
+### 5. Claude's File Editing Workflow
+
+**CRITICAL**: When Claude needs to edit dotfiles managed by chezmoi, follow this exact workflow:
+
+1. **Edit files in the home directory FIRST** (e.g., `~/.config/tmux/tmux.conf`, NOT `~/.local/share/chezmoi/home/private_dot_config/tmux/tmux.conf`)
+2. **Use `chezmoi add` to sync changes** to the dotfiles repository
+3. **Commit the changes** to git if requested
+
+**NEVER**:
+- ❌ Edit files directly in `~/.local/share/chezmoi/home/`
+- ❌ Use `chezmoi apply` to copy chezmoi repo changes to home directory
+- ❌ Skip the `chezmoi add` step after editing home directory files
+
+**Example Workflow**:
+```bash
+# ✅ CORRECT: Edit home directory, then sync to dotfiles repo
+Edit(~/.config/tmux/tmux.conf)           # Edit the actual file
+chezmoi add ~/.config/tmux/tmux.conf     # Sync to dotfiles repo
+cd ~/.local/share/chezmoi && git add . && git commit -m "Update tmux config"
+
+# ❌ WRONG: Editing dotfiles repo directly
+Edit(~/.local/share/chezmoi/home/private_dot_config/tmux/tmux.conf)  # NO!
+chezmoi apply  # NO! This overwrites home directory
+```
+
+**Rationale**: The user prefers to maintain the home directory as the source of truth, with the dotfiles repository being a version-controlled copy. This workflow ensures that changes are made where they will take effect immediately, then synchronized to version control.
+
+### 6. Status Checking Protocol
 
 Before ANY chezmoi operation that could modify files:
 1. Run `chezmoi status` to see current state

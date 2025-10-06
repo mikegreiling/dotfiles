@@ -9,6 +9,7 @@ statsig
 todos
 .credentials.json
 settings.local.json
+history.jsonl
 
 # Custom Directories
 caches
