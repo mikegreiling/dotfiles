@@ -29,36 +29,70 @@ if [[ ! "$HEX_SUBSTRING" =~ ^[0-9a-f]{8,}$ ]]; then
   exit 1
 fi
 
-# Search for matching files in todos and history directories
-MATCHES=$(find ~/.claude/todos ~/.claude/history -type f -name "*${HEX_SUBSTRING}*.json" 2>/dev/null || true)
+# Function to extract session ID from filename
+extract_session_id() {
+  local filename="$1"
+  # Extract the first UUID (8-4-4-4-12 format) from the filename
+  # This handles both .jsonl files and -agent- suffixed todo files
+  if [[ "$filename" =~ ([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}) ]]; then
+    echo "${BASH_REMATCH[1]}"
+  fi
+}
 
-if [[ -z "$MATCHES" ]]; then
-  echo "Error: No session files found containing '${HEX_SUBSTRING}'"
-  exit 1
+# Step 1: Search project transcript files first (authoritative source)
+PROJECT_MATCHES=$(find ~/.claude/projects -type f -name "*${HEX_SUBSTRING}*.jsonl" 2>/dev/null || true)
+
+if [[ -n "$PROJECT_MATCHES" ]]; then
+  # Extract unique session IDs from project files
+  declare -A UNIQUE_SESSIONS
+  while IFS= read -r file; do
+    if [[ -n "$file" ]]; then
+      SESSION_ID=$(extract_session_id "$(basename "$file")")
+      if [[ -n "$SESSION_ID" ]]; then
+        UNIQUE_SESSIONS["$SESSION_ID"]=1
+      fi
+    fi
+  done <<< "$PROJECT_MATCHES"
+else
+  # Step 2: Fallback to todo files for newly-started sessions
+  TODO_MATCHES=$(find ~/.claude/todos -type f -name "*${HEX_SUBSTRING}*.json" 2>/dev/null || true)
+
+  if [[ -z "$TODO_MATCHES" ]]; then
+    echo "Error: No session files found containing '${HEX_SUBSTRING}'"
+    exit 1
+  fi
+
+  # Extract unique session IDs from todo files (ignoring -agent- suffixes)
+  declare -A UNIQUE_SESSIONS
+  while IFS= read -r file; do
+    if [[ -n "$file" ]]; then
+      SESSION_ID=$(extract_session_id "$(basename "$file")")
+      if [[ -n "$SESSION_ID" ]]; then
+        UNIQUE_SESSIONS["$SESSION_ID"]=1
+      fi
+    fi
+  done <<< "$TODO_MATCHES"
 fi
 
-# Count matches
-MATCH_COUNT=$(echo "$MATCHES" | wc -l | tr -d ' ')
+# Check how many unique sessions we found
+SESSION_COUNT=${#UNIQUE_SESSIONS[@]}
 
-if [[ "$MATCH_COUNT" -gt 1 ]]; then
-  echo "Error: Multiple sessions found matching '${HEX_SUBSTRING}':"
-  echo "$MATCHES"
+if [[ $SESSION_COUNT -eq 0 ]]; then
+  echo "Error: No valid session IDs could be extracted from matching files"
+  exit 1
+elif [[ $SESSION_COUNT -gt 1 ]]; then
+  echo "Error: Multiple unique sessions found matching '${HEX_SUBSTRING}':"
+  for session in "${!UNIQUE_SESSIONS[@]}"; do
+    echo "  - $session"
+  done
   echo ""
   echo "Please provide a longer substring to uniquely identify the session"
   exit 1
 fi
 
-# Extract session ID from filename
-MATCHED_FILE="$MATCHES"
-FILENAME=$(basename "$MATCHED_FILE")
-
-# Extract UUID pattern (8-4-4-4-12 format)
-if [[ "$FILENAME" =~ ([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}) ]]; then
-  SESSION_ID="${BASH_REMATCH[1]}"
+# Get the single session ID
+for SESSION_ID in "${!UNIQUE_SESSIONS[@]}"; do
   echo "Found session: $SESSION_ID"
   echo "Resuming with claude..."
   exec $COMMAND --resume "$SESSION_ID"
-else
-  echo "Error: Could not extract session ID from filename: $FILENAME"
-  exit 1
-fi
+done

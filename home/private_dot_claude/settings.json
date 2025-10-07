@@ -125,11 +125,13 @@
       "Bash(rm:*)"
     ]
   },
+  "model": "sonnet[1m]",
   "statusLine": {
     "type": "command",
     "command": "npx -y ccstatusline@latest",
     "padding": 0
   },
+  "alwaysThinkingEnabled": false,
   "feedbackSurveyState": {
     "lastShownTime": 1753997328049
   }

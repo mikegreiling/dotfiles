@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+# tmux-resurrect user options persistence - RESTORE
+#
+# Restores user options captured during save.
+# Invoked via: @resurrect-hook-pre-restore-pane-processes
+#
+# Hook Timing Rationale:
+#   This hook runs AFTER panes/windows are created but BEFORE processes start.
+#
+#   Why this matters:
+#   1. Panes must exist for us to set options on them
+#   2. Metadata must be available before processes that depend on it start
+#      Example: Claude Code reading @claude_session when it launches
+#   3. Uses documented API (vs undocumented @resurrect-hook-post-restore-all)
+#
+# Safety Guarantees:
+#   - NEVER overwrites existing user option values
+#   - Validates pane identity using CWD before restoration
+#   - Continues on individual errors (doesn't abort entire restoration)
+#   - Silently skips panes that don't exist or have wrong CWD
+#
+# Restoration Logic:
+#   For each pane in sidecar file:
+#     1. Check if pane exists at session:window.pane index
+#     2. Check if user option already exists (skip if yes - never overwrite)
+#     3. Validate CWD matches saved value (skip if no - wrong pane due to renumbering)
+#     4. Set user option (ignore errors, continue to next)
+#
+# This mirrors tmux-resurrect's behavior: restore to panes it creates/modifies,
+# skip panes that already existed or were renumbered.
+
+set -euo pipefail
+
+res_dir="$(tmux show -gv @resurrect-dir 2>/dev/null || echo ~/.tmux/resurrect)"
+state_file="$(readlink -f "${res_dir}/last" 2>/dev/null || true)"
+[ -n "${state_file}" ] || exit 0
+
+sidecar="${state_file//resurrect/useropts}.tsv"
+[ -f "${sidecar}" ] || exit 0
+
+# Base64 decode (portable macOS/Linux)
+b64d() { printf '%s' "$1" | base64 -D 2>/dev/null || printf '%s' "$1" | base64 -d; }
+
+while IFS=$'\t' read -r scope sess win pane key vb64 cwd; do
+  val="$(b64d "${vb64}" || true)"
+
+  case "${scope}" in
+    server)
+      # Set server-level option (ignore errors)
+      tmux set-option -gsq "${key}" "${val}" 2>/dev/null || true
+      ;;
+
+    session)
+      # Set session-level option (ignore errors)
+      tmux set-option -sq -t "${sess}" "${key}" "${val}" 2>/dev/null || true
+      ;;
+
+    window)
+      # Set window-level option (ignore errors)
+      tmux set-option -swq -t "${sess}:${win}" "${key}" "${val}" 2>/dev/null || true
+      ;;
+
+    pane)
+      # Pane-level options require extra validation
+      target="${sess}:${win}.${pane}"
+
+      # 1. Check if pane exists
+      if ! tmux list-panes -t "${target}" >/dev/null 2>&1; then
+        continue  # Pane doesn't exist, skip silently
+      fi
+
+      # 2. Check if user option already exists (NEVER OVERWRITE)
+      existing="$(tmux show -pqv -t "${target}" "${key}" 2>/dev/null || true)"
+      if [ -n "${existing}" ]; then
+        continue  # Skip - pane already has this option set
+      fi
+
+      # 3. Validate pane identity using CWD (skip if '-' which means no CWD was saved)
+      if [ "${cwd}" != "-" ]; then
+        current_cwd="$(tmux display -pt "${target}" -F '#{pane_current_path}' 2>/dev/null || true)"
+        if [ "${current_cwd}" != "${cwd}" ]; then
+          continue  # Skip - wrong pane (likely renumbering issue)
+        fi
+      fi
+
+      # 4. Set user option (ignore errors, continue on failure)
+      tmux set-option -pq -t "${target}" "${key}" "${val}" 2>/dev/null || true
+      ;;
+  esac
+done < "${sidecar}"

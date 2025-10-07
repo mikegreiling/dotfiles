@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+# tmux-resurrect user options persistence - SAVE
+#
+# Captures user-defined tmux options (@*) during resurrect save.
+# Invoked via: @resurrect-hook-post-save-layout
+#
+# Whitelist configuration supports glob patterns for matching user option keys.
+# Patterns are matched against key names WITHOUT the @ prefix.
+#
+# Glob pattern syntax:
+#   *  → matches any sequence of characters
+#   ?  → matches exactly one character
+#
+# Examples:
+#   'pane_label'      → matches @pane_label exactly
+#   'meta.*'          → matches @meta.foo, @meta.bar, @meta.anything
+#   'foo?'            → matches @foox, @fooy, but NOT @foobar
+#   'claude_*'        → matches @claude_session, @claude_id, etc.
+#
+# Configuration in ~/.config/tmux/tmux.conf:
+#   set -g @resurrect-useropts-whitelist 'pane_label,claude_session,meta.*'
+#
+# Output format (TSV):
+#   scope    session    window    pane    key           value_b64    cwd
+#   pane     main       1         0       @pane_label   dmFsdWU=     /projects/foo
+#
+# The CWD (current working directory) is included for validation during restore
+# to detect pane renumbering issues and ensure metadata is restored to the
+# correct pane.
+
+set -euo pipefail
+
+# Resolve snapshot file path:
+state_file="${1:-}"
+res_dir="$(tmux show -gv @resurrect-dir 2>/dev/null || echo ~/.tmux/resurrect)"
+if [ -z "${state_file}" ] || [ ! -f "${state_file}" ]; then
+  state_file="$(readlink -f "${res_dir}/last" 2>/dev/null || true)"
+fi
+[ -n "${state_file}" ] || exit 0
+
+dir="$(dirname "${state_file}")"
+base="$(basename "${state_file}")"
+sidecar="${dir}/${base//resurrect/useropts}.tsv"
+: > "${sidecar}"
+
+# Whitelist (comma/space/semicolon separated); patterns support * and ?
+wl_raw="$(tmux show -gv @resurrect-useropts-whitelist 2>/dev/null || true)"
+[ -n "${wl_raw// /}" ] || exit 0
+wl="$(printf '%s' "${wl_raw}" | tr ',;' ' ' | tr -s ' ')"
+
+# Build a single regex from glob patterns: * -> .*, ? -> .
+build_rx() {
+  local rx='' esc
+  for pat in $wl; do
+    # escape regex metachars except * and ?
+    esc="$(printf '%s' "$pat" | sed -E \
+      -e 's/\\/\\\\/g' \
+      -e 's/([.^$[\\](){\}+|])/\\\1/g' \
+      -e 's/\*/.*/g' \
+      -e 's/\?/./g')"
+    rx="${rx:+${rx}|}(${esc})"
+  done
+  printf '^(%s)$' "${rx}"
+}
+RX="$(build_rx)"
+
+# Base64 helpers (portable macOS/Linux)
+b64() { printf '%s' "$1" | base64 | tr -d '\n'; }
+
+persist_filtered() {
+  scope="$1"; shift
+  tmux show-options "$@" 2>/dev/null \
+  | awk -v RX="$RX" -v SCOPE="$scope" '
+      # Lines look like: @key <value...>
+      /^@/ {
+        key=$1; $1=""; sub(/^ /,"");
+        kNoAt=substr(key,2);
+        if (kNoAt ~ RX) {
+          printf "%s\t%s\t%s\n", SCOPE, key, $0
+        }
+      }'
+}
+
+# SERVER
+persist_filtered "server\t-\t-\t-" -s \
+| while IFS=$'\t' read -r scope key val; do
+    printf '%s\t%s\t-\n' "${scope}" "$(b64 "${val}")" >> "${sidecar}"
+  done
+
+# SESSIONS
+while read -r s; do
+  persist_filtered "session\t${s}\t-\t-" -t "${s}" \
+  | while IFS=$'\t' read -r scope key val; do
+      printf '%s\t%s\t-\n' "${scope}" "$(b64 "${val}")" >> "${sidecar}"
+    done
+done < <(tmux list-sessions -F '#{session_name}')
+
+# WINDOWS
+while IFS=$'\t' read -r s w; do
+  persist_filtered "window\t${s}\t${w}\t-" -w -t "${s}:${w}" \
+  | while IFS=$'\t' read -r scope key val; do
+      printf '%s\t%s\t-\n' "${scope}" "$(b64 "${val}")" >> "${sidecar}"
+    done
+done < <(tmux list-windows -a -F '#{session_name}	#{window_index}')
+
+# PANES (with CWD for validation)
+while IFS=$'\t' read -r s w p pid; do
+  cwd="$(tmux display -pt "${pid}" -F '#{pane_current_path}' 2>/dev/null || echo '-')"
+  persist_filtered "pane\t${s}\t${w}\t${p}" -p -t "${pid}" \
+  | while IFS=$'\t' read -r scope key val; do
+      printf '%s\t%s\t%s\n' "${scope}" "$(b64 "${val}")" "${cwd}" >> "${sidecar}"
+    done
+done < <(tmux list-panes -a -F '#{session_name}	#{window_index}	#{pane_index}	#{pane_id}')
