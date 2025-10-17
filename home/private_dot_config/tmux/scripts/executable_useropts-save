@@ -30,9 +30,9 @@
 
 set -euo pipefail
 
-# Resolve snapshot file path:
+# Resolve snapshot file path (matching tmux-resurrect's XDG-aware default):
 state_file="${1:-}"
-res_dir="$(tmux show -gv @resurrect-dir 2>/dev/null || echo ~/.tmux/resurrect)"
+res_dir="$(tmux show -gv @resurrect-dir 2>/dev/null || echo "${XDG_DATA_HOME:-$HOME/.local/share}/tmux/resurrect")"
 if [ -z "${state_file}" ] || [ ! -f "${state_file}" ]; then
   state_file="$(readlink -f "${res_dir}/last" 2>/dev/null || true)"
 fi
@@ -40,7 +40,7 @@ fi
 
 dir="$(dirname "${state_file}")"
 base="$(basename "${state_file}")"
-sidecar="${dir}/${base//resurrect/useropts}.tsv"
+sidecar="${dir}/${base%.txt}.useropts.tsv"
 : > "${sidecar}"
 
 # Whitelist (comma/space/semicolon separated); patterns support * and ?
@@ -111,3 +111,27 @@ while IFS=$'\t' read -r s w p pid; do
       printf '%s\t%s\t%s\n' "${scope}" "$(b64 "${val}")" "${cwd}" >> "${sidecar}"
     done
 done < <(tmux list-panes -a -F '#{session_name}	#{window_index}	#{pane_index}	#{pane_id}')
+
+# Deduplication: compare with last saved useropts
+last_sidecar="${res_dir}/last.useropts.tsv"
+if [ -f "$last_sidecar" ] && cmp -s "$sidecar" "$last_sidecar"; then
+  rm "$sidecar"  # Identical to last save, remove duplicate
+else
+  # Different from last, update symlink
+  ln -sf "$(basename "$sidecar")" "$last_sidecar"
+fi
+
+# Cleanup old useropts files (matching tmux-resurrect retention policy)
+remove_old_useropts() {
+  local delete_after="$(tmux show -gv @resurrect-save-backup-after 2>/dev/null || echo 30)"
+  local -a files
+  # Get all useropts files, skip first 5 (keep minimum)
+  files=($(ls -t "${res_dir}"/tmux_resurrect_*.useropts.tsv 2>/dev/null | tail -n +6))
+  # Delete files older than retention period
+  [[ ${#files[@]} -eq 0 ]] || \
+    find "${files[@]}" -type f -mtime "+${delete_after}" -exec rm "{}" \; 2>/dev/null
+}
+remove_old_useropts
+
+# Remove old-format files (backward compatibility cleanup)
+rm -f "${res_dir}"/tmux_useropts_*.txt.tsv 2>/dev/null

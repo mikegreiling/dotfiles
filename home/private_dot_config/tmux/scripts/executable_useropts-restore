@@ -31,12 +31,52 @@
 
 set -euo pipefail
 
-res_dir="$(tmux show -gv @resurrect-dir 2>/dev/null || echo ~/.tmux/resurrect)"
+# Match tmux-resurrect's XDG-aware default directory:
+res_dir="$(tmux show -gv @resurrect-dir 2>/dev/null || echo "${XDG_DATA_HOME:-$HOME/.local/share}/tmux/resurrect")"
 state_file="$(readlink -f "${res_dir}/last" 2>/dev/null || true)"
 [ -n "${state_file}" ] || exit 0
 
-sidecar="${state_file//resurrect/useropts}.tsv"
-[ -f "${sidecar}" ] || exit 0
+# Smart pairing: find matching useropts file for this resurrect snapshot
+find_matching_useropts() {
+  local resurrect_file="$1"
+  local resurrect_timestamp=$(echo "$resurrect_file" | grep -oE '[0-9]{8}T[0-9]{6}')
+  local res_dir=$(dirname "$resurrect_file")
+
+  # Step 1: Try exact timestamp match
+  local exact="${res_dir}/tmux_resurrect_${resurrect_timestamp}.useropts.tsv"
+  [ -f "$exact" ] && echo "$exact" && return 0
+
+  # Step 2: Search forward (prefer newer - deduplicated resurrect scenario)
+  while read -r newer_useropts; do
+    local ts=$(echo "$newer_useropts" | grep -oE '[0-9]{8}T[0-9]{6}')
+    local corresponding_resurrect="${res_dir}/tmux_resurrect_${ts}.txt"
+    if [ ! -f "$corresponding_resurrect" ]; then
+      # No matching resurrect = resurrect was deduplicated
+      echo "$newer_useropts"
+      return 0
+    fi
+  done < <(ls -1 "${res_dir}"/tmux_resurrect_*.useropts.tsv 2>/dev/null | \
+           awk -F'[_T]' -v target="${resurrect_timestamp}" \
+           '$3$4 > target' | sort)
+
+  # Step 3: Search backward (deduplicated useropts scenario)
+  while read -r older_useropts; do
+    local ts=$(echo "$older_useropts" | grep -oE '[0-9]{8}T[0-9]{6}')
+    local corresponding_resurrect="${res_dir}/tmux_resurrect_${ts}.txt"
+    if [ ! -f "$corresponding_resurrect" ]; then
+      # No matching resurrect = useropts was deduplicated
+      echo "$older_useropts"
+      return 0
+    fi
+  done < <(ls -1 "${res_dir}"/tmux_resurrect_*.useropts.tsv 2>/dev/null | \
+           awk -F'[_T]' -v target="${resurrect_timestamp}" \
+           '$3$4 < target' | sort -r)
+
+  return 1  # No valid pairing found
+}
+
+sidecar=$(find_matching_useropts "$state_file")
+[ -n "$sidecar" ] && [ -f "$sidecar" ] || exit 0
 
 # Base64 decode (portable macOS/Linux)
 b64d() { printf '%s' "$1" | base64 -D 2>/dev/null || printf '%s' "$1" | base64 -d; }
