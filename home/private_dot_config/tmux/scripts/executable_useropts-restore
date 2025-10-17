@@ -28,6 +28,13 @@
 #
 # This mirrors tmux-resurrect's behavior: restore to panes it creates/modifies,
 # skip panes that already existed or were renumbered.
+#
+# Expected TSV format (7 tab-separated fields per line):
+#   scope session window pane key value_b64 cwd
+#
+#   Example: pane	main	1	0	@claude_session	dGVzdDEyMw==	/Users/mike/projects
+#
+# See useropts-save script header for complete format documentation.
 
 set -euo pipefail
 

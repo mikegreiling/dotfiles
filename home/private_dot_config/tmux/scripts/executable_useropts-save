@@ -20,13 +20,21 @@
 # Configuration in ~/.config/tmux/tmux.conf:
 #   set -g @resurrect-useropts-whitelist 'pane_label,claude_session,meta.*'
 #
-# Output format (TSV):
-#   scope    session    window    pane    key           value_b64    cwd
-#   pane     main       1         0       @pane_label   dmFsdWU=     /projects/foo
+# Output format (TSV) - 7 tab-separated fields:
+#   Field 1: scope       - "server", "session", "window", or "pane"
+#   Field 2: session     - Session name (or "-" for server scope)
+#   Field 3: window      - Window index (or "-" for non-window scopes)
+#   Field 4: pane        - Pane index (or "-" for non-pane scopes)
+#   Field 5: key         - User option name (with @ prefix)
+#   Field 6: value_b64   - Base64-encoded option value
+#   Field 7: cwd         - Current working directory (pane only, "-" otherwise)
 #
-# The CWD (current working directory) is included for validation during restore
-# to detect pane renumbering issues and ensure metadata is restored to the
-# correct pane.
+# Example lines:
+#   pane	main	1	0	@claude_session	dGVzdDEyMw==	/Users/mike/projects
+#   session	main	-	-	@meta.color	Ymx1ZQ==	-
+#
+# The CWD field enables validation during restore to detect pane renumbering
+# issues and ensure metadata is restored to the correct pane.
 
 set -euo pipefail
 
@@ -83,23 +91,23 @@ persist_filtered() {
 
 # SERVER
 persist_filtered "server\t-\t-\t-" -s \
-| while IFS=$'\t' read -r scope key val; do
-    printf '%s\t%s\t-\n' "${scope}" "$(b64 "${val}")" >> "${sidecar}"
+| while IFS=$'\t' read -r scope_type sess win pane key val; do
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t-\n' "server" "${sess}" "${win}" "${pane}" "${key}" "$(b64 "${val}")" >> "${sidecar}"
   done
 
 # SESSIONS
 while read -r s; do
   persist_filtered "session\t${s}\t-\t-" -t "${s}" \
-  | while IFS=$'\t' read -r scope key val; do
-      printf '%s\t%s\t-\n' "${scope}" "$(b64 "${val}")" >> "${sidecar}"
+  | while IFS=$'\t' read -r scope_type sess win pane key val; do
+      printf '%s\t%s\t%s\t%s\t%s\t%s\t-\n' "session" "${sess}" "${win}" "${pane}" "${key}" "$(b64 "${val}")" >> "${sidecar}"
     done
 done < <(tmux list-sessions -F '#{session_name}')
 
 # WINDOWS
 while IFS=$'\t' read -r s w; do
   persist_filtered "window\t${s}\t${w}\t-" -w -t "${s}:${w}" \
-  | while IFS=$'\t' read -r scope key val; do
-      printf '%s\t%s\t-\n' "${scope}" "$(b64 "${val}")" >> "${sidecar}"
+  | while IFS=$'\t' read -r scope_type sess win pane key val; do
+      printf '%s\t%s\t%s\t%s\t%s\t%s\t-\n' "window" "${sess}" "${win}" "${pane}" "${key}" "$(b64 "${val}")" >> "${sidecar}"
     done
 done < <(tmux list-windows -a -F '#{session_name}	#{window_index}')
 
@@ -107,8 +115,8 @@ done < <(tmux list-windows -a -F '#{session_name}	#{window_index}')
 while IFS=$'\t' read -r s w p pid; do
   cwd="$(tmux display -pt "${pid}" -F '#{pane_current_path}' 2>/dev/null || echo '-')"
   persist_filtered "pane\t${s}\t${w}\t${p}" -p -t "${pid}" \
-  | while IFS=$'\t' read -r scope key val; do
-      printf '%s\t%s\t%s\n' "${scope}" "$(b64 "${val}")" "${cwd}" >> "${sidecar}"
+  | while IFS=$'\t' read -r scope_type sess win pane_idx key val; do
+      printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "pane" "${sess}" "${win}" "${pane_idx}" "${key}" "$(b64 "${val}")" "${cwd}" >> "${sidecar}"
     done
 done < <(tmux list-panes -a -F '#{session_name}	#{window_index}	#{pane_index}	#{pane_id}')
 
@@ -132,6 +140,3 @@ remove_old_useropts() {
     find "${files[@]}" -type f -mtime "+${delete_after}" -exec rm "{}" \; 2>/dev/null
 }
 remove_old_useropts
-
-# Remove old-format files (backward compatibility cleanup)
-rm -f "${res_dir}"/tmux_useropts_*.txt.tsv 2>/dev/null
