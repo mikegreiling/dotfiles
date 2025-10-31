@@ -29,6 +29,17 @@ about potential blockers.
 **IMPORTANT**: `chezmoi` should NEVER be used at all whatsoever without first
 reading the comprehensive guidelines in `~/.local/share/chezmoi/CLAUDE.md`.
 
+### Chezmoi Workflow - Test Before Committing
+
+**DO NOT EDIT CHEZMOI FILES DIRECTLY**. Instead, follow this workflow:
+
+1. **Make changes directly in your user directory** (e.g., `~/.config/`, `~/.bashrc`, etc.)
+2. **Test and validate the changes** work as intended
+3. **Use `chezmoi add <file>`** to persist validated changes to the dotfiles repository
+4. **Commit the changes** to git
+
+This ensures that all changes are tested before being stored in version control and prevents broken configurations from being committed.
+
 ## Bash/terminal command quirks
 
 Claude Code will block Claude from executing `cd` to directories that I have not
@@ -207,7 +218,13 @@ This ID should be used when:
 - Filtering tickets by assignee
 - Creating tickets with me as the creator
 
-### Team Sprinters (SPR) Project Details
+### Foundations Pod (FP) Project Details (Primary Team)
+
+- **Project Key**: `FP`
+- **Project ID**: `10200`
+- **Board ID**: `316`
+
+### Team Sprinters (SPR) Project Details (Former Team)
 
 - **Project Key**: `SPR`
 - **Project ID**: `10059`
@@ -224,14 +241,14 @@ associated with it. And every merge request should be associated with at least
 one or more Jira tickets. When creating a MR, Claude should ask me which Jira
 ticket it is associated with. Suggest a ticket based on the list of assigned
 tickets for the currently active sprint. Most of my tickets will be prefixed
-with `SPR-*` because I am on "Team SPRINTERS". If no existing ticket matches the
+with `FP-*` because I am on "Foundations Pod" team. If no existing ticket matches the
 work being done on the current branch Claude can create a new Jira ticket within
-Team SPRINTERS, give it an appropriate description, assign it to me, and move it
+Foundations Pod, give it an appropriate description, assign it to me, and move it
 into the currently active sprint. Ask for verification before doing this.
 
 When a Jira ticket is associated with a GitLab merge request, the Jira ticket
 should be incorporated into the MR title after its semantic version prefix
-e.g. `MINOR: SPR-2019 Fix FooBar Component`.
+e.g. `MINOR: FP-79 Fix FooBar Component`.
 
 ### Marking a Jira ticket as "complete".
 
