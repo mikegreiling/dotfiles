@@ -124,14 +124,14 @@
       "Bash(rm:*)"
     ]
   },
-  "model": "haiku",
+  "model": "sonnet[1m]",
   "hooks": {
     "SessionStart": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "sh -c 'id=$(jq -r \".session_id\"); [ -n \"$TMUX\" ] && tmux set-option -p @meta.claude.session_id \"$id\" && tmux set-option -p @meta.claude.session_id_set_on \"SessionStart\" && tmux set-option -p @meta.claude.status \"running\" || exit 0'"
+            "command": "sh -c 'id=$(jq -r \".session_id\"); [ -n \"$TMUX\" ] && tmux set-option -p @meta.claude.session_id \"$id\" && tmux set-option -p @meta.claude.session_id_set_on \"SessionStart\" && tmux set-option -p @meta.claude.status \"stopped\" || exit 0'"
           }
         ]
       }

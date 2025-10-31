@@ -14,7 +14,11 @@ Claude Code sessions store three tmux pane user options under the `@meta.claude.
 Sets all three values:
 - `session_id` = current session UUID
 - `session_id_set_on` = "SessionStart"
-- `status` = "running"
+- `status` = "stopped"
+
+**Why SessionStart sets status="stopped"**: Most Claude sessions start by awaiting the user's first prompt. Setting status to "stopped" at SessionStart correctly reflects this typical state.
+
+**Known Edge Case**: When passing an initial prompt to the `claude` command (e.g., `claude "explain this code"`), Claude immediately begins processing without awaiting input. In this case, status will briefly show "stopped" until the first Stop hook fires. This is a rare use case and the brief incorrect state is acceptable. A future refinement could detect the presence of an initial prompt argument, but this adds complexity for minimal benefit.
 
 ### Stop
 Sets all three values:
