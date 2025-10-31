@@ -131,7 +131,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh -c 'id=$(jq -r \".session_id\"); [ -n \"$TMUX\" ] && tmux set-option -p @claude_session \"$id\" && tmux set-option -p @claude_session_set_on \"SessionStart\" || exit 0'"
+            "command": "sh -c 'id=$(jq -r \".session_id\"); [ -n \"$TMUX\" ] && tmux set-option -p @meta.claude.session_id \"$id\" && tmux set-option -p @meta.claude.session_id_set_on \"SessionStart\" && tmux set-option -p @meta.claude.status \"running\" || exit 0'"
           }
         ]
       }
@@ -141,7 +141,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh -c 'id=$(jq -r \".session_id\"); [ -n \"$TMUX\" ] && tmux set-option -p @claude_session \"$id\" && tmux set-option -p @claude_session_set_on \"SessionEnd\" && tmux set-option -pu @claude_awaiting_input || exit 0'"
+            "command": "sh -c 'id=$(jq -r \".session_id\"); [ -n \"$TMUX\" ] && tmux set-option -p @meta.claude.session_id \"$id\" && tmux set-option -p @meta.claude.session_id_set_on \"SessionEnd\" && tmux set-option -pu @meta.claude.status || exit 0'"
           }
         ]
       }
@@ -151,7 +151,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh -c 'id=$(jq -r \".session_id\"); [ -n \"$TMUX\" ] && tmux set-option -p @claude_session \"$id\" && tmux set-option -p @claude_session_set_on \"Stop\" && tmux set-option -p @claude_awaiting_input \"1\" || exit 0'"
+            "command": "sh -c 'id=$(jq -r \".session_id\"); [ -n \"$TMUX\" ] && tmux set-option -p @meta.claude.session_id \"$id\" && tmux set-option -p @meta.claude.session_id_set_on \"Stop\" && tmux set-option -p @meta.claude.status \"stopped\" || exit 0'"
           }
         ]
       }
@@ -161,7 +161,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh -c '[ -n \"$TMUX\" ] && tmux set-option -pu @claude_awaiting_input || exit 0'"
+            "command": "sh -c 'id=$(jq -r \".session_id\"); [ -n \"$TMUX\" ] && tmux set-option -p @meta.claude.session_id \"$id\" && tmux set-option -p @meta.claude.session_id_set_on \"UserPromptSubmit\" && tmux set-option -p @meta.claude.status \"running\" || exit 0'"
           }
         ]
       }
