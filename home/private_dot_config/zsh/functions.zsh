@@ -10,3 +10,28 @@ refresh-prompt() {
     p10k display -r
   }
 }
+
+# Display tmux user options (@meta.claude.*) for all panes in current window
+printmeta() {
+  local current_pane="$TMUX_PANE"
+
+  tmux list-panes -F "#{pane_id}:#{pane_title}" | while IFS=: read -r pane_id pane_title; do
+    local is_current=""
+    if [ "$pane_id" = "$current_pane" ]; then
+      is_current=" (CURRENT)"
+    fi
+
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "Pane: $pane_id$is_current"
+    echo "Label: $pane_title"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+    local user_opts=$(tmux show-options -p -t "$pane_id" 2>/dev/null | grep "^@")
+    if [ -n "$user_opts" ]; then
+      echo "$user_opts"
+    else
+      echo "(no user options set)"
+    fi
+    echo ""
+  done
+}
