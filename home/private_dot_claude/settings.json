@@ -141,7 +141,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh -c 'id=$(jq -r \".session_id\"); [ -n \"$TMUX\" ] && tmux set-option -p @claude_session \"$id\" && tmux set-option -p @claude_session_set_on \"SessionEnd\" || exit 0'"
+            "command": "sh -c 'id=$(jq -r \".session_id\"); [ -n \"$TMUX\" ] && tmux set-option -p @claude_session \"$id\" && tmux set-option -p @claude_session_set_on \"SessionEnd\" && tmux set-option -pu @claude_awaiting_input || exit 0'"
           }
         ]
       }
