@@ -530,6 +530,9 @@ Jira tickets are formatted with 2-4 letters matching the project, a dash, and a
 
 #### Common Jira Projects
 
+- **FP** (Foundations Pod)
+- **BP** (Buyer Pod)
+- **SP** (Seller Pod)
 - **SPR** (Team Sprinters)
 - **MULA** (Team MULA)
 - **TBD** (Team TBD)
@@ -581,7 +584,7 @@ Jira ticket titles should follow these formatting patterns observed in the Optim
 
 Tickets must go through a specific set of status "transitions" to ultimately get
 to their "completed" (Done) state. What follows is the normal sequence of status
-values and transitions for tickets in the following projects: `SPR`, `MULA`,
+values and transitions for tickets in the following projects: `FP`, `SPR`, `MULA`,
 `TBD`, `ZRO`, `WRH`, `GLOB`. Other projects (like `BUGS`) follow completely
 different statuses and transition patterns.
 
