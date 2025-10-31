@@ -18,7 +18,7 @@ find_jira_ticket() {
     local transcript_path="$1"
     local current_dir="$2"
     local prompt_limit="$3"
-    local jira_pattern='(SPR|MULA|TBD|ZRO|WRH|GLOB|BUGS)-[0-9]{1,5}'
+    local jira_pattern='(FP|BP|SP|SPR|MULA|TBD|ZRO|WRH|GLOB|BUGS)-[0-9]{1,5}'
     
     # First, try to extract JIRA patterns from user prompts in transcript
     if [[ -f "$transcript_path" ]]; then
