@@ -1,7 +1,6 @@
 {
   "env": {
-    "PINENTRY_USER_DATA": "claude-code",
-    "HUSKY": "0"
+    "PINENTRY_USER_DATA": "claude-code"
   },
   "permissions": {
     "allow": [
@@ -125,14 +124,46 @@
       "Bash(rm:*)"
     ]
   },
-  "model": "sonnet[1m]",
+  "model": "haiku",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'id=$(jq -r \".session_id\"); [ -n \"$TMUX\" ] && tmux set-option -p @claude_session \"$id\" && tmux set-option -p @claude_session_set_on \"SessionStart\" || exit 0'"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'id=$(jq -r \".session_id\"); [ -n \"$TMUX\" ] && tmux set-option -p @claude_session \"$id\" && tmux set-option -p @claude_session_set_on \"SessionEnd\" || exit 0'"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'id=$(jq -r \".session_id\"); [ -n \"$TMUX\" ] && tmux set-option -p @claude_session \"$id\" && tmux set-option -p @claude_session_set_on \"Stop\" || exit 0'"
+          }
+        ]
+      }
+    ]
+  },
   "statusLine": {
     "type": "command",
     "command": "npx -y ccstatusline@latest",
     "padding": 0
   },
-  "alwaysThinkingEnabled": false,
+  "alwaysThinkingEnabled": true,
   "feedbackSurveyState": {
-    "lastShownTime": 1753997328049
+    "lastShownTime": 1953997328049
   }
 }
