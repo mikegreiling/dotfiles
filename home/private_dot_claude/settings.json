@@ -124,14 +124,13 @@
       "Bash(rm:*)"
     ]
   },
-  "model": "sonnet[1m]",
   "hooks": {
     "SessionStart": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "sh -c 'id=$(jq -r \".session_id\"); [ -n \"$TMUX\" ] && tmux set-option -p @meta.claude.session_id \"$id\" && tmux set-option -p @meta.claude.session_id_set_on \"SessionStart\" && tmux set-option -p @meta.claude.status \"stopped\" || exit 0'"
+            "command": "sh -c 'id=$(jq -r \".session_id\"); [ -n \"$TMUX\" ] && tmux set-option -pt \"$TMUX_PANE\" @meta.claude.session_id \"$id\" && tmux set-option -pt \"$TMUX_PANE\" @meta.claude.session_id_set_on \"SessionStart\" && tmux set-option -pt \"$TMUX_PANE\" @meta.claude.status \"stopped\" || exit 0'"
           }
         ]
       }
@@ -141,7 +140,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh -c 'id=$(jq -r \".session_id\"); [ -n \"$TMUX\" ] && tmux set-option -p @meta.claude.session_id \"$id\" && tmux set-option -p @meta.claude.session_id_set_on \"SessionEnd\" && tmux set-option -pu @meta.claude.status || exit 0'"
+            "command": "sh -c 'id=$(jq -r \".session_id\"); [ -n \"$TMUX\" ] && tmux set-option -pt \"$TMUX_PANE\" @meta.claude.session_id \"$id\" && tmux set-option -pt \"$TMUX_PANE\" @meta.claude.session_id_set_on \"SessionEnd\" && tmux set-option -pt \"$TMUX_PANE\" -u @meta.claude.status || exit 0'"
           }
         ]
       }
@@ -151,7 +150,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh -c 'id=$(jq -r \".session_id\"); [ -n \"$TMUX\" ] && tmux set-option -p @meta.claude.session_id \"$id\" && tmux set-option -p @meta.claude.session_id_set_on \"Stop\" && tmux set-option -p @meta.claude.status \"stopped\" || exit 0'"
+            "command": "sh -c 'id=$(jq -r \".session_id\"); [ -n \"$TMUX\" ] && tmux set-option -pt \"$TMUX_PANE\" @meta.claude.session_id \"$id\" && tmux set-option -pt \"$TMUX_PANE\" @meta.claude.session_id_set_on \"Stop\" && tmux set-option -pt \"$TMUX_PANE\" @meta.claude.status \"stopped\" || exit 0'"
           }
         ]
       }
@@ -161,7 +160,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh -c 'id=$(jq -r \".session_id\"); [ -n \"$TMUX\" ] && tmux set-option -p @meta.claude.session_id \"$id\" && tmux set-option -p @meta.claude.session_id_set_on \"UserPromptSubmit\" && tmux set-option -p @meta.claude.status \"running\" || exit 0'"
+            "command": "sh -c 'id=$(jq -r \".session_id\"); [ -n \"$TMUX\" ] && tmux set-option -pt \"$TMUX_PANE\" @meta.claude.session_id \"$id\" && tmux set-option -pt \"$TMUX_PANE\" @meta.claude.session_id_set_on \"UserPromptSubmit\" && tmux set-option -pt \"$TMUX_PANE\" @meta.claude.status \"running\" || exit 0'"
           }
         ]
       }
@@ -175,5 +174,6 @@
   "alwaysThinkingEnabled": true,
   "feedbackSurveyState": {
     "lastShownTime": 1953997328049
-  }
+  },
+  "model": "sonnet[1m]"
 }

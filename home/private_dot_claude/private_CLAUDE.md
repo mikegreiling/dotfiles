@@ -47,6 +47,26 @@ Sets session_id and session_id_set_on, removes status:
    - **Clean exit**: `session_id_set_on="SessionEnd"` (session terminated normally)
    - **Interrupted exit**: `session_id_set_on="Stop"` or other (session crashed/interrupted)
 
+## Hook Implementation Details
+
+### Pane Targeting with $TMUX_PANE
+
+All hooks use `tmux set-option -pt "$TMUX_PANE"` to ensure metadata is set on the **pane where Claude is running**, not the currently focused pane.
+
+- **`-p`**: Explicitly declares this is a pane option (not window/session/server)
+- **`-t "$TMUX_PANE"`**: Targets the specific pane where the hook process executes
+
+The `$TMUX_PANE` environment variable contains the pane ID (e.g., `%26`) where the hook process is running, guaranteeing correct pane targeting even when the user switches focus during Claude's execution.
+
+**Why this matters**: Without `$TMUX_PANE` targeting, if you switch focus from the Claude pane to another pane before a hook fires, the metadata would be set on the wrong pane. This causes metadata cross-contamination where multiple panes incorrectly show the same Claude session information.
+
+**Example of the problem**:
+- Start Claude in pane %26
+- Switch focus to pane %39
+- Claude finishes and Stop hook fires
+- Without `$TMUX_PANE`: metadata incorrectly set on %39 (currently focused)
+- With `$TMUX_PANE`: metadata correctly set on %26 (where Claude runs)
+
 ## Tmux Display Logic
 
 ### Pane Status Display
