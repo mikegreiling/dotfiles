@@ -1,0 +1,497 @@
+#!/opt/homebrew/bin/bash
+
+# cld - Claude CLI convenience wrapper
+# Provides session ID expansion, tmux integration, and spatial forking
+# See CLD_API_SPEC.md for full documentation
+
+set -euo pipefail
+
+# Detect Claude binary location (prefer PATH, fallback to hardcoded location)
+if command -v claude &>/dev/null; then
+  readonly CLAUDE_BIN="claude"
+else
+  readonly CLAUDE_BIN="${HOME}/.claude/local/claude"
+fi
+
+# Exit codes
+readonly EXIT_SUCCESS=0
+readonly EXIT_INVALID_INPUT=1
+readonly EXIT_NO_MATCHES=2
+readonly EXIT_AMBIGUOUS=3
+readonly EXIT_NOT_IN_TMUX=4
+readonly EXIT_NO_METADATA=5
+readonly EXIT_ELSEWHERE_FAILED=6
+readonly EXIT_NESTED_CLAUDE=7
+
+# Valid location options for elsewhere
+readonly VALID_LOCATIONS=("up" "down" "left" "right" "pane" "tab" "window")
+
+# ============================================================================
+# Utility Functions
+# ============================================================================
+
+error() {
+  echo "Error: $*" >&2
+}
+
+info() {
+  echo "$*"
+}
+
+# Check if we're running inside Claude Code
+is_inside_claude_code() {
+  [[ -n "${CLAUDECODE:-}" ]]
+}
+
+# Check if we're running in tmux
+is_in_tmux() {
+  [[ -n "${TMUX:-}" ]]
+}
+
+# Read session ID from tmux metadata
+read_tmux_session_id() {
+  if ! is_in_tmux; then
+    error "Not running in a tmux session."
+    error "This command requires tmux. Start tmux first or provide an explicit session ID."
+    exit "$EXIT_NOT_IN_TMUX"
+  fi
+
+  local session_id
+  # Prefer new @meta.claude.session_id, fall back to legacy @claude_session
+  session_id=$(tmux show-options -pv @meta.claude.session_id 2>/dev/null || true)
+  if [[ -z "$session_id" ]]; then
+    session_id=$(tmux show-options -pv @claude_session 2>/dev/null || true)
+  fi
+
+  if [[ -z "$session_id" ]]; then
+    error "No Claude session found in current tmux pane."
+    error "Run 'cld resume <session-id>' with an explicit session ID instead."
+    exit "$EXIT_NO_METADATA"
+  fi
+
+  echo "$session_id"
+}
+
+# Validate that a string is a valid partial or full session ID
+validate_partial_session_id() {
+  local partial_id="$1"
+
+  # Accept any prefix of a UUID (at least 6 chars, only hex and dashes)
+  # Examples: 23e30f, 23e30f82, 23e30f82-be, 23e30f82-bee0-4861-8bd3-869ca8a5c8a3
+  if [[ ! "$partial_id" =~ ^[0-9a-f-]{6,}$ ]]; then
+    error "Invalid session ID format."
+    error "Must be at least 6 characters and contain only lowercase hex digits and dashes."
+    error "Examples: 23e30f, 23e30f82-be, 23e30f82-bee0-4861-8bd3-869ca8a5c8a3"
+    exit "$EXIT_INVALID_INPUT"
+  fi
+
+  # Remove dashes for length check
+  local hex_only="${partial_id//-/}"
+  if [[ ${#hex_only} -lt 6 ]]; then
+    error "Session ID must contain at least 6 hexadecimal characters (excluding dashes)."
+    error "Example: 23e30f"
+    exit "$EXIT_INVALID_INPUT"
+  fi
+}
+
+# Extract session ID from filename
+extract_session_id() {
+  local filename="$1"
+  if [[ "$filename" =~ ([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}) ]]; then
+    echo "${BASH_REMATCH[1]}"
+  fi
+}
+
+# Expand partial session ID to full UUID
+expand_session_id() {
+  local partial_id="$1"
+
+  validate_partial_session_id "$partial_id"
+
+  # If it's already a full UUID, just return it
+  if [[ "$partial_id" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]]; then
+    echo "$partial_id"
+    return
+  fi
+
+  # Strip dashes from the partial ID for searching
+  # This allows matching "23e30f82-be" against files containing "23e30f82be..."
+  local search_string="${partial_id//-/}"
+
+  # Initialize associative array for unique sessions
+  declare -A unique_sessions
+
+  # Step 1: Search project transcript files first (authoritative source)
+  # Note: Use ${search_string}* (no leading *) to match only at start of UUID
+  local project_matches
+  project_matches=$(find ~/.claude/projects -type f -name "${search_string}*.jsonl" 2>/dev/null || true)
+
+  if [[ -n "$project_matches" ]]; then
+    # Extract unique session IDs from project files
+    while IFS= read -r file; do
+      if [[ -n "$file" ]]; then
+        local session_id
+        session_id=$(extract_session_id "$(basename "$file")")
+        if [[ -n "$session_id" ]] && [[ ! "$session_id" =~ -agent- ]]; then
+          unique_sessions["$session_id"]=1
+        fi
+      fi
+    done <<< "$project_matches"
+  else
+    # Step 2: Fallback to todo files for newly-started sessions
+    # Note: Use ${search_string}* (no leading *) to match only at start of UUID
+    local todo_matches
+    todo_matches=$(find ~/.claude/todos -type f -name "${search_string}*.json" 2>/dev/null || true)
+
+    if [[ -n "$todo_matches" ]]; then
+      # Extract unique session IDs from todo files (ignoring -agent- suffixes)
+      while IFS= read -r file; do
+        if [[ -n "$file" ]]; then
+          local session_id
+          session_id=$(extract_session_id "$(basename "$file")")
+          if [[ -n "$session_id" ]] && [[ ! "$session_id" =~ -agent- ]]; then
+            unique_sessions["$session_id"]=1
+          fi
+        fi
+      done <<< "$todo_matches"
+    fi
+  fi
+
+  # Check how many unique sessions we found
+  local session_count=0
+  if [[ ${#unique_sessions[@]} -gt 0 ]] 2>/dev/null; then
+    session_count=${#unique_sessions[@]}
+  fi
+
+  if [[ $session_count -eq 0 ]]; then
+    error "No sessions found matching '$partial_id'."
+    error "Run 'claude --list-sessions' to see available sessions."
+    exit "$EXIT_NO_MATCHES"
+  elif [[ $session_count -gt 1 ]]; then
+    error "Multiple sessions found matching '$partial_id':"
+    for session in "${!unique_sessions[@]}"; do
+      echo "  - $session" >&2
+    done
+    echo "" >&2
+    error "Please provide more characters to uniquely identify the session."
+    exit "$EXIT_AMBIGUOUS"
+  fi
+
+  # Return the single session ID
+  for session_id in "${!unique_sessions[@]}"; do
+    echo "$session_id"
+    return
+  done
+}
+
+# Check if a location is valid
+is_valid_location() {
+  local location="$1"
+  for valid in "${VALID_LOCATIONS[@]}"; do
+    if [[ "$location" == "$valid" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+# Check if options array contains conflicting resume/continue flags
+validate_options_for_subcommand() {
+  local subcommand="$1"
+  shift
+  local options=("$@")
+
+  for opt in "${options[@]}"; do
+    if [[ "$opt" == "--resume" ]]; then
+      if [[ "$subcommand" == "resume" || "$subcommand" == "fork" ]]; then
+        error "Cannot use --resume with '$subcommand' subcommand."
+        error "The subcommand already handles session resumption."
+        exit "$EXIT_INVALID_INPUT"
+      fi
+    elif [[ "$opt" == "--continue" ]]; then
+      if [[ "$subcommand" == "fork" ]]; then
+        error "Cannot use --continue with 'fork' subcommand."
+        error "Use 'cld' or 'cld resume' with --continue instead."
+        exit "$EXIT_INVALID_INPUT"
+      fi
+    fi
+  done
+}
+
+# Interactive prompt to resume previous session
+# Returns 0 if user wants to resume, 1 if not
+prompt_resume() {
+  local session_id="$1"
+
+  echo "Previous session found: ${session_id:0:40}..." >&2
+  echo -n "Would you like to resume? [Yn] " >&2
+
+  local reply
+  read -r -n 1 reply
+  echo "" >&2  # New line after single char input
+
+  # Default to yes if empty (just pressed enter)
+  if [[ -z "$reply" || "$reply" =~ ^[Yy]$ ]]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+# ============================================================================
+# Command Implementations
+# ============================================================================
+
+# Resume a Claude session
+cmd_resume() {
+  local session_id="$1"
+  shift
+  local options=("$@")
+
+  # Check if running inside Claude Code (not allowed without elsewhere)
+  if is_inside_claude_code; then
+    error "Cannot run claude inside a Claude Code session."
+    error "Use 'cld fork <location>' to run in a new pane/window/tab."
+    error "Examples:"
+    error "  cld fork pane    # Fork to new pane"
+    error "  cld fork tab     # Fork to new window/tab"
+    error "  cld fork right   # Fork to pane on the right"
+    exit "$EXIT_NESTED_CLAUDE"
+  fi
+
+  if [[ -z "$session_id" ]]; then
+    # No session ID provided, read from tmux metadata
+    session_id=$(read_tmux_session_id)
+  else
+    # Expand partial session ID to full UUID
+    session_id=$(expand_session_id "$session_id")
+  fi
+
+  info "Resuming session: $session_id"
+  exec "$CLAUDE_BIN" --resume "$session_id" "${options[@]}"
+}
+
+# Fork a Claude session
+cmd_fork() {
+  local session_id="${1:-}"
+  shift
+  local options=("$@")
+
+  # Check if running inside Claude Code without a location
+  if is_inside_claude_code; then
+    # Default to 'pane' location when inside Claude Code
+    cmd_fork_elsewhere "pane" "$session_id" "${options[@]}"
+    return
+  fi
+
+  # Not inside Claude Code, proceed with regular fork
+  if [[ -z "$session_id" ]]; then
+    # No session ID provided, read from tmux metadata
+    session_id=$(read_tmux_session_id)
+  else
+    # Expand partial session ID to full UUID
+    session_id=$(expand_session_id "$session_id")
+  fi
+
+  info "Forking session: $session_id"
+  exec "$CLAUDE_BIN" --resume "$session_id" --fork-session "${options[@]}"
+}
+
+# Fork a Claude session to a new location using run-elsewhere
+cmd_fork_elsewhere() {
+  local location="$1"
+  local session_id="${2:-}"
+  shift 2
+  local options=("$@")
+
+  # Validate location
+  if ! is_valid_location "$location"; then
+    error "Invalid location '$location'."
+    error "Valid locations: ${VALID_LOCATIONS[*]}"
+    exit "$EXIT_INVALID_INPUT"
+  fi
+
+  # Check if in tmux (required for elsewhere)
+  if ! is_in_tmux; then
+    error "Not running in a tmux session."
+    error "Spatial forking requires tmux. Start tmux first."
+    exit "$EXIT_NOT_IN_TMUX"
+  fi
+
+  # Determine session ID
+  if [[ -z "$session_id" ]]; then
+    # No session ID provided, read from tmux metadata
+    session_id=$(read_tmux_session_id)
+  else
+    # Expand partial session ID to full UUID
+    session_id=$(expand_session_id "$session_id")
+  fi
+
+  # Get current working directory
+  local cwd="$PWD"
+
+  # Construct the command string (with proper escaping)
+  local cmd_string="cd '$cwd' && $CLAUDE_BIN --resume $session_id --fork-session"
+  # Append options if any
+  if [[ ${#options[@]} -gt 0 ]]; then
+    cmd_string="$cmd_string ${options[*]}"
+  fi
+
+  # Build the elsewhere command as an array
+  local elsewhere_cmd=(npx -y run-elsewhere --no-tty --"$location" -c "$cmd_string")
+
+  info "Forking session $session_id to $location..."
+  info "Command: ${elsewhere_cmd[*]}"
+
+  # Execute via run-elsewhere
+  if ! "${elsewhere_cmd[@]}"; then
+    error "Failed to execute run-elsewhere."
+    error "Make sure the package is available: npx -y run-elsewhere --version"
+    exit "$EXIT_ELSEWHERE_FAILED"
+  fi
+}
+
+# ============================================================================
+# Main Command Router
+# ============================================================================
+
+main() {
+  # Handle no arguments - check for previous session
+  if [[ $# -eq 0 ]]; then
+    # Check if in tmux with session metadata
+    if is_in_tmux; then
+      local session_id
+      # Prefer new @meta.claude.session_id, fall back to legacy @claude_session
+      session_id=$(tmux show-options -pv @meta.claude.session_id 2>/dev/null || true)
+      if [[ -z "$session_id" ]]; then
+        session_id=$(tmux show-options -pv @claude_session 2>/dev/null || true)
+      fi
+
+      if [[ -n "$session_id" ]]; then
+        # Previous session found, prompt user
+        if prompt_resume "$session_id"; then
+          # User wants to resume
+          cmd_resume "$session_id"
+        else
+          # User wants new session
+          exec "$CLAUDE_BIN"
+        fi
+      else
+        # No previous session, direct passthrough
+        exec "$CLAUDE_BIN"
+      fi
+    else
+      # Not in tmux, direct passthrough
+      exec "$CLAUDE_BIN"
+    fi
+    return
+  fi
+
+  # Parse arguments: separate subcommand/session-id from options
+  local first_arg="$1"
+
+  # Check if first arg is a known subcommand
+  if [[ "$first_arg" == "resume" || "$first_arg" == "fork" ]]; then
+    local subcommand="$first_arg"
+    shift
+
+    # Collect remaining args (will parse into session-id/location and options)
+    local remaining_args=("$@")
+    local options=()
+    local non_option_args=()
+
+    # Separate options from non-option arguments
+    for arg in "${remaining_args[@]}"; do
+      if [[ "$arg" =~ ^-- ]]; then
+        options+=("$arg")
+      else
+        non_option_args+=("$arg")
+      fi
+    done
+
+    # Validate options for this subcommand
+    validate_options_for_subcommand "$subcommand" "${options[@]}"
+
+    # Route to appropriate command
+    case "$subcommand" in
+      resume)
+        # cld resume [session-id] [options...]
+        local session_id="${non_option_args[0]:-}"
+        cmd_resume "$session_id" "${options[@]}"
+        ;;
+
+      fork)
+        # cld fork [location] [session-id] [options...]
+        # Need to determine if first arg is a location or session ID
+
+        if [[ ${#non_option_args[@]} -eq 0 ]]; then
+          # cld fork (no args, just options)
+          cmd_fork "" "${options[@]}"
+        elif [[ ${#non_option_args[@]} -eq 1 ]]; then
+          # cld fork <arg> [options...]
+          # Could be either location or session-id
+          local arg="${non_option_args[0]}"
+
+          if is_valid_location "$arg"; then
+            # It's a location: cld fork <location> [options...]
+            cmd_fork_elsewhere "$arg" "" "${options[@]}"
+          else
+            # It's a session ID: cld fork <session-id> [options...]
+            cmd_fork "$arg" "${options[@]}"
+          fi
+        else
+          # cld fork <location> <session-id> [options...]
+          local location="${non_option_args[0]}"
+          local session_id="${non_option_args[1]}"
+          cmd_fork_elsewhere "$location" "$session_id" "${options[@]}"
+        fi
+        ;;
+    esac
+  else
+    # Not a known subcommand - check for interactive resume with options
+    # If first arg starts with --, it's an option, check for previous session
+    if [[ "$first_arg" =~ ^-- ]]; then
+      # Has options but no subcommand - check for previous session
+      if is_in_tmux; then
+        local session_id
+        # Prefer new @meta.claude.session_id, fall back to legacy @claude_session
+        session_id=$(tmux show-options -pv @meta.claude.session_id 2>/dev/null || true)
+        if [[ -z "$session_id" ]]; then
+          session_id=$(tmux show-options -pv @claude_session 2>/dev/null || true)
+        fi
+
+        # Check if --resume or --continue is in the args
+        local has_resume=false
+        for arg in "$@"; do
+          if [[ "$arg" == "--resume" || "$arg" == "--continue" ]]; then
+            has_resume=true
+            break
+          fi
+        done
+
+        if [[ -n "$session_id" ]] && [[ "$has_resume" == "false" ]]; then
+          # Previous session found and no --resume/--continue, prompt user
+          if prompt_resume "$session_id"; then
+            # User wants to resume with options
+            cmd_resume "$session_id" "$@"
+          else
+            # User wants new session with options
+            exec "$CLAUDE_BIN" "$@"
+          fi
+        else
+          # Either no session or already has --resume/--continue, pass through
+          exec "$CLAUDE_BIN" "$@"
+        fi
+      else
+        # Not in tmux, pass through
+        exec "$CLAUDE_BIN" "$@"
+      fi
+    else
+      # Unknown subcommand or regular claude arguments - pass everything through
+      exec "$CLAUDE_BIN" "$@"
+    fi
+  fi
+}
+
+# Run main function
+main "$@"
