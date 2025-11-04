@@ -147,7 +147,5 @@ alias reload="exec ${SHELL} -l"
 alias path='echo -e ${PATH//:/\\n}'
 
 # Claude alias shorthand
-alias cld='claude'
-alias cldmcp='claude --mcp-config ~/.claude/.mcp-bstock-chores.json'
-alias cldfork='~/.claude/scripts/fork-session.sh'
-alias cldforkmcp='~/.claude/scripts/fork-session.sh --mcp'
+alias cld='~/.claude/scripts/cld'
+alias cldfork='cld fork'
