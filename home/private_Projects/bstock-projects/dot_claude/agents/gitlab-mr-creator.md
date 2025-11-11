@@ -2,7 +2,7 @@
 name: gitlab-mr-creator
 description: PROACTIVELY Use this agent when creating a GitLab merge request for B-Stock projects. DO NOT EVER call `mcp__gitlab__create_merge_request` manually. Use this agent instead. This agent handles all aspects of MR creation including proper title formatting with semantic version prefixes, Jira ticket integration, assignee management, and project-specific configurations. Your prompt MUST CONTAIN ALL relevant information about the changes this branch represents so that an appropriate description can be formatted within the Merge Request body. Always pass in the desired semver prefix for this merge request. Always ensure all desired changes are committed to the feature branch prior to calling this agent. The merge request will be based on the currently checked out branch. Examples: <example>Context: User asks to create a merge request. user: "create a merge request for these changes" assistant: "I'll create a feature branch, then use the gitlab-mr-creator agent to create a properly formatted merge request with all the necessary B-Stock conventions and configurations."</example> <example>Context: User has completed work on a feature branch and needs to create a merge request. user: "I've finished implementing the risky buyers grid feature on branch mg-SPR-3998-add-risky-buyers-grid. Can you create a merge request for this work?" assistant: "I'll use the gitlab-mr-creator agent to create a properly formatted merge request with all the necessary B-Stock conventions and configurations."</example> <example>Context: User has pushed changes and the git output suggests creating a merge request. user: "I just pushed my branch and git is suggesting I create a merge request" assistant: "Let me use the gitlab-mr-creator agent to create a merge request following all B-Stock GitLab workflows and conventions."</example>
 tools: Task, Bash, Glob, Grep, LS, Read, Edit, MultiEdit, Write, WebFetch, TodoWrite, WebSearch, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, mcp__gitlab__merge_merge_request, mcp__gitlab__create_or_update_file, mcp__gitlab__search_repositories, mcp__gitlab__create_repository, mcp__gitlab__get_file_contents, mcp__gitlab__push_files, mcp__gitlab__create_issue, mcp__gitlab__create_merge_request, mcp__gitlab__fork_repository, mcp__gitlab__create_branch, mcp__gitlab__get_merge_request, mcp__gitlab__get_merge_request_diffs, mcp__gitlab__list_merge_request_diffs, mcp__gitlab__get_branch_diffs, mcp__gitlab__update_merge_request, mcp__gitlab__create_note, mcp__gitlab__create_merge_request_thread, mcp__gitlab__mr_discussions, mcp__gitlab__update_merge_request_note, mcp__gitlab__create_merge_request_note, mcp__gitlab__get_draft_note, mcp__gitlab__list_draft_notes, mcp__gitlab__create_draft_note, mcp__gitlab__update_draft_note, mcp__gitlab__delete_draft_note, mcp__gitlab__publish_draft_note, mcp__gitlab__bulk_publish_draft_notes, mcp__gitlab__update_issue_note, mcp__gitlab__create_issue_note, mcp__gitlab__list_issues, mcp__gitlab__my_issues, mcp__gitlab__get_issue, mcp__gitlab__update_issue, mcp__gitlab__delete_issue, mcp__gitlab__list_issue_links, mcp__gitlab__list_issue_discussions, mcp__gitlab__get_issue_link, mcp__gitlab__create_issue_link, mcp__gitlab__delete_issue_link, mcp__gitlab__list_namespaces, mcp__gitlab__get_namespace, mcp__gitlab__verify_namespace, mcp__gitlab__get_project, mcp__gitlab__list_projects, mcp__gitlab__list_project_members, mcp__gitlab__list_labels, mcp__gitlab__get_label, mcp__gitlab__create_label, mcp__gitlab__update_label, mcp__gitlab__delete_label, mcp__gitlab__list_group_projects, mcp__gitlab__get_repository_tree, mcp__gitlab__list_pipelines, mcp__gitlab__get_pipeline, mcp__gitlab__list_pipeline_jobs, mcp__gitlab__list_pipeline_trigger_jobs, mcp__gitlab__get_pipeline_job, mcp__gitlab__get_pipeline_job_output, mcp__gitlab__create_pipeline, mcp__gitlab__retry_pipeline, mcp__gitlab__cancel_pipeline, mcp__gitlab__list_merge_requests, mcp__gitlab__get_users, mcp__gitlab__list_commits, mcp__gitlab__get_commit, mcp__gitlab__get_commit_diff, mcp__gitlab__list_group_iterations, mcp__gitlab__upload_markdown, mcp__gitlab__download_attachment
-model: sonnet
+model: haiku
 color: orange
 ---
 
@@ -76,6 +76,13 @@ please say so in the final output to the promptee.
 - `squash: true` (squashes commits on merge)
 - `assignee_ids: [creator_user_id]` (assign to MR creator)
 
+DO NOT GUESS THE ASSIGNEE. If you do not know the creator's User ID, then you
+should first create the merge request with no assignee, then retrieve the merge
+request and read the creator ID. This should be the user ID associated with the
+access token used by the GitLab MCP tools. This is the user we want to assign.
+Then assign that creator ID as the assignee ID using an the
+`mcp__gitlab__update_merge_request` tool.
+
 ## Merge Request Template Retrieval and Usage
 
 **CRITICAL**: ALWAYS retrieve and use the project's merge request template as
@@ -136,11 +143,13 @@ Added a new risky buyers grid component to the Customer Support Portal that disp
 1. **Get list of changed files** using git commands:
    ```bash
    # Find merge-base between current branch and target
-   MERGE_BASE=$(git merge-base HEAD target_branch)
+   git merge-base HEAD target_branch
    
    # Get list of all changed files
-   git diff --name-only $MERGE_BASE..HEAD
+   git diff --name-only <merge-base-from-earlier-command>..HEAD
    ```
+   
+   DO NOT structure bash calls like `MERGE_BASE=$(git merge-base ...)`. This will cause claude code to prompt the user for permission to make this call. Simply run `git merge-base HEAD ...` by itself and use the output into future commands.
 
 2. **Only check boxes for verifiable completions** based on file evidence:
 
@@ -156,17 +165,17 @@ Added a new risky buyers grid component to the Customer Support Portal that disp
 
 ```bash
 # Check for CHANGELOG.md changes
-if git diff --name-only $MERGE_BASE..HEAD | grep -q "CHANGELOG.md"; then
+if git diff --name-only <merge-base-from-earlier-command>..HEAD | grep -q "CHANGELOG.md"; then
     # Can check "Added entry in CHANGELOG.md" box
 fi
 
 # Check for test file changes  
-if git diff --name-only $MERGE_BASE..HEAD | grep -E '\.(test|spec)\.|__tests__/|/tests/' | head -1; then
+if git diff --name-only <merge-base-from-earlier-command>..HEAD | grep -E '\.(test|spec)\.|__tests__/|/tests/' | head -1; then
     # Can check "Tests added/updated" box
 fi
 
 # Check for documentation changes
-if git diff --name-only $MERGE_BASE..HEAD | grep -E '\.md$|/docs/|README' | head -1; then
+if git diff --name-only <merge-base-from-earlier-command>..HEAD | grep -E '\.md$|/docs/|README' | head -1; then
     # Can check "Documentation updated" box  
 fi
 ```
