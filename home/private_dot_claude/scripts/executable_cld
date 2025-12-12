@@ -3,6 +3,16 @@
 # cld - Claude CLI convenience wrapper
 # Provides session ID expansion, tmux integration, and spatial forking
 # See CLD_API_SPEC.md for full documentation
+#
+# Flag Handling:
+# - cld-specific flags (-y/--yes, -n/--no) are parsed and stripped before passing to claude
+# - All other flags/options are passed through to the claude command unchanged
+# - --resume is REJECTED when used with 'cld resume' or 'cld fork' (generates error)
+#   since these subcommands already handle session resumption
+# - Examples:
+#   cld resume -y abc123 --model sonnet   → strips -y, passes --model sonnet to claude
+#   cld -n --output-format json           → strips -n, passes --output-format json to claude
+#   cld resume abc123 --resume            → ERROR: Cannot use --resume with 'resume' subcommand
 
 set -euo pipefail
 
@@ -184,6 +194,189 @@ expand_session_id() {
   done
 }
 
+# Encode current directory to lossy format for comparison
+encode_current_directory() {
+  local dir="$PWD"
+  dir="${dir#/}"
+  # Replace all non-alphanumeric with dash
+  dir=$(echo "$dir" | sed 's/[^a-zA-Z0-9]/-/g')
+  echo "-$dir"
+}
+
+# Match encoded prefix against directory name
+# Returns number of encoded characters matched via echo, or exits with code 1 if no match
+match_prefix() {
+  local encoded="$1"
+  local dirname="$2"
+
+  local enc_idx=0
+  local dir_idx=0
+  local enc_len=${#encoded}
+  local dir_len=${#dirname}
+  local last_dash_idx=-1
+
+  while [[ $enc_idx -lt $enc_len && $dir_idx -lt $dir_len ]]; do
+    local enc_char="${encoded:$enc_idx:1}"
+    local dir_char="${dirname:$dir_idx:1}"
+
+    if [[ "$enc_char" =~ [a-zA-Z0-9] ]]; then
+      # Alphanumeric must match exactly
+      if [[ "$enc_char" == "$dir_char" ]]; then
+        enc_idx=$((enc_idx + 1))
+        dir_idx=$((dir_idx + 1))
+      else
+        # Mismatch
+        return 1
+      fi
+    elif [[ "$enc_char" == "-" ]]; then
+      # Remember this dash position
+      last_dash_idx=$enc_idx
+
+      # Dash can match any non-alphanumeric
+      if [[ ! "$dir_char" =~ [a-zA-Z0-9] ]]; then
+        # Consume non-alphanumeric from dirname
+        dir_idx=$((dir_idx + 1))
+        # Don't advance enc_idx yet - this dash might match multiple chars
+      else
+        # We've hit alphanumeric in dirname, this dash group is done
+        enc_idx=$((enc_idx + 1))
+      fi
+    fi
+  done
+
+  # Return how many encoded chars we consumed
+  echo "$enc_idx"
+  return 0
+}
+
+# Greedy pattern-matching decoder
+decode_and_validate_path() {
+  local encoded="$1"
+
+  # Quick check: Does current directory match?
+  local current_encoded
+  current_encoded=$(encode_current_directory)
+  if [[ "$encoded" == "$current_encoded" ]]; then
+    echo "$PWD"
+    return 0
+  fi
+
+  # Remove leading dash
+  encoded="${encoded#-}"
+
+  local current_path=""
+  local remaining="$encoded"
+
+  while [[ -n "$remaining" ]]; do
+    # Get next directory component
+    local best_match=""
+    local best_match_len=0
+
+    # List subdirectories (including hidden)
+    local search_path="${current_path:-/}"
+    while IFS= read -r -d '' subdir; do
+      local dirname
+      dirname=$(basename "$subdir")
+
+      # Try to match prefix (capture output and ignore exit code)
+      local matched_len
+      matched_len=$(match_prefix "$remaining" "$dirname" 2>/dev/null || true)
+      if [[ -n "$matched_len" && $matched_len -gt $best_match_len ]]; then
+        best_match="$dirname"
+        best_match_len=$matched_len
+      fi
+    done < <(find "$search_path" -mindepth 1 -maxdepth 1 -type d -print0 2>/dev/null)
+
+    if [[ -z "$best_match" ]]; then
+      # No match found
+      return 1
+    fi
+
+    # Update path and remaining
+    if [[ -z "$current_path" ]]; then
+      current_path="/$best_match"
+    else
+      current_path="$current_path/$best_match"
+    fi
+
+    remaining="${remaining:$best_match_len}"
+
+    # Skip exactly ONE leading dash if present (represents /)
+    # Multiple consecutive dashes represent encoded special characters, so don't strip them all
+    if [[ "${remaining:0:1}" == "-" ]]; then
+      remaining="${remaining:1}"
+    fi
+  done
+
+  echo "$current_path"
+  return 0
+}
+
+# Get session directory from metadata or decode from transcript path
+get_session_directory() {
+  local session_id="$1"
+
+  # Try tmux metadata first
+  local metadata_dir=""
+  if is_in_tmux; then
+    metadata_dir=$(tmux show-options -pv @meta.claude.session_dir 2>/dev/null || true)
+  fi
+
+  # Find transcript file
+  local session_file
+  session_file=$(find ~/.claude/projects -name "${session_id}.jsonl" -print -quit 2>/dev/null)
+
+  if [[ -z "$session_file" ]]; then
+    # No transcript found, use metadata if available
+    if [[ -n "$metadata_dir" ]]; then
+      echo "$metadata_dir"
+    fi
+    return
+  fi
+
+  # Extract encoded directory name
+  local encoded_dir
+  encoded_dir=$(basename "$(dirname "$session_file")")
+
+  # Decode and validate the path
+  local decoded_dir
+  if ! decoded_dir=$(decode_and_validate_path "$encoded_dir" 2>/dev/null); then
+    # Decoding failed, fall back to metadata
+    if [[ -n "$metadata_dir" ]]; then
+      echo "$metadata_dir"
+    fi
+    return
+  fi
+
+  # Validate metadata against decoded path (if both exist)
+  if [[ -n "$metadata_dir" && "$metadata_dir" != "$decoded_dir" ]]; then
+    # Mismatch detected
+    error "Warning: Metadata path differs from transcript location"
+    error "  Metadata: $metadata_dir"
+    error "  Transcript: $decoded_dir"
+    echo -n "Resume anyway using transcript path? [Yn] " >&2
+
+    local reply
+    read -r -n 1 reply
+    echo "" >&2
+
+    if [[ -z "$reply" || "$reply" =~ ^[Yy]$ ]]; then
+      echo "$decoded_dir"
+    else
+      exit "$EXIT_INVALID_INPUT"
+    fi
+  else
+    # No conflict, use decoded path (or metadata if decode failed)
+    echo "${decoded_dir:-$metadata_dir}"
+  fi
+}
+
+# Check if directory matches
+check_directory_match() {
+  local session_dir="$1"
+  [[ -n "$session_dir" && "$PWD" == "$session_dir" ]]
+}
+
 # Check if a location is valid
 is_valid_location() {
   local location="$1"
@@ -246,7 +439,25 @@ prompt_resume() {
 cmd_resume() {
   local session_id="$1"
   shift
-  local options=("$@")
+
+  # Parse flags
+  local auto_yes=false
+  local auto_no=false
+  local clean_options=()
+
+  for opt in "$@"; do
+    case "$opt" in
+      -y|--yes)
+        auto_yes=true
+        ;;
+      -n|--no)
+        auto_no=true
+        ;;
+      *)
+        clean_options+=("$opt")
+        ;;
+    esac
+  done
 
   # Check if running inside Claude Code (not allowed without elsewhere)
   if is_inside_claude_code; then
@@ -259,16 +470,65 @@ cmd_resume() {
     exit "$EXIT_NESTED_CLAUDE"
   fi
 
+  # Get or expand session ID
   if [[ -z "$session_id" ]]; then
-    # No session ID provided, read from tmux metadata
     session_id=$(read_tmux_session_id)
   else
-    # Expand partial session ID to full UUID
     session_id=$(expand_session_id "$session_id")
   fi
 
+  # Get session directory with validation
+  local session_dir
+  session_dir=$(get_session_directory "$session_id")
+
+  # Handle directory switching
+  if [[ -n "$session_dir" ]] && ! check_directory_match "$session_dir"; then
+    if [[ "$auto_no" == true ]]; then
+      # User explicitly said no, exit without resuming
+      info "Session resume cancelled (--no flag)"
+      exit "$EXIT_SUCCESS"
+    elif [[ "$auto_yes" == true ]]; then
+      info "Changing to: $session_dir"
+      cd "$session_dir" || {
+        error "Failed to change to directory: $session_dir"
+        exit "$EXIT_INVALID_INPUT"
+      }
+    else
+      # Interactive prompt
+      echo "Warning: Session started in $session_dir" >&2
+      echo "Currently in: $PWD" >&2
+      echo -n "Change directory and resume? [Yn] " >&2
+
+      local reply
+      read -r -n 1 reply
+      echo "" >&2
+
+      # Check for ESC key (ASCII 27)
+      if [[ "$reply" == $'\e' ]]; then
+        info "Session resume cancelled"
+        exit "$EXIT_SUCCESS"
+      elif [[ -z "$reply" || "$reply" =~ ^[Yy]$ ]]; then
+        # Yes - change directory and continue to resume
+        cd "$session_dir" || {
+          error "Failed to change to directory: $session_dir"
+          exit "$EXIT_INVALID_INPUT"
+        }
+      else
+        # No - exit without resuming
+        info "Session resume cancelled"
+        exit "$EXIT_SUCCESS"
+      fi
+    fi
+  fi
+
   info "Resuming session: $session_id"
-  exec "$CLAUDE_BIN" --resume "$session_id" "${options[@]}"
+
+  # Handle empty clean_options array properly
+  if [[ ${#clean_options[@]} -eq 0 ]]; then
+    exec "$CLAUDE_BIN" --resume "$session_id"
+  else
+    exec "$CLAUDE_BIN" --resume "$session_id" "${clean_options[@]}"
+  fi
 }
 
 # Fork a Claude session
@@ -327,8 +587,12 @@ cmd_fork_elsewhere() {
     session_id=$(expand_session_id "$session_id")
   fi
 
-  # Get current working directory
-  local cwd="$PWD"
+  # Get session's project directory (not current working directory)
+  local session_dir
+  session_dir=$(get_session_directory "$session_id")
+
+  # Fallback to current directory if we can't determine session directory
+  local cwd="${session_dir:-$PWD}"
 
   # Construct the command string (with proper escaping)
   local cmd_string="cd '$cwd' && $CLAUDE_BIN --resume $session_id --fork-session"
@@ -356,39 +620,102 @@ cmd_fork_elsewhere() {
 # ============================================================================
 
 main() {
-  # Handle no arguments - check for previous session
-  if [[ $# -eq 0 ]]; then
-    # Check if in tmux with session metadata
-    if is_in_tmux; then
-      local session_id
-      # Prefer new @meta.claude.session_id, fall back to legacy @claude_session
-      session_id=$(tmux show-options -pv @meta.claude.session_id 2>/dev/null || true)
-      if [[ -z "$session_id" ]]; then
-        session_id=$(tmux show-options -pv @claude_session 2>/dev/null || true)
-      fi
+  # Parse arguments: determine what kind of invocation this is
+  local first_arg="${1:-}"
 
-      if [[ -n "$session_id" ]]; then
-        # Previous session found, prompt user
-        if prompt_resume "$session_id"; then
-          # User wants to resume
-          cmd_resume "$session_id"
+  # Case 1: Explicit subcommands (cld resume, cld fork)
+  # Check this FIRST before flag detection to avoid confusion
+  if [[ "$first_arg" == "resume" || "$first_arg" == "fork" ]]; then
+    # Jump directly to subcommand handler (implemented below)
+    :  # noop, will fall through to subcommand handler
+  # Case 2: No arguments or flags with implicit resume (cld, cld -y, cld --model)
+  elif [[ $# -eq 0 || "$first_arg" =~ ^- ]]; then
+    # Check for cld-specific flags
+    local has_yes_flag=false
+    local has_no_flag=false
+
+    for arg in "$@"; do
+      [[ "$arg" == "-y" || "$arg" == "--yes" ]] && has_yes_flag=true
+      [[ "$arg" == "-n" || "$arg" == "--no" ]] && has_no_flag=true
+    done
+
+    # If we have cld-specific flags or no args, try implicit resume
+    if [[ $# -eq 0 || "$has_yes_flag" == true || "$has_no_flag" == true ]]; then
+      if is_in_tmux; then
+        local session_id
+        session_id=$(tmux show-options -pv @meta.claude.session_id 2>/dev/null || true)
+        if [[ -z "$session_id" ]]; then
+          session_id=$(tmux show-options -pv @claude_session 2>/dev/null || true)
+        fi
+
+        if [[ -n "$session_id" ]]; then
+          local session_dir
+          session_dir=$(get_session_directory "$session_id")
+
+          local needs_cd=false
+          [[ -n "$session_dir" ]] && ! check_directory_match "$session_dir" && needs_cd=true
+
+          if [[ "$has_no_flag" == true ]]; then
+            # Auto-deny: start new session
+            exec "$CLAUDE_BIN" "${@}"
+          elif [[ "$has_yes_flag" == true ]]; then
+            # Auto-accept: cd if needed and resume
+            if [[ "$needs_cd" == true ]]; then
+              cd "$session_dir" || {
+                error "Failed to change to directory: $session_dir"
+                exit "$EXIT_INVALID_INPUT"
+              }
+            fi
+            cmd_resume "$session_id" "${@}"
+          else
+            # Interactive combined prompt
+            if [[ "$needs_cd" == true ]]; then
+              echo "Resume session ${session_id:0:8} from $session_dir? [Yn] " >&2
+            else
+              echo "Resume session ${session_id:0:8}? [Yn] " >&2
+            fi
+
+            local reply
+            read -r -n 1 reply
+            echo "" >&2
+
+            # Check for ESC key (ASCII 27)
+            if [[ "$reply" == $'\e' ]]; then
+              exec "$CLAUDE_BIN"
+            elif [[ -z "$reply" || "$reply" =~ ^[Yy]$ ]]; then
+              if [[ "$needs_cd" == true ]]; then
+                cd "$session_dir" || {
+                  error "Failed to change to directory: $session_dir"
+                  exit "$EXIT_INVALID_INPUT"
+                }
+              fi
+              cmd_resume "$session_id"
+            else
+              exec "$CLAUDE_BIN"
+            fi
+          fi
         else
-          # User wants new session
-          exec "$CLAUDE_BIN"
+          # No previous session
+          exec "$CLAUDE_BIN" "$@"
         fi
       else
-        # No previous session, direct passthrough
-        exec "$CLAUDE_BIN"
+        # Not in tmux
+        exec "$CLAUDE_BIN" "$@"
       fi
+      return
     else
-      # Not in tmux, direct passthrough
-      exec "$CLAUDE_BIN"
+      # Has flags but not our flags, pass through to claude
+      exec "$CLAUDE_BIN" "$@"
+      return
     fi
+  # Case 3: Unknown command, pass through
+  else
+    exec "$CLAUDE_BIN" "$@"
     return
   fi
 
-  # Parse arguments: separate subcommand/session-id from options
-  local first_arg="$1"
+  # If we reached here, first_arg is a known subcommand (resume or fork)
+  # Continue with subcommand processing
 
   # Check if first arg is a known subcommand
   if [[ "$first_arg" == "resume" || "$first_arg" == "fork" ]]; then
@@ -402,7 +729,7 @@ main() {
 
     # Separate options from non-option arguments
     for arg in "${remaining_args[@]}"; do
-      if [[ "$arg" =~ ^-- ]]; then
+      if [[ "$arg" =~ ^- ]]; then
         options+=("$arg")
       else
         non_option_args+=("$arg")
@@ -449,8 +776,8 @@ main() {
     esac
   else
     # Not a known subcommand - check for interactive resume with options
-    # If first arg starts with --, it's an option, check for previous session
-    if [[ "$first_arg" =~ ^-- ]]; then
+    # If first arg starts with -, it's an option, check for previous session
+    if [[ "$first_arg" =~ ^- ]]; then
       # Has options but no subcommand - check for previous session
       if is_in_tmux; then
         local session_id
