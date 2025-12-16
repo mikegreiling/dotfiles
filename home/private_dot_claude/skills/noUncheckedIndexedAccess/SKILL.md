@@ -1,142 +1,117 @@
 ---
 name: noUncheckedIndexedAccess
-description: Systematically resolves TypeScript noUncheckedIndexedAccess violations by applying conservative fix patterns, logging all changes with justifications, and improving over time through pattern recognition.
+description: Conservative, low-risk fixes for TypeScript errors introduced by enabling noUncheckedIndexedAccess, with different policies for test vs production code and a bias toward non-cascading changes.
 ---
 
 # noUncheckedIndexedAccess Violation Resolver
 
-This skill provides systematic, conservative fixes for TypeScript `noUncheckedIndexedAccess` violations across B-Stock frontend portal projects.
+Enable `noUncheckedIndexedAccess` while keeping changes **safe**, **local**, and **reviewable**.
 
-## When to Use This Skill
+`noUncheckedIndexedAccess` changes indexed access from `T` to `T | undefined` (arrays, objects with index signatures, `Record<...>`, etc.). This skill focuses on fixing the resulting type errors without turning the migration into a signature-changing domino chain.
 
-Use this skill when:
-- Resolving type errors caused by enabling `noUncheckedIndexedAccess` in tsconfig
-- Fixing `TS2532` (Object is possibly 'undefined') errors
-- Fixing `TS2345` (Type 'X | undefined' is not assignable) errors
-- Fixing `TS2538` (Type 'undefined' cannot be used as an index type) errors
-- Fixing `TS18048` (X is possibly 'undefined') errors
+## When to Use
+
+Use this skill when you see TypeScript errors that appear after enabling `noUncheckedIndexedAccess`, commonly:
+
+- TS2532: Object is possibly 'undefined'
+- TS18048: 'x' is possibly 'undefined'
+- TS2345: Type 'T | undefined' is not assignable to type 'T'
+- TS2538: Type 'undefined' cannot be used as an index type
+
+## Mode Detection: Tests vs Production
+
+**Test files** (lower risk):
+- Paths matching `**/*.test.*`, `**/*.spec.*`, `**/__tests__/**`, `**/test/**`
+- Or files that clearly use test frameworks (`jest`, `vitest`) / Testing Library (`@testing-library/*`)
+
+**Production code** (higher risk):
+- Everything else, especially shared libraries and app runtime code
 
 ## Core Principles
 
-1. **Conservative approach**: Prefer proper null checks over ignoring problems
-2. **No reckless assertions**: NEVER use type assertions to any, unknown, or never without explicit user approval
-3. **Justification required**: Production code assertions require explanatory comments. Test assertions do NOT require comments when self-evident.
-4. **Learn and improve**: Log novel situations and suggest skill improvements
-5. **Verify changes**: Run type-check after fixes to confirm resolution
+1. **Local fixes beat cascading API changes**  
+   Prefer local guards, defaults, and boundary validation over changing return types or parameter types.
 
-## Fix Hierarchy
+2. **Production code: avoid unsafe assertions**  
+   Do **not** use `as any`, `as unknown`, `as never`, or blanket `@ts-ignore` as a quick escape hatch.
 
-### For Production Code (Conservative)
+3. **Tests have different ergonomics**  
+   In tests, it’s acceptable to use:
+   - non-null assertions (`!`) for ergonomics, especially after runtime expectations
+   - test-only assertion helpers that narrow types (preferred over `!` for “type narrowing”)
 
-1. **Proper null checks with early return/throw**
-   ```typescript
-   // BEST: Explicit null check
-   if (value === undefined) {
-     throw new Error('Value is required')
-   }
-   // Now value is narrowed to non-undefined
-   ```
+4. **Suppressions must be deliberate**  
+   - Prefer `@ts-expect-error` over `@ts-ignore` (because it self-invalidates once fixed)
+   - In production code, `@ts-expect-error` must include a ticket + expiry date (or equivalent)
 
-2. **Nullish coalescing with sensible defaults**
-   ```typescript
-   const extension = mimeTypes[type] ?? 'bin'
-   ```
+## Fix Policy
 
-3. **Type guards/narrowing**
-   ```typescript
-   if (accountRole !== undefined) {
-     // Use accountRole here
-   }
-   ```
+### Test Code Policy (preferred order)
 
-4. **Destructuring with defaults**
-   ```typescript
-   const [first = defaultValue] = array
-   ```
+1. **Use test helpers that narrow types**  
+   See `references/test-helpers.md` for `expectString`, `expectDefined`, `at()`, etc.
 
-5. **Non-null assertion (the ! operator)** - ONLY when immediately preceded by a check that guarantees existence
-   ```typescript
-   if (array.length > 0) {
-     // Length check above guarantees first element exists
-     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-     const first = array[0]!
-   }
-   ```
+2. **Use `!` for indexing after an explicit runtime assertion**  
+   Example: `expect(rows).toHaveLength(2)` then `rows[0]!`.
 
-### For Test Files (More Permissive)
+3. **Use `@ts-expect-error` only for intentionally invalid test cases**  
+   Avoid it for normal indexing/narrowing.
 
-Test files can use non-null assertions more liberally since test setup guarantees values exist. **Straightforward test file assertions do NOT require explanatory comments.**
+4. **Avoid `@ts-ignore`**  
+   It disables type checking too broadly.
 
-```typescript
-// Simple test file - no comment needed
-const inputs = getAllByRole('textbox')
-await user.type(inputs[0]!, 'value1')
-await user.type(inputs[1]!, 'value2')
-```
+### Production Code Policy (preferred order)
 
-## Assertion Comment Requirements
+1. **Defaulting** (`??`) when a sensible fallback exists  
+2. **Guard/early return** when undefined is acceptable and local handling is correct  
+3. **Throw with a clear error** when undefined is a programmer/configuration error  
+4. **Tighten types** (e.g., restrict key unions, `as const` objects) when keys are known  
+5. **Non-null assertion (`!`) only for true invariants** (and comment if non-obvious)  
+6. **`@ts-expect-error`** only when the correct fix is genuinely structural and must be deferred (ticket + expiry required)
 
-**Production Code**: ALL non-null assertion or type assertion usage MUST include:
-1. An explanatory comment describing why it's safe
-2. An ESLint/TypeScript suppression comment (`eslint-disable-next-line` or `@ts-expect-error`)
+## Avoiding the “Spiral”
 
-**Test Files**: Comments and suppressions are NOT required for straightforward assertions where test setup clearly guarantees values.
+Before changing a function signature (e.g., returning `T | undefined` where it previously returned `T`), ask:
 
-```typescript
-// Production code - comment + suppression REQUIRED
-if (array.length > 0) {
-  // Length check above guarantees element exists
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const first = array[0]!
-}
+- Can we handle `undefined` locally at the call site?
+- Is this value coming from a boundary (URL params, env/config, JSON parsing)? Validate once at the boundary.
+- Would a signature change force many callers to change? If yes, prefer local handling or upstream validation.
 
-// Production code - alternative with @ts-expect-error
-// accountRoles[accountId] guaranteed by JWT validation middleware
-// @ts-expect-error TS2532 - see comment above
-const role = accountRoles[accountId]
+Signature changes can be correct, but they must be *deliberate* and usually handled in a focused PR.
 
-// Test file - No comment or suppression needed (obvious)
-const button = getByRole('button')
-fireEvent.click(button!)
+## Recommended Lint Guardrails
 
-// Test file - Comment for non-obvious case (suppression optional)
-// Custom mock factory always includes userId in response
-const userId = mockResponse.userId!
-```
+To prevent “`!` creep” in production code:
 
-## Agent Workflow
+- Enable `@typescript-eslint/no-non-null-assertion` in production code (error or warn)
+- Enable `@typescript-eslint/no-unnecessary-type-assertion` (type-aware) to catch some unnecessary assertions
 
-When invoked, this skill uses the `nounchecked-fixer` sub-agent to:
+Tests can override `no-non-null-assertion` to allow ergonomic `!`.
 
-1. **Read the file** and understand context
-2. **Identify violations** from type-check output
-3. **Apply fixes** following the hierarchy above
-4. **Add explanatory comments** for production code assertions or non-obvious situations
-5. **Verify fixes** by running type-check on the file
-6. **Log changes** with justifications to `~/.claude/skills/noUncheckedIndexedAccess/logs/resolution-log.md`
-7. **Flag novel situations** for user review if encountering new patterns
-8. **Suggest improvements** to skill reference documentation
+> Note: `no-unnecessary-type-assertion` requires type-aware ESLint (`parserOptions.project`, often via `tsconfig.eslint.json`).
+
+## Workflow
+
+1. **Confirm scope**: test vs production
+2. **Classify the violation**:
+   - array indexing
+   - object index signature / `Record`
+   - map/dictionary lookup
+   - boundary data (config/env/user input)
+   - falsy vs undefined confusion
+3. **Apply the lowest-risk fix** using the policies above
+4. **Run typecheck/tests** (or describe what should be run in the repo)
+5. **Record the fix** in `logs/{project-name}-resolution-log.md` where `{project-name}` is derived from the current working directory basename (e.g., `cops-portal`, `seller-portal`, `fe-core`). Record what changed and why – UNLESS it is a _trivial_ application of a non-null assertion in a test file, we do not need to log these. If we have already created a code comment documenting our justifications, these log entries ought to be as concise as possible. Simply append to this log file, do NOT read the whole thing or it will fill up the context window quickly
 
 ## References
 
-- **Fix patterns**: See `references/fix-patterns.md` for detailed examples
-- **Known issues**: See `references/known-issues.md` for edge cases and novel patterns
-
-## Logging
-
-All changes are logged to `logs/resolution-log.md` with:
-- Violations fixed per file
-- Fix method used for each violation
-- Justification for the approach
-- Verification results
-- Novel situations encountered
-- Suggested skill improvements
+- `references/fix-patterns.md` — common motifs and the recommended fix for each
+- `references/test-helpers.md` — assertion helpers that narrow types in tests
+- `references/known-issues.md` — edge cases / novel patterns worth remembering
 
 ## Success Criteria
 
-- Type errors resolved without breaking runtime behavior
-- No type assertions to any, unknown, or never without explicit approval
-- Production code assertions include explanatory comments
-- Test file assertions are straightforward and self-explanatory
-- Verification passes after fixes
-- Comprehensive change log for review
+- Errors resolved with minimal runtime behavior changes
+- Production code avoids unsafe type assertions and broad suppressions
+- Test code fixes are ergonomic and maintainable
+- Fixes are logged for review and repeatability

@@ -1,335 +1,242 @@
 # Fix Patterns for noUncheckedIndexedAccess Violations
 
-This document provides detailed examples of fix patterns for common `noUncheckedIndexedAccess` violations.
+This document catalogs high-frequency motifs caused by enabling `noUncheckedIndexedAccess`, with conservative fixes that avoid cascading type changes.
 
-## Pattern 1: Object Index Signature Access
+> Quick rule: **tests optimize for ergonomics**, **production optimizes for correctness + stability**.
 
-### Problem
+---
 
-```typescript
-const types: { [key: string]: string } = {
-  'audio/x-mpeg': 'mpega',
-  'video/mp4': 'mp4'
+## Pattern 1: Array indexing after a runtime assertion (tests)
+
+### Symptom
+
+```ts
+expect(rows).toHaveLength(2)
+within(rows[0]) // TS: rows[0] is possibly undefined
+```
+
+### Recommended fixes
+
+**Option A (simple): non-null assertion**
+
+```ts
+expect(rows).toHaveLength(2)
+within(rows[0]!)
+```
+
+**Option B (cleaner): use `at()` helper (recommended when repeated often)**
+
+```ts
+expect(rows).toHaveLength(2)
+within(at(rows, 0))
+```
+
+See `references/test-helpers.md`.
+
+---
+
+## Pattern 2: “typeof” checks that don’t narrow types (tests)
+
+### Symptom
+
+```ts
+expect(typeof value).toBe('string')
+expect(value.startsWith('.')).toBe(true) // TS: value might not be string
+```
+
+### Recommended fix: assertion helper that narrows
+
+```ts
+expectString(value)
+expect(value.startsWith('.')).toBe(true)
+```
+
+See `references/test-helpers.md`.
+
+---
+
+## Pattern 3: Object index signature access (`Record` / `{[k: string]: T}`) in production
+
+### Symptom
+
+```ts
+const types: Record<string, string> = {
+  "audio/x-mpeg": "mpega",
+  "video/mp4": "mp4",
 }
 
-// ❌ Error: Type 'string | undefined' is not assignable to type 'string'
-export const getExtensionByMimeType = (type: string): string => types[type]
+export const extFor = (type: string): string => types[type] // TS: string | undefined
 ```
 
-### Fix Options
+### Fix options (choose based on semantics)
 
-#### Option A: Update return type (Preferred for functions)
+**Option A: Provide a sensible default**
 
-```typescript
-// ✅ Best: Be explicit about undefined possibility
-export const getExtensionByMimeType = (type: string): string | undefined => types[type]
-
-// Caller must handle undefined:
-const ext = getExtensionByMimeType(mimeType)
-if (!ext) {
-  throw new Error(`Unknown mime type: ${mimeType}`)
-}
+```ts
+export const extFor = (type: string): string => types[type] ?? "bin"
 ```
 
-#### Option B: Provide fallback (Good for known defaults)
+**Option B: Guard and throw (programmer/config error)**
 
-```typescript
-// ✅ Good: Provide sensible default
-export const getExtensionByMimeType = (type: string): string => types[type] ?? 'bin'
-```
-
-#### Option C: Throw if undefined (Good for required values)
-
-```typescript
-// ✅ Good: Throw if type not found
-export const getExtensionByMimeType = (type: string): string => {
-  const extension = types[type]
-  if (extension === undefined) {
-    throw new Error(`Unknown mime type: ${type}`)
-  }
-  return extension
-}
-```
-
-## Pattern 2: Array Index Access
-
-### Problem
-
-```typescript
-const items = ['a', 'b', 'c']
-// ❌ Error: Type 'string | undefined' is not assignable to type 'string'
-const first: string = items[0]
-```
-
-### Fix Options
-
-#### Option A: Check before access (Production code)
-
-```typescript
-// ✅ Best for production: Explicit check
-if (items.length === 0) {
-  throw new Error('Array is empty')
-}
-// Length check above guarantees first element exists
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const first = items[0]!
-```
-
-#### Option B: Use at() with nullish coalescing
-
-```typescript
-// ✅ Good: at() method with fallback
-const first = items.at(0) ?? defaultValue
-```
-
-#### Option C: Destructuring with default
-
-```typescript
-// ✅ Good: Destructure with default
-const [first = defaultValue] = items
-```
-
-#### Option D: Non-null assertion in tests
-
-```typescript
-// ✅ OK in test files: Mock guarantees value
-// Test mock returns exactly 3 items
-const first = items[0]!
-const second = items[1]!
-```
-
-## Pattern 3: Test File Array Access
-
-### Problem
-
-```typescript
-// Test file
-const inputs = getAllByRole('textbox')
-// ❌ Error: HTMLElement | undefined not assignable to HTMLElement
-await user.type(inputs[0], 'value1')
-```
-
-### Fix Options
-
-#### Option A: Non-null assertion with comment (Preferred for tests)
-
-```typescript
-// ✅ Best for tests: Assert with explanatory comment
-const inputs = getAllByRole('textbox')
-// Test setup creates exactly 2 textbox inputs
-await user.type(inputs[0]!, 'value1')
-await user.type(inputs[1]!, 'value2')
-```
-
-#### Option B: Explicit assertion before use
-
-```typescript
-// ✅ Good: Explicit test assertion
-const inputs = getAllByRole('textbox')
-expect(inputs).toHaveLength(2)
-// expect().toHaveLength(2) assertion guarantees 2 elements
-await user.type(inputs[0]!, 'value1')
-await user.type(inputs[1]!, 'value2')
-```
-
-#### Option C: Array destructuring
-
-```typescript
-// ✅ Good: Destructure to named variables
-const [input1, input2] = getAllByRole('textbox')
-// Test setup guarantees 2 inputs exist
-if (!input1 || !input2) throw new Error('Expected 2 inputs')
-await user.type(input1, 'value1')
-await user.type(input2, 'value2')
-```
-
-## Pattern 4: RegExp Named Groups
-
-### Problem
-
-```typescript
-const match = regex.exec(text)
-if (!match.groups) {
-  throw new Error('Named capture groups not supported')
-}
-// ❌ Error: Type 'string | undefined' not assignable to type 'string'
-const key = match.groups.key
-const value = match.groups.value
-```
-
-### Fix Options
-
-#### Option A: Runtime validation (Best)
-
-```typescript
-// ✅ Best: Validate after checking groups exists
-if (!match.groups) {
-  throw new Error('Named capture groups not supported')
-}
-const key = match.groups.key
-const value = match.groups.value
-if (!key || !value) {
-  throw new Error('Expected key and value in regex match')
-}
-// Now key and value are validated as strings
-```
-
-#### Option B: Non-null assertion with explanatory comment
-
-```typescript
-// ✅ OK if regex pattern guarantees groups
-if (!match.groups) {
-  throw new Error('Named capture groups not supported')
-}
-// Regex pattern /(?<key>\w+)=(?<value>\w+)/ guarantees key and value groups
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const key = match.groups.key!
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const value = match.groups.value!
-```
-
-## Pattern 5: Cascading Undefined
-
-### Problem
-
-```typescript
-const accountRole = roles[accountId]  // accountRole is Role | undefined
-// ❌ Error: Object is possibly 'undefined'
-if (accountRole.buyer === RoleStatus.INTENDED) {
-  // ...
+```ts
+export const extFor = (type: string): string => {
+  const ext = types[type]
+  if (ext === undefined) throw new Error(`Unknown mime type: ${type}`)
+  return ext
 }
 ```
 
-### Fix Options
+**Option C: Tighten the key type (when keys are known)**
 
-#### Option A: Check before use (Best)
+```ts
+const types = {
+  "audio/x-mpeg": "mpega",
+  "video/mp4": "mp4",
+} as const
 
-```typescript
-// ✅ Best: Check undefined before accessing properties
-const accountRole = roles[accountId]
-if (!accountRole) {
-  throw new Error('Account role not found')
-}
-// Now accountRole is narrowed to Role
-if (accountRole.buyer === RoleStatus.INTENDED) {
-  // ...
-}
+type Mime = keyof typeof types
+
+export const extFor = (type: Mime): string => types[type]
 ```
 
-#### Option B: Optional chaining
+This avoids `undefined` entirely by making the key space explicit.
 
-```typescript
-// ✅ Good: Use optional chaining
-const accountRole = roles[accountId]
-if (accountRole?.buyer === RoleStatus.INTENDED) {
-  // ...
-}
+---
+
+## Pattern 4: Index access + property access chain (production)
+
+### Symptom
+
+```ts
+const label = labels[key].text // TS: labels[key] possibly undefined
 ```
 
-## Pattern 6: Object Property from Object.entries()
+### Fix options
 
-### Problem
+**Option A: Optional chaining + default**
 
-```typescript
-const obj = { a: 1, b: 2, c: 3 }
-for (const [key, value] of Object.entries(obj)) {
-  // ❌ Error: Type 'number | undefined' not assignable to type 'number'
-  const doubled: number = obj[key]
-}
+```ts
+const label = labels[key]?.text ?? "Unknown"
 ```
 
-### Fix Options
+**Option B: Guard**
 
-#### Option A: Use the value from entries
-
-```typescript
-// ✅ Best: Use value directly from entries
-for (const [key, value] of Object.entries(obj)) {
-  const doubled = value * 2  // value is already the correct type
-}
+```ts
+const entry = labels[key]
+if (!entry) return "Unknown"
+return entry.text
 ```
 
-#### Option B: Type assertion with comment (if obj access needed)
+Prefer `=== undefined` checks if falsy values are valid:
 
-```typescript
-// ✅ OK: Assert that key is valid (it comes from Object.entries)
-for (const [key, value] of Object.entries(obj)) {
-  // key comes from Object.entries(obj) so obj[key] is guaranteed to exist
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const num = obj[key]!
-  const doubled = num * 2
-}
+```ts
+const entry = labels[key]
+if (entry === undefined) return "Unknown"
 ```
 
-## Pattern 7: Testing Library Queries
+---
 
-### Problem
+## Pattern 5: `undefined` as an index type (production)
 
-```typescript
-// Test file
-const button = container.querySelector('.submit-button')
-// ❌ Error: Element | null not assignable to Element
-fireEvent.click(button)
+### Symptom
+
+```ts
+const key = maybeKey // string | undefined
+const v = obj[key]   // TS2538: undefined cannot be used as an index type
 ```
 
-### Fix Options
+### Fix options
 
-#### Option A: Use getBy* queries (Best for tests)
+**Option A: Guard key**
 
-```typescript
-// ✅ Best: getBy* throws if element not found
-const button = getByRole('button', { name: 'Submit' })
-fireEvent.click(button)  // button is guaranteed to exist
+```ts
+if (!key) return
+const v = obj[key]
 ```
 
-#### Option B: Assert + non-null assertion
+**Option B: Default key (only if appropriate)**
 
-```typescript
-// ✅ Good: Explicit assertion
-const button = container.querySelector('.submit-button')
-// Test DOM setup includes .submit-button element
-expect(button).toBeInTheDocument()
-fireEvent.click(button!)
+```ts
+const v = obj[key ?? "defaultKey"]
 ```
 
-## Anti-Patterns (AVOID)
+---
 
-### ❌ Type assertion to any
+## Pattern 6: Boundary validation (config/env/URL params/user input)
 
-```typescript
-// ❌ NEVER: Defeats type safety completely
-const value = obj[key] as any
+When the value originates from a boundary, validate once and keep internal code clean.
+
+### Symptom
+
+```ts
+const env = process.env.APP_ENV // string | undefined
+const config = configs[env]     // TS: env possibly undefined; config possibly undefined
 ```
 
-### ❌ Type assertion to unknown then to target
+### Recommended fix (validate once)
 
-```typescript
-// ❌ NEVER: Circumvents type checking
-const value = obj[key] as unknown as string
+```ts
+const env = process.env.APP_ENV
+if (!env) throw new Error("APP_ENV is required")
+
+const config = configs[env]
+if (!config) throw new Error(`Unknown APP_ENV: ${env}`)
 ```
 
-### ❌ Non-null assertion without justification
+This prevents the “spray `| undefined` everywhere” cascade.
 
-```typescript
-// ❌ BAD: No comment explaining why this is safe
-const value = obj[key]!
+---
+
+## Pattern 7: “Falsy” narrowing bugs (production + tests)
+
+### Symptom
+
+```ts
+const v = map[key] // string | undefined
+if (!v) return     // BUG if empty string is valid
 ```
 
-### ❌ Ignoring undefined in production code
+### Recommended fix
 
-```typescript
-// ❌ BAD: Silently using undefined as fallback in production
-const config = configs[env]!  // Will crash at runtime if env not in configs
+```ts
+const v = map[key]
+if (v === undefined) return
 ```
+
+Use falsy checks only when falsy values are truly impossible or undesired.
+
+---
+
+## Pattern 8: When `!` is acceptable in production
+
+Use `!` only when the invariant is **truly guaranteed** and **locally obvious**, e.g.:
+
+- indexing into a tuple with a known index
+- accessing a property that was just checked in the same scope
+- values enforced by schema/validation in the same module
+
+Prefer a comment if the invariant isn’t self-evident.
+
+```ts
+// Invariant: `activeId` always exists after `loadState()` succeeds.
+const active = entities[activeId]!
+```
+
+If the invariant is not real, do not use `!`—validate or guard instead.
+
+---
 
 ## Summary Decision Tree
 
 ```
-Is it a test file?
-├─ YES → Use `!` with SAFETY comment explaining test setup
-└─ NO (production code) → Is there a sensible default?
-   ├─ YES → Use nullish coalescing: `value ?? default`
-   └─ NO → Can you check before use?
-      ├─ YES → Use if guard: `if (!value) throw new Error(...)`
-      └─ NO → Consult with user for guidance
+Is this a test file?
+├─ YES
+│  ├─ Can we narrow with a test helper? → use expectString/expectDefined/at()
+│  └─ Otherwise, use `!` for ergonomic indexing after runtime expects
+└─ NO (production)
+   ├─ Is there a sensible default? → `value ?? default`
+   ├─ Can we handle locally with a guard? → early return / fallback UI
+   ├─ Is undefined a programmer/config error? → throw with a good message
+   ├─ Are keys known? → tighten the key type (`as const`, `keyof`)
+   └─ Only then: `!` (true invariant) or `@ts-expect-error` (ticket + expiry)
 ```
