@@ -2,8 +2,7 @@
 local
 file-history
 ide
-plugins/*
-!plugins/local
+plugins
 projects
 shell-snapshots
 statsig
