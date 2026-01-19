@@ -1,0 +1,11 @@
+{
+  "description": "Shows macOS notifications for Claude events (tmux only)",
+  "hooks": {
+    "Notification": [
+      {
+        "type": "command",
+        "command": "sh -c '[ -z \"$TMUX\" ] && exit 0; command -v terminal-notifier &>/dev/null || exit 0; notif_type=$(jq -r \".notification_type // \\\"unknown\\\"\"); case \"$notif_type\" in idle_prompt) terminal-notifier -title \"Claude Code\" -message \"Session idle - awaiting input\" -sound Ping &>/dev/null & ;; permission_prompt) terminal-notifier -title \"Claude Code\" -message \"Permission required\" -sound Ping &>/dev/null & ;; elicitation_dialog) terminal-notifier -title \"Claude Code\" -message \"Input requested\" -sound Ping &>/dev/null & ;; esac'"
+      }
+    ]
+  }
+}

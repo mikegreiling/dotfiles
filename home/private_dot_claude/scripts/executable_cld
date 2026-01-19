@@ -23,6 +23,21 @@ else
   readonly CLAUDE_BIN="${HOME}/.claude/local/claude"
 fi
 
+# Plugin directories to load
+readonly PLUGIN_DIRS=(
+  "${HOME}/.claude/plugins/local/tmux-session-metadata"
+  "${HOME}/.claude/plugins/local/audio-notifications"
+  "${HOME}/.claude/plugins/local/tmux-visual-notifications"
+)
+
+# Build plugin flags array
+PLUGIN_FLAGS=()
+for plugin_dir in "${PLUGIN_DIRS[@]}"; do
+  if [[ -d "$plugin_dir" ]]; then
+    PLUGIN_FLAGS+=("--plugin-dir" "$plugin_dir")
+  fi
+done
+
 # Exit codes
 readonly EXIT_SUCCESS=0
 readonly EXIT_INVALID_INPUT=1
@@ -525,9 +540,9 @@ cmd_resume() {
 
   # Handle empty clean_options array properly
   if [[ ${#clean_options[@]} -eq 0 ]]; then
-    exec "$CLAUDE_BIN" --resume "$session_id"
+    exec "$CLAUDE_BIN" "${PLUGIN_FLAGS[@]}" --resume "$session_id"
   else
-    exec "$CLAUDE_BIN" --resume "$session_id" "${clean_options[@]}"
+    exec "$CLAUDE_BIN" "${PLUGIN_FLAGS[@]}" --resume "$session_id" "${clean_options[@]}"
   fi
 }
 
@@ -554,7 +569,7 @@ cmd_fork() {
   fi
 
   info "Forking session: $session_id"
-  exec "$CLAUDE_BIN" --resume "$session_id" --fork-session "${options[@]}"
+  exec "$CLAUDE_BIN" "${PLUGIN_FLAGS[@]}" --resume "$session_id" --fork-session "${options[@]}"
 }
 
 # Fork a Claude session to a new location using run-elsewhere
@@ -594,8 +609,14 @@ cmd_fork_elsewhere() {
   # Fallback to current directory if we can't determine session directory
   local cwd="${session_dir:-$PWD}"
 
+  # Build plugin flags string
+  local plugin_flags_str=""
+  for flag in "${PLUGIN_FLAGS[@]}"; do
+    plugin_flags_str="$plugin_flags_str $flag"
+  done
+
   # Construct the command string (with proper escaping)
-  local cmd_string="cd '$cwd' && $CLAUDE_BIN --resume $session_id --fork-session"
+  local cmd_string="cd '$cwd' && $CLAUDE_BIN$plugin_flags_str --resume $session_id --fork-session"
   # Append options if any
   if [[ ${#options[@]} -gt 0 ]]; then
     cmd_string="$cmd_string ${options[*]}"
@@ -657,7 +678,7 @@ main() {
 
           if [[ "$has_no_flag" == true ]]; then
             # Auto-deny: start new session
-            exec "$CLAUDE_BIN" "${@}"
+            exec "$CLAUDE_BIN" "${PLUGIN_FLAGS[@]}" "${@}"
           elif [[ "$has_yes_flag" == true ]]; then
             # Auto-accept: cd if needed and resume
             if [[ "$needs_cd" == true ]]; then
@@ -681,7 +702,7 @@ main() {
 
             # Check for ESC key (ASCII 27)
             if [[ "$reply" == $'\e' ]]; then
-              exec "$CLAUDE_BIN"
+              exec "$CLAUDE_BIN" "${PLUGIN_FLAGS[@]}"
             elif [[ -z "$reply" || "$reply" =~ ^[Yy]$ ]]; then
               if [[ "$needs_cd" == true ]]; then
                 cd "$session_dir" || {
@@ -691,26 +712,26 @@ main() {
               fi
               cmd_resume "$session_id"
             else
-              exec "$CLAUDE_BIN"
+              exec "$CLAUDE_BIN" "${PLUGIN_FLAGS[@]}"
             fi
           fi
         else
           # No previous session
-          exec "$CLAUDE_BIN" "$@"
+          exec "$CLAUDE_BIN" "${PLUGIN_FLAGS[@]}" "$@"
         fi
       else
         # Not in tmux
-        exec "$CLAUDE_BIN" "$@"
+        exec "$CLAUDE_BIN" "${PLUGIN_FLAGS[@]}" "$@"
       fi
       return
     else
       # Has flags but not our flags, pass through to claude
-      exec "$CLAUDE_BIN" "$@"
+      exec "$CLAUDE_BIN" "${PLUGIN_FLAGS[@]}" "$@"
       return
     fi
   # Case 3: Unknown command, pass through
   else
-    exec "$CLAUDE_BIN" "$@"
+    exec "$CLAUDE_BIN" "${PLUGIN_FLAGS[@]}" "$@"
     return
   fi
 
@@ -803,19 +824,19 @@ main() {
             cmd_resume "$session_id" "$@"
           else
             # User wants new session with options
-            exec "$CLAUDE_BIN" "$@"
+            exec "$CLAUDE_BIN" "${PLUGIN_FLAGS[@]}" "$@"
           fi
         else
           # Either no session or already has --resume/--continue, pass through
-          exec "$CLAUDE_BIN" "$@"
+          exec "$CLAUDE_BIN" "${PLUGIN_FLAGS[@]}" "$@"
         fi
       else
         # Not in tmux, pass through
-        exec "$CLAUDE_BIN" "$@"
+        exec "$CLAUDE_BIN" "${PLUGIN_FLAGS[@]}" "$@"
       fi
     else
       # Unknown subcommand or regular claude arguments - pass everything through
-      exec "$CLAUDE_BIN" "$@"
+      exec "$CLAUDE_BIN" "${PLUGIN_FLAGS[@]}" "$@"
     fi
   fi
 }

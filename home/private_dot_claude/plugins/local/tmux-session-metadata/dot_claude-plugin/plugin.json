@@ -1,0 +1,5 @@
+{
+  "name": "tmux-session-metadata",
+  "version": "1.0.0",
+  "description": "Manages tmux pane metadata for Claude session tracking"
+}
