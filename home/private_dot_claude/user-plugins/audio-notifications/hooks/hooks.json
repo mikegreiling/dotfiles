@@ -3,14 +3,22 @@
   "hooks": {
     "Stop": [
       {
-        "type": "command",
-        "command": "sh -c '(afplay /System/Library/Sounds/Glass.aiff &>/dev/null &)'"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c '(afplay /System/Library/Sounds/Glass.aiff &>/dev/null &)'"
+          }
+        ]
       }
     ],
     "Notification": [
       {
-        "type": "command",
-        "command": "sh -c 'notif_type=$(jq -r \".notification_type // \\\"unknown\\\"\"); if [[ \"$notif_type\" == \"idle_prompt\" ]]; then (for i in 1 2 3; do afplay /System/Library/Sounds/Ping.aiff; done &>/dev/null &); elif [[ \"$notif_type\" == \"permission_prompt\" || \"$notif_type\" == \"elicitation_dialog\" ]]; then (afplay /System/Library/Sounds/Ping.aiff &>/dev/null &); fi'"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'notif_type=$(jq -r \".notification_type // \\\"unknown\\\"\"); if [[ \"$notif_type\" == \"idle_prompt\" ]]; then (for i in 1 2 3; do afplay /System/Library/Sounds/Ping.aiff; done &>/dev/null &); elif [[ \"$notif_type\" == \"permission_prompt\" || \"$notif_type\" == \"elicitation_dialog\" ]]; then (afplay /System/Library/Sounds/Ping.aiff &>/dev/null &); fi'"
+          }
+        ]
       }
     ]
   }
