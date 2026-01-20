@@ -8,8 +8,10 @@ if ! command -v terminal-notifier &>/dev/null; then
 {
   "hookSpecificOutput": {
     "hookEventName": "SessionStart",
-    "additionalContext": "⚠️  terminal-notifier is not installed. Visual notifications are disabled.\n\nTo install: brew install terminal-notifier"
-  }
+    "additionalContext": ""
+  },
+  "suppressOutput": true,
+  "systemMessage": "\n⚠️ terminal-notifier is not installed. Visual notifications are disabled.\n\nTo install: brew install terminal-notifier\nTo disable this message, uninstall the macos-system-notifications plugin."
 }
 EOF
   exit 0
