@@ -3,8 +3,15 @@
 
 # Check if terminal-notifier is installed
 if ! command -v terminal-notifier &>/dev/null; then
-  echo "Warning: terminal-notifier not installed. Visual notifications disabled." >&2
-  echo "Install with: brew install terminal-notifier" >&2
+  # Output JSON - SessionStart adds stdout to Claude's context for visibility
+  cat <<'EOF'
+{
+  "hookSpecificOutput": {
+    "hookEventName": "SessionStart",
+    "additionalContext": "⚠️  terminal-notifier is not installed. Visual notifications are disabled.\n\nTo install: brew install terminal-notifier"
+  }
+}
+EOF
   exit 0
 fi
 
