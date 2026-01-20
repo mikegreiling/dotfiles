@@ -46,10 +46,10 @@ if [ -z "$notif_message" ] || [ "$notif_message" = "Claude Code needs your atten
 fi
 
 # Check for custom icon
-icon_path="$HOME/.claude/assets/claude-logo.png"
+icon_path="${CLAUDE_PLUGIN_ROOT}/claude-logo.png"
 icon_flag=""
 if [ -f "$icon_path" ]; then
-  icon_flag="-appIcon $icon_path"
+  icon_flag="-contentImage $icon_path"
 fi
 
 # Send notification based on type

@@ -22,4 +22,5 @@ fi
 
 # Set up tmux hook for auto-dismissing notifications on pane selection
 # This is idempotent - multiple sessions can set it without conflicts
-tmux set-hook -g after-select-pane 'run-shell "session_id=\$(tmux show-options -pv @meta.claude.session_id 2>/dev/null); [ -n \"\$session_id\" ] && command -v terminal-notifier &>/dev/null && terminal-notifier -remove \"\$session_id\" &>/dev/null || true"' 2>/dev/null || true
+# The 13731138 is a pseudo random unique index which ensures that this hook does not clobber other hooks
+tmux set-hook -g after-select-pane[13731138] 'run-shell "session_id=\$(tmux show-options -pv @meta.claude.session_id 2>/dev/null); [ -n \"\$session_id\" ] && command -v terminal-notifier &>/dev/null && terminal-notifier -remove \"\$session_id\" &>/dev/null || true"' 2>/dev/null || true
