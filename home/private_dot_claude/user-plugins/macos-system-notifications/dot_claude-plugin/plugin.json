@@ -1,5 +1,5 @@
 {
-  "name": "tmux-visual-notifications",
+  "name": "macos-system-notifications",
   "version": "1.0.0",
-  "description": "Shows macOS notifications via terminal-notifier (only in tmux)"
+  "description": "Shows macOS system notifications for Claude Code events with auto-dismiss"
 }
