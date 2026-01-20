@@ -10,6 +10,10 @@ command -v terminal-notifier &>/dev/null || exit 0
 # Parse notification details from JSON input
 session_id=$(echo "$input" | jq -r ".session_id // \"claude\"")
 notif_type=$(echo "$input" | jq -r ".notification_type // \"stop\"")
+message=$(echo "$input" | jq -r ".message // \"\"")
+
+# Create truncated session ID for title (first 8 chars)
+session_short=$(echo "$session_id" | cut -c1-8)
 
 # Detect which terminal emulator is running this tmux session
 detect_terminal() {
@@ -29,37 +33,30 @@ detect_terminal() {
 
 terminal_app=$(detect_terminal)
 
+# Determine notification message (use payload message if available, otherwise fallback)
+notif_message="$message"
+if [ -z "$notif_message" ] || [ "$notif_message" = "Claude Code needs your attention" ]; then
+  case "$notif_type" in
+    idle_prompt) notif_message="Session idle - awaiting input";;
+    permission_prompt) notif_message="Input requested";;
+    elicitation_dialog) notif_message="Input requested";;
+    stop) notif_message="Session stopped";;
+    *) notif_message="Notification from Claude";;
+  esac
+fi
+
+# Check for custom icon
+icon_path="$HOME/.claude/assets/claude-logo.png"
+icon_flag=""
+if [ -f "$icon_path" ]; then
+  icon_flag="-appIcon $icon_path"
+fi
+
 # Send notification based on type
 # Note: We don't background terminal-notifier (no &) because -execute needs to register with macOS
 if [ -n "$terminal_app" ]; then
-  case "$notif_type" in
-    idle_prompt)
-      terminal-notifier -title "Claude Code" -message "Session idle - awaiting input" -sound Glass -group "$session_id" -execute "osascript -e 'tell application \"$terminal_app\" to activate'" >/dev/null 2>&1
-      ;;
-    permission_prompt)
-      terminal-notifier -title "Claude Code" -message "Input requested" -sound Glass -group "$session_id" -execute "osascript -e 'tell application \"$terminal_app\" to activate'" >/dev/null 2>&1
-      ;;
-    elicitation_dialog)
-      terminal-notifier -title "Claude Code" -message "Input requested" -sound Glass -group "$session_id" -execute "osascript -e 'tell application \"$terminal_app\" to activate'" >/dev/null 2>&1
-      ;;
-    stop)
-      terminal-notifier -title "Claude Code" -message "Session stopped" -sound Glass -group "$session_id" -execute "osascript -e 'tell application \"$terminal_app\" to activate'" >/dev/null 2>&1
-      ;;
-  esac
+  terminal-notifier -title "Claude Code ($session_short)" -message "$notif_message" -sound Glass -group "$session_id" $icon_flag -execute "osascript -e 'tell application \"$terminal_app\" to activate'" >/dev/null 2>&1
 else
   # Fallback without click-to-activate if terminal detection fails
-  case "$notif_type" in
-    idle_prompt)
-      terminal-notifier -title "Claude Code" -message "Session idle - awaiting input" -sound Glass -group "$session_id" >/dev/null 2>&1
-      ;;
-    permission_prompt)
-      terminal-notifier -title "Claude Code" -message "Input requested" -sound Glass -group "$session_id" >/dev/null 2>&1
-      ;;
-    elicitation_dialog)
-      terminal-notifier -title "Claude Code" -message "Input requested" -sound Glass -group "$session_id" >/dev/null 2>&1
-      ;;
-    stop)
-      terminal-notifier -title "Claude Code" -message "Session stopped" -sound Glass -group "$session_id" >/dev/null 2>&1
-      ;;
-  esac
+  terminal-notifier -title "Claude Code ($session_short)" -message "$notif_message" -sound Glass -group "$session_id" $icon_flag >/dev/null 2>&1
 fi

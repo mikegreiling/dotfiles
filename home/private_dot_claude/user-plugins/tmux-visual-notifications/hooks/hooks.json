@@ -1,6 +1,16 @@
 {
-  "description": "Shows sticky macOS notifications for Claude events with auto-dismiss and click-to-activate (tmux only)",
+  "description": "Shows sticky macOS notifications for Claude events with auto-dismiss and click-to-activate",
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/mike/.claude/user-plugins/tmux-visual-notifications/session-start-hook.sh"
+          }
+        ]
+      }
+    ],
     "Notification": [
       {
         "hooks": [
