@@ -26,7 +26,6 @@ fi
 # Plugin directories to load
 readonly PLUGIN_DIRS=(
   "${HOME}/.claude/user-plugins/tmux-session-metadata"
-  "${HOME}/.claude/user-plugins/audio-notifications"
   "${HOME}/.claude/user-plugins/tmux-visual-notifications"
 )
 
@@ -37,6 +36,13 @@ for plugin_dir in "${PLUGIN_DIRS[@]}"; do
     PLUGIN_FLAGS+=("--plugin-dir" "$plugin_dir")
   fi
 done
+
+# Set up tmux hook for auto-dismissing Claude notifications on pane focus
+# This hook checks if the focused pane has a Claude session and clears its notifications
+# Note: set-hook -g is idempotent (replaces existing hook), so multiple cld instances are safe
+if [[ -n "$TMUX" ]] && command -v terminal-notifier &>/dev/null; then
+  tmux set-hook -g after-select-pane 'run-shell "session_id=$(tmux show-options -pv @meta.claude.session_id 2>/dev/null); [ -n \"$session_id\" ] && command -v terminal-notifier &>/dev/null && terminal-notifier -remove \"$session_id\" &>/dev/null || true"' 2>/dev/null || true
+fi
 
 # Exit codes
 readonly EXIT_SUCCESS=0
