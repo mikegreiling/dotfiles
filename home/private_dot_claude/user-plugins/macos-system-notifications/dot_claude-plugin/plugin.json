@@ -1,5 +1,6 @@
 {
   "name": "macos-system-notifications",
   "version": "1.0.0",
-  "description": "Shows macOS system notifications for Claude Code events with auto-dismiss"
+  "description": "Shows macOS system notifications for Claude Code events with auto-dismiss",
+  "hooks": "./hooks/hooks.json"
 }
