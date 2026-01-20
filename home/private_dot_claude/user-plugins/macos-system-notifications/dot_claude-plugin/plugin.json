@@ -1,0 +1,5 @@
+{
+  "name": "tmux-visual-notifications",
+  "version": "1.0.0",
+  "description": "Shows macOS notifications via terminal-notifier (only in tmux)"
+}

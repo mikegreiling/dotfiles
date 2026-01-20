@@ -26,7 +26,7 @@ fi
 # Plugin directories to load
 readonly PLUGIN_DIRS=(
   "${HOME}/.claude/user-plugins/tmux-session-metadata"
-  "${HOME}/.claude/user-plugins/tmux-visual-notifications"
+  "${HOME}/.claude/user-plugins/macos-system-notifications"
 )
 
 # Build plugin flags array
