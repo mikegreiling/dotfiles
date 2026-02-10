@@ -104,6 +104,125 @@ validate_partial_session_id() {
   fi
 }
 
+# Validate that a string is a usable directory path
+# Returns 0 if valid, 1 if invalid
+is_valid_directory_path() {
+  local path="$1"
+
+  # Empty path is invalid
+  [[ -z "$path" ]] && return 1
+
+  # Must be an absolute path (starts with /)
+  [[ "$path" != /* ]] && return 1
+
+  # Reject paths containing quote characters (indicates malformed metadata)
+  [[ "$path" == *\"* || "$path" == *\'* ]] && return 1
+
+  # Directory must exist
+  [[ ! -d "$path" ]] && return 1
+
+  return 0
+}
+
+# Format a Unix timestamp into human-readable string with timezone
+# Output example: "Mon Feb  9 14:23:45 2026 (CST)"
+format_timestamp() {
+  local timestamp="$1"
+  local formatted
+
+  # macOS uses -r, Linux uses -d @
+  # %Z gives timezone abbreviation (CST, EST, UTC, etc.)
+  formatted=$(date -r "$timestamp" "+%a %b %e %H:%M:%S %Y (%Z)" 2>/dev/null) || \
+    formatted=$(date -d "@$timestamp" "+%a %b %e %H:%M:%S %Y (%Z)" 2>/dev/null) || \
+    formatted="unknown"
+
+  echo "$formatted"
+}
+
+# Sessions older than this may have been purged (3 weeks in seconds)
+readonly SESSION_AGE_WARNING_SECONDS=$((21 * 24 * 60 * 60))
+
+# Find session transcript file and return its path
+find_session_transcript() {
+  local session_id="$1"
+  find ~/.claude/projects -name "${session_id}.jsonl" -print -quit 2>/dev/null
+}
+
+# Get modification time of a session transcript file
+# Returns empty string if file doesn't exist or stat fails
+get_session_mtime() {
+  local session_file="$1"
+  [[ -z "$session_file" ]] && return
+
+  # macOS stat uses -f %m, Linux uses -c %Y
+  stat -f %m "$session_file" 2>/dev/null || stat -c %Y "$session_file" 2>/dev/null || true
+}
+
+# Get the last hook timestamp from tmux metadata
+# Returns empty string if not in tmux or no metadata available
+get_tmux_hook_timestamp() {
+  if is_in_tmux; then
+    tmux show-options -pv @meta.claude.latest_hook_time 2>/dev/null || true
+  fi
+}
+
+# Display session information preamble before resume
+# Parameters:
+#   $1 - session_id
+#   $2 - session_file (empty if not found)
+#   $3 - session_mtime (empty if not available)
+#   $4 - use_tmux_metadata ("true" or "false") - only valid for current pane's session
+show_session_preamble() {
+  local session_id="$1"
+  local session_file="$2"
+  local session_mtime="$3"
+  local use_tmux_metadata="${4:-false}"
+
+  if [[ -n "$session_file" ]]; then
+    # Session transcript found
+    info "Session found: $session_id"
+    if [[ -n "$session_mtime" ]]; then
+      local formatted_time
+      formatted_time=$(format_timestamp "$session_mtime")
+      info "Last activity: $formatted_time"
+    fi
+  else
+    # Session transcript NOT found - warn user
+    info "Session: $session_id"
+
+    # Only try tmux metadata if this is the current pane's session
+    if [[ "$use_tmux_metadata" == "true" ]]; then
+      local hook_time
+      hook_time=$(get_tmux_hook_timestamp)
+
+      if [[ -n "$hook_time" ]]; then
+        local formatted_time
+        formatted_time=$(format_timestamp "$hook_time")
+        local current_time
+        current_time=$(date +%s)
+        local age=$((current_time - hook_time))
+
+        if [[ $age -gt $SESSION_AGE_WARNING_SECONDS ]]; then
+          echo "⚠ Warning: No transcript found. Last activity was $formatted_time." >&2
+          echo "  Session likely expired. claude --resume is likely to fail." >&2
+        else
+          echo "⚠ Warning: No transcript found. Last activity was $formatted_time." >&2
+          echo "  claude --resume is likely to fail." >&2
+        fi
+      else
+        echo "⚠ Warning: No transcript found. The session may no longer be available." >&2
+        echo "  claude --resume is likely to fail." >&2
+      fi
+    else
+      # Explicit session ID - don't use tmux metadata
+      echo "⚠ Warning: No transcript found. The session may no longer be available." >&2
+      echo "  claude --resume is likely to fail." >&2
+    fi
+  fi
+
+  echo "" # Blank line before directory prompt or launch message
+}
+
 # Extract session ID from filename
 extract_session_id() {
   local filename="$1"
@@ -124,58 +243,72 @@ expand_session_id() {
     return
   fi
 
-  # Strip dashes from the partial ID for searching
-  # This allows matching "23e30f82-be" against files containing "23e30f82be..."
+  # Strip dashes from the partial ID for comparison
   local search_string="${partial_id//-/}"
 
   # Initialize associative array for unique sessions
   declare -A unique_sessions
 
-  # Step 1: Search project transcript files first (authoritative source)
-  # Note: Use ${search_string}* (no leading *) to match only at start of UUID
-  local project_matches
-  project_matches=$(find ~/.claude/projects -type f -name "${search_string}*.jsonl" 2>/dev/null || true)
+  # Helper function to check if a filename matches our search string
+  # Compares dashless versions to handle any dash placement
+  matches_search() {
+    local filename="$1"
+    local filename_nodashes="${filename//-/}"
+    [[ "$filename_nodashes" == "${search_string}"* ]]
+  }
 
-  if [[ -n "$project_matches" ]]; then
-    # Extract unique session IDs from project files
-    while IFS= read -r file; do
-      if [[ -n "$file" ]]; then
+  # Step 1: Search project transcript files first (authoritative source)
+  # Note: We use mapfile to avoid subshell issues with process substitution
+  local -a project_files
+  mapfile -t -d '' project_files < <(find ~/.claude/projects -type f -name "*.jsonl" -print0 2>/dev/null)
+
+  for file in "${project_files[@]}"; do
+    [[ -z "$file" ]] && continue
+    local filename
+    filename=$(basename "$file")
+    if matches_search "$filename"; then
+      local session_id
+      session_id=$(extract_session_id "$filename")
+      if [[ -n "$session_id" ]] && [[ ! "$session_id" =~ -agent- ]]; then
+        unique_sessions["$session_id"]=1
+      fi
+    fi
+  done
+
+  # Step 2: If no matches in projects, try todo files for newly-started sessions
+  local array_size=0
+  # Safely get array size even if array is empty or unset
+  set +u  # Temporarily disable unbound variable check
+  array_size=${#unique_sessions[@]}
+  set -u  # Re-enable unbound variable check
+  if [[ "$array_size" -eq 0 ]]; then
+    local -a todo_files
+    mapfile -t -d '' todo_files < <(find ~/.claude/todos -type f -name "*.json" -print0 2>/dev/null)
+
+    for file in "${todo_files[@]}"; do
+      [[ -z "$file" ]] && continue
+      local filename
+      filename=$(basename "$file")
+      if matches_search "$filename"; then
         local session_id
-        session_id=$(extract_session_id "$(basename "$file")")
+        session_id=$(extract_session_id "$filename")
         if [[ -n "$session_id" ]] && [[ ! "$session_id" =~ -agent- ]]; then
           unique_sessions["$session_id"]=1
         fi
       fi
-    done <<< "$project_matches"
-  else
-    # Step 2: Fallback to todo files for newly-started sessions
-    # Note: Use ${search_string}* (no leading *) to match only at start of UUID
-    local todo_matches
-    todo_matches=$(find ~/.claude/todos -type f -name "${search_string}*.json" 2>/dev/null || true)
-
-    if [[ -n "$todo_matches" ]]; then
-      # Extract unique session IDs from todo files (ignoring -agent- suffixes)
-      while IFS= read -r file; do
-        if [[ -n "$file" ]]; then
-          local session_id
-          session_id=$(extract_session_id "$(basename "$file")")
-          if [[ -n "$session_id" ]] && [[ ! "$session_id" =~ -agent- ]]; then
-            unique_sessions["$session_id"]=1
-          fi
-        fi
-      done <<< "$todo_matches"
-    fi
+    done
   fi
 
   # Check how many unique sessions we found
   local session_count=0
-  if [[ ${#unique_sessions[@]} -gt 0 ]] 2>/dev/null; then
-    session_count=${#unique_sessions[@]}
-  fi
+  # Safely get array size even if array is empty or unset
+  set +u  # Temporarily disable unbound variable check
+  session_count=${#unique_sessions[@]}
+  set -u  # Re-enable unbound variable check
 
   if [[ $session_count -eq 0 ]]; then
     error "No sessions found matching '$partial_id'."
-    error "Run 'claude --list-sessions' to see available sessions."
+    error "Run 'claude --resume' to see available sessions in interactive picker."
     exit "$EXIT_NO_MATCHES"
   elif [[ $session_count -gt 1 ]]; then
     error "Multiple sessions found matching '$partial_id':"
@@ -316,10 +449,16 @@ decode_and_validate_path() {
 get_session_directory() {
   local session_id="$1"
 
-  # Try tmux metadata first
+  # Try tmux metadata first (with validation)
   local metadata_dir=""
   if is_in_tmux; then
-    metadata_dir=$(tmux show-options -pv @meta.claude.session_dir 2>/dev/null || true)
+    local raw_metadata
+    raw_metadata=$(tmux show-options -pv @meta.claude.session_dir 2>/dev/null || true)
+    # Only use metadata if it's a valid directory path
+    # This ensures transcript decoding is used when metadata is corrupted
+    if is_valid_directory_path "$raw_metadata"; then
+      metadata_dir="$raw_metadata"
+    fi
   fi
 
   # Find transcript file
@@ -443,6 +582,7 @@ cmd_resume() {
   # Parse flags
   local auto_yes=false
   local auto_no=false
+  local dry_run=false
   local clean_options=()
 
   for opt in "$@"; do
@@ -453,14 +593,17 @@ cmd_resume() {
       -n|--no)
         auto_no=true
         ;;
+      --dry-run)
+        dry_run=true
+        ;;
       *)
         clean_options+=("$opt")
         ;;
     esac
   done
 
-  # Check if running inside Claude Code (not allowed without elsewhere)
-  if is_inside_claude_code; then
+  # Check if running inside Claude Code (not allowed without elsewhere or dry-run)
+  if is_inside_claude_code && [[ "$dry_run" != "true" ]]; then
     error "Cannot run claude inside a Claude Code session."
     error "Use 'cld fork <location>' to run in a new pane/window/tab."
     error "Examples:"
@@ -471,20 +614,38 @@ cmd_resume() {
   fi
 
   # Get or expand session ID
+  local explicit_session_id="$session_id"  # Track if explicit ID was provided
   if [[ -z "$session_id" ]]; then
     session_id=$(read_tmux_session_id)
   else
     session_id=$(expand_session_id "$session_id")
   fi
 
+  # Find session transcript and get metadata
+  local session_file
+  session_file=$(find_session_transcript "$session_id")
+  local session_mtime
+  session_mtime=$(get_session_mtime "$session_file")
+
+  # Use tmux metadata only if no explicit session ID was provided
+  local use_tmux_metadata="false"
+  [[ -z "$explicit_session_id" ]] && use_tmux_metadata="true"
+
+  # Show session preamble
+  show_session_preamble "$session_id" "$session_file" "$session_mtime" "$use_tmux_metadata"
+
   # Get session directory with validation
   local session_dir
   session_dir=$(get_session_directory "$session_id")
 
+  # Final safety check - if session_dir somehow contains invalid data, clear it
+  if [[ -n "$session_dir" ]] && ! is_valid_directory_path "$session_dir"; then
+    session_dir=""
+  fi
+
   # Handle directory switching
   if [[ -n "$session_dir" ]] && ! check_directory_match "$session_dir"; then
     if [[ "$auto_no" == true ]]; then
-      # User explicitly said no, exit without resuming
       info "Session resume cancelled (--no flag)"
       exit "$EXIT_SUCCESS"
     elif [[ "$auto_yes" == true ]]; then
@@ -495,33 +656,41 @@ cmd_resume() {
       }
     else
       # Interactive prompt
-      echo "Warning: Session started in $session_dir" >&2
-      echo "Currently in: $PWD" >&2
+      info "Session started in: $session_dir"
+      info "Currently in: $PWD"
       echo -n "Change directory and resume? [Yn] " >&2
 
       local reply
       read -r -n 1 reply
       echo "" >&2
 
-      # Check for ESC key (ASCII 27)
       if [[ "$reply" == $'\e' ]]; then
         info "Session resume cancelled"
         exit "$EXIT_SUCCESS"
       elif [[ -z "$reply" || "$reply" =~ ^[Yy]$ ]]; then
-        # Yes - change directory and continue to resume
         cd "$session_dir" || {
           error "Failed to change to directory: $session_dir"
           exit "$EXIT_INVALID_INPUT"
         }
       else
-        # No - exit without resuming
         info "Session resume cancelled"
         exit "$EXIT_SUCCESS"
       fi
     fi
   fi
 
-  info "Resuming session: $session_id"
+  # Exit early if dry-run mode
+  if [[ "$dry_run" == "true" ]]; then
+    echo "" # Blank line
+    info "DRY RUN: Would launch: $CLAUDE_BIN --resume $session_id"
+    if [[ ${#clean_options[@]} -gt 0 ]]; then
+      info "DRY RUN: Additional options: ${clean_options[*]}"
+    fi
+    exit "$EXIT_SUCCESS"
+  fi
+
+  echo "" # Blank line
+  info "Launching: $CLAUDE_BIN --resume $session_id"
 
   # Handle empty clean_options array properly
   if [[ ${#clean_options[@]} -eq 0 ]]; then
@@ -545,6 +714,7 @@ cmd_fork() {
   fi
 
   # Not inside Claude Code, proceed with regular fork
+  local explicit_session_id="$session_id"
   if [[ -z "$session_id" ]]; then
     # No session ID provided, read from tmux metadata
     session_id=$(read_tmux_session_id)
@@ -553,7 +723,20 @@ cmd_fork() {
     session_id=$(expand_session_id "$session_id")
   fi
 
-  info "Forking session: $session_id"
+  # Find session transcript and get metadata
+  local session_file
+  session_file=$(find_session_transcript "$session_id")
+  local session_mtime
+  session_mtime=$(get_session_mtime "$session_file")
+
+  # Use tmux metadata only if no explicit session ID was provided
+  local use_tmux_metadata="false"
+  [[ -z "$explicit_session_id" ]] && use_tmux_metadata="true"
+
+  # Show session preamble
+  show_session_preamble "$session_id" "$session_file" "$session_mtime" "$use_tmux_metadata"
+
+  info "Launching: $CLAUDE_BIN --resume $session_id --fork-session"
   exec "$CLAUDE_BIN" --resume "$session_id" --fork-session "${options[@]}"
 }
 
@@ -579,6 +762,7 @@ cmd_fork_elsewhere() {
   fi
 
   # Determine session ID
+  local explicit_session_id="$session_id"
   if [[ -z "$session_id" ]]; then
     # No session ID provided, read from tmux metadata
     session_id=$(read_tmux_session_id)
@@ -586,6 +770,19 @@ cmd_fork_elsewhere() {
     # Expand partial session ID to full UUID
     session_id=$(expand_session_id "$session_id")
   fi
+
+  # Find session transcript and get metadata
+  local session_file
+  session_file=$(find_session_transcript "$session_id")
+  local session_mtime
+  session_mtime=$(get_session_mtime "$session_file")
+
+  # Use tmux metadata only if no explicit session ID was provided
+  local use_tmux_metadata="false"
+  [[ -z "$explicit_session_id" ]] && use_tmux_metadata="true"
+
+  # Show session preamble (in current pane, before spawning elsewhere)
+  show_session_preamble "$session_id" "$session_file" "$session_mtime" "$use_tmux_metadata"
 
   # Get session's project directory (not current working directory)
   local session_dir
@@ -651,6 +848,11 @@ main() {
         if [[ -n "$session_id" ]]; then
           local session_dir
           session_dir=$(get_session_directory "$session_id")
+
+          # Validate session_dir is usable
+          if [[ -n "$session_dir" ]] && ! is_valid_directory_path "$session_dir"; then
+            session_dir=""
+          fi
 
           local needs_cd=false
           [[ -n "$session_dir" ]] && ! check_directory_match "$session_dir" && needs_cd=true
