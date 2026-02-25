@@ -1,0 +1,22 @@
+{
+	"auths": {
+		"gitlab.bstock.io:8443": {
+			"auth": "bWlrZS5ncmVpbGluZzpVZENUaW4xVmNLa3RtOGJMNkFCVw=="
+		}
+	},
+	"currentContext": "colima",
+	"cliPluginsExtraDirs": [
+		"/opt/homebrew/lib/docker/cli-plugins"
+	],
+	"plugins": {
+		"debug": {
+			"hooks": "exec"
+		},
+		"scout": {
+			"hooks": "pull,buildx build"
+		}
+	},
+	"features": {
+		"hooks": "true"
+	}
+}
