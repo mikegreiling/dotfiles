@@ -33,5 +33,5 @@ if is_claude_code; then
     fi
 else
     # All other environments: Use terminal-based pinentry
-    exec /opt/homebrew/bin/pinentry-curses "$@"
+    TERM=xterm-256color exec /opt/homebrew/bin/pinentry-curses "$@"
 fi
