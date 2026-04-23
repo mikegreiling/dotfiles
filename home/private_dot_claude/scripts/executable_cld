@@ -6,6 +6,10 @@
 #
 # Flag Handling:
 # - cld-specific flags (-y/--yes, -n/--no) are parsed and stripped before passing to claude
+# - cld-specific DSP shorthands: -D, --danger, --yolo all expand to
+#   --dangerously-skip-permissions before being passed to claude
+# - Non-option positional args are trimmed of leading/trailing whitespace
+#   defensively (handles pasted session IDs with stray spaces)
 # - All other flags/options are passed through to the claude command unchanged
 # - --resume is REJECTED when used with 'cld resume' or 'cld fork' (generates error)
 #   since these subcommands already handle session resumption
@@ -13,6 +17,8 @@
 #   cld resume -y abc123 --model sonnet   → strips -y, passes --model sonnet to claude
 #   cld -n --output-format json           → strips -n, passes --output-format json to claude
 #   cld resume abc123 --resume            → ERROR: Cannot use --resume with 'resume' subcommand
+#   cld -D resume abc123                  → resumes with --dangerously-skip-permissions
+#   cld resume abc123 --yolo              → same
 
 set -euo pipefail
 
@@ -817,6 +823,27 @@ cmd_fork_elsewhere() {
 # ============================================================================
 
 main() {
+  # Preprocess: expand cld-specific DSP shorthands and trim whitespace from
+  # non-option args. See top-of-file flag-handling comment.
+  local _processed=()
+  local _arg
+  for _arg in "$@"; do
+    case "$_arg" in
+      -D|--danger|--yolo)
+        _processed+=("--dangerously-skip-permissions")
+        ;;
+      -*)
+        _processed+=("$_arg")
+        ;;
+      *)
+        _arg="${_arg#"${_arg%%[![:space:]]*}"}"
+        _arg="${_arg%"${_arg##*[![:space:]]}"}"
+        _processed+=("$_arg")
+        ;;
+    esac
+  done
+  [[ ${#_processed[@]} -gt 0 ]] && set -- "${_processed[@]}"
+
   # Parse arguments: determine what kind of invocation this is
   local first_arg="${1:-}"
 
@@ -830,14 +857,16 @@ main() {
     # Check for cld-specific flags
     local has_yes_flag=false
     local has_no_flag=false
+    local has_dsp_flag=false
 
     for arg in "$@"; do
       [[ "$arg" == "-y" || "$arg" == "--yes" ]] && has_yes_flag=true
       [[ "$arg" == "-n" || "$arg" == "--no" ]] && has_no_flag=true
+      [[ "$arg" == "--dangerously-skip-permissions" ]] && has_dsp_flag=true
     done
 
     # If we have cld-specific flags or no args, try implicit resume
-    if [[ $# -eq 0 || "$has_yes_flag" == true || "$has_no_flag" == true ]]; then
+    if [[ $# -eq 0 || "$has_yes_flag" == true || "$has_no_flag" == true || "$has_dsp_flag" == true ]]; then
       if is_in_tmux; then
         local session_id
         session_id=$(tmux show-options -pv @meta.claude.session_id 2>/dev/null || true)
@@ -883,7 +912,7 @@ main() {
 
             # Check for ESC key (ASCII 27)
             if [[ "$reply" == $'\e' ]]; then
-              exec "$CLAUDE_BIN"
+              exec "$CLAUDE_BIN" "$@"
             elif [[ -z "$reply" || "$reply" =~ ^[Yy]$ ]]; then
               if [[ "$needs_cd" == true ]]; then
                 cd "$session_dir" || {
@@ -891,9 +920,9 @@ main() {
                   exit "$EXIT_INVALID_INPUT"
                 }
               fi
-              cmd_resume "$session_id"
+              cmd_resume "$session_id" "$@"
             else
-              exec "$CLAUDE_BIN"
+              exec "$CLAUDE_BIN" "$@"
             fi
           fi
         else

@@ -149,3 +149,5 @@ alias path='echo -e ${PATH//:/\\n}'
 # Claude alias shorthand
 alias cld='~/.claude/scripts/cld'
 alias cldfork='cld fork'
+# Claude with --dangerously-skip-permissions pre-applied
+cldd() { cld "$@" --danger; }
