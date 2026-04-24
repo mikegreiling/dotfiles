@@ -55,10 +55,25 @@ The semantic versioning prefix will be used to trigger a new version once this
 branch is merged into its target.
 
 - `MAJOR` and `MINOR` prefixes should be used for breaking API changes or major
-  user interface changes or feature additions. When these are used, they MUST be
-  accompanied by a CHANGELOG.md entry. If there is not one, the CI pipeline for
-  this merge request will fail. Warn the promptee if a CHANGELOG.md entry is not
-  present on such a merge request.
+  user interface changes or feature additions. When these are used, the MR
+  description MUST include a changelog entry inside a `<details open>` block.
+  **Do NOT edit `CHANGELOG.md` directly** — that file is managed automatically
+  by semantic-release, which reads the `<details>` block from the merged MR
+  description and appends it to `CHANGELOG.md` after the release is tagged.
+
+  The `<details>` block format:
+  ```
+  <details open>
+
+  ### Nonbreaking
+  - [JIRA-ID](https://bstock.atlassian.net/browse/JIRA-ID) Concise description of the changes
+
+  </details>
+  ```
+
+  Use `### Breaking` instead of `### Nonbreaking` for `MAJOR` changes.
+  Always warn if a `MAJOR` or `MINOR` MR is missing this block.
+
 - `PATCH` should be used when there are no breaking changes.
 - `NO-RELEASE` should be used when there are no visible changes to the user (in
   the case of a `*-portal` project) or to the package consumer (in the case of a
@@ -89,20 +104,33 @@ Then assign that creator ID as the assignee ID using an the
 the basis for MR body content.
 
 ### Template Access Method
-Use GitLab MCP tools to retrieve templates:
+
+Most B-Stock projects have multiple per-prefix templates located in
+`.gitlab/merge_request_templates/` within the repository. Always try to load
+the template that matches the semantic prefix first (e.g. `MINOR.md`,
+`PATCH.md`, `MAJOR.md`, `NO-RELEASE.md`). Fall back to the project-level
+default template from GitLab settings if no matching file exists.
+
 ```javascript
+// Step 1: Try per-prefix template from repo (preferred)
+const template = await mcp__gitlab__get_file_contents({
+  project_id: "PROJECT_ID",
+  file_path: `.gitlab/merge_request_templates/${SEMANTIC_PREFIX}.md`,
+  ref: "main",
+})
+
+// Step 2: Fall back to project-level default
 const project = await mcp__gitlab__get_project({ project_id: "PROJECT_ID" })
 const template = project.merge_requests_template
 ```
 
 ### Template Processing
-- **Project-level templates**: Most B-Stock projects (fe-core, accounts-portal,
-  cs-portal, home-portal, seller-portal) use project-level templates stored in
-  GitLab settings.
-- **Empty templates**: Some projects have empty templates
-- **No file-based templates**: Although GitLab supports templates defined within
-  the project repo (`.gitlab/merge_request_templates/*.md` files), no B-Stock
-  projects appear to use this.
+- **Per-prefix templates** (preferred): Check `.gitlab/merge_request_templates/`
+  for a file matching the semver prefix (e.g. `MINOR.md`). Use it if found.
+- **Project-level templates**: Fall back to the template stored in GitLab
+  project settings if no per-prefix file exists.
+- **Empty templates**: Some projects have empty templates — use a sensible
+  fallback structure in that case.
 
 ### Template Content Structure
 Templates contain:
@@ -155,7 +183,7 @@ Added a new risky buyers grid component to the Customer Support Portal that disp
 
 ### Specific Validation Rules
 
-- **"Added entry in CHANGELOG.md"** → Only check if `CHANGELOG.md` appears in changed files list
+- **"Added changelog entry"** (or similar) → Only check if the MR description includes a `<details open>` block with a changelog entry. **Never check based on `CHANGELOG.md` file changes** — that file is managed by semantic-release and must not be edited manually.
 - **"Tests added/updated"** → Only check if test files (containing `.test.`, `.spec.`, `__tests__/`, `/tests/`) appear in changed files
 - **"Documentation updated"** → Only check if documentation files (`.md`, `/docs/`, README) appear in changed files  
 - **"Linting/formatting applied"** → Only check if you can verify no lint errors exist
@@ -164,11 +192,6 @@ Added a new risky buyers grid component to the Customer Support Portal that disp
 ### Validation Examples
 
 ```bash
-# Check for CHANGELOG.md changes
-if git diff --name-only <merge-base-from-earlier-command>..HEAD | grep -q "CHANGELOG.md"; then
-    # Can check "Added entry in CHANGELOG.md" box
-fi
-
 # Check for test file changes  
 if git diff --name-only <merge-base-from-earlier-command>..HEAD | grep -E '\.(test|spec)\.|__tests__/|/tests/' | head -1; then
     # Can check "Tests added/updated" box
@@ -226,7 +249,7 @@ Update cache when new values are discovered through MCP tool responses.
 ## Integration Points
 
 - **Jira workflow**: Link tickets, update status to 'Technical Review' if appropriate
-- **Changelog requirements**: Remind about CHANGELOG.md updates for MAJOR/MINOR changes
+- **Changelog requirements**: For MAJOR/MINOR MRs, ensure a `<details open>` changelog block is present in the MR description — never edit `CHANGELOG.md` directly
 - **CI/CD considerations**: Note any special build or deployment requirements
 
 You operate with precision and attention to B-Stock's established conventions. Always confirm critical details before proceeding and provide clear feedback about the MR creation process.
