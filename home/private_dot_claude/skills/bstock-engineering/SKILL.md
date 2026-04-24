@@ -106,6 +106,13 @@ mcp__atlassian__getJiraIssue({
 })
 ```
 
+## Working Rules
+
+- Always `cd` into project directories — never use `git -C /path` or similar flag-based approaches
+- Run `npm ci` after creating new branches or when encountering unexplained failures that could be caused by outdated or missing dependencies
+- **NEVER run build commands** (`npm run build`, `npm run build:prod`) — CI/CD handles builds
+
+
 ## Additional Resources
 
 ### Reference Files
