@@ -18,14 +18,14 @@ else
     export PINENTRY_USER_DATA='tty'
 fi
 
-if [[ -f /opt/homebrew/bin/brew ]]; then
-    # Homebrew exists at /opt/homebrew for arm64 macos
+if [[ -x /opt/homebrew/bin/brew ]]; then
+    # Homebrew exists at /opt/homebrew for arm64 macOS
     eval "$(/opt/homebrew/bin/brew shellenv)"
-elif [[ -f /usr/local/bin/brew ]]; then
-    # or at /usr/local for intel macos
-    eval $(/usr/local/bin/brew shellenv)
-elif [ -d "~/.linuxbrew" ]; then
+elif [[ -x /usr/local/bin/brew ]]; then
+    # or at /usr/local for Intel macOS
+    eval "$(/usr/local/bin/brew shellenv)"
+elif [[ -x ~/.linuxbrew/bin/brew ]]; then
     eval "$(~/.linuxbrew/bin/brew shellenv)"
-elif [ -d "/home/linuxbrew" ]; then
+elif [[ -x /home/linuxbrew/.linuxbrew/bin/brew ]]; then
     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 fi

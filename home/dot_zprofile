@@ -1,5 +1,14 @@
-# .zprofile is sourced on login shells and before .zshrc. As a general rule, it should not change the
-# shell environment at all.
+# .zprofile is sourced on login shells and before .zshrc.
 #
-# Note: Homebrew path configuration has been moved to ~/.zshenv since .zshenv is always loaded
-# by all shell types (login/non-login, interactive/non-interactive)
+# Re-apply Homebrew's shell environment here because macOS /etc/zprofile runs
+# path_helper for login shells, which can move /usr/bin ahead of Homebrew.
+# Keeping the same logic in ~/.zshenv ensures non-login shells also work.
+if [[ -x /opt/homebrew/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [[ -x /usr/local/bin/brew ]]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+elif [[ -x ~/.linuxbrew/bin/brew ]]; then
+    eval "$(~/.linuxbrew/bin/brew shellenv)"
+elif [[ -x /home/linuxbrew/.linuxbrew/bin/brew ]]; then
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi
