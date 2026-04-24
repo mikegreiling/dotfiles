@@ -116,13 +116,9 @@
       "mcp__gitlab__update_merge_request_note",
       "mcp__ide__getDiagnostics"
     ],
-    "deny": [
-      "Bash(chezmoi cd:*)"
-    ],
-    "ask": [
-      "Bash(chezmoi apply:*)",
-      "Bash(rm:*)"
-    ]
+    "deny": ["Bash(chezmoi cd:*)"],
+    "ask": ["Bash(chezmoi apply:*)", "Bash(rm:*)"],
+    "defaultMode": "auto"
   },
   "model": "opusplan",
   "statusLine": {
@@ -130,7 +126,17 @@
     "command": "npx -y ccstatusline@latest",
     "padding": 0
   },
+  "enabledPlugins": {
+    "plugin-dev@claude-plugins-official": true,
+    "tmux-session-metadata@mikegreiling-plugins": true,
+    "macos-system-notifications@mikegreiling-plugins": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "slack@claude-plugins-official": false,
+    "skill-creator@claude-plugins-official": true
+  },
   "alwaysThinkingEnabled": true,
+  "skipDangerousModePermissionPrompt": true,
+  "skipAutoPermissionPrompt": true,
   "feedbackSurveyState": {
     "lastShownTime": 1953997328049
   }
