@@ -1,24 +1,21 @@
 # Load our common env exports
 source ~/.config/exports;
 
-# Detect if the current shell session is being used by an LLM agent
-function _is_llm_agent() {
-	[[ "$CLAUDECODE" == "1" || ("$TERM_PROGRAM" == "vscode" && "$PAGER" == 'head -n 10000 | cat') || "$_IS_LLM_AGENT" == "1" ]]
-}
+# Determine whether to load the full custom prompt.
+# LLM agent shells must never load it.
+function _zsh_load_custom_prompt() {
+  if [[ "$_IS_LLM_AGENT" == "1" ]]; then
+    return 1
+  fi
 
-# --- Determine if we should load the full custom prompt ---
-# This is set to false for non-interactive shells like the one used by LLM
-# agents (Claude, Cursor, etc.) to prevent prompt decorations from interfering
-# with command completion tracking. We use a variable to avoid reordering the whole file.
-_zsh_load_custom_prompt=true
-if _is_llm_agent; then
-  _zsh_load_custom_prompt=false
-fi
+  local value="${LOAD_CUSTOM_PROMPT:-1}"
+  [[ ! "${value:l}" =~ ^(0|n|no|false)$ ]]
+}
 
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
-if [[ "$_zsh_load_custom_prompt" == true ]]; then
+if _zsh_load_custom_prompt; then
   if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
     source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
   fi
@@ -93,7 +90,7 @@ if type brew &>/dev/null; then
   fi
 
   # Load powerlevel10k prompt
-  if [[ "$_zsh_load_custom_prompt" == true ]]; then
+  if _zsh_load_custom_prompt; then
     if [[ -r "$HOMEBREW_PREFIX/share/powerlevel10k/powerlevel10k.zsh-theme" ]]; then
       source $HOMEBREW_PREFIX/share/powerlevel10k/powerlevel10k.zsh-theme
 
@@ -121,7 +118,7 @@ bindkey ${PER_DIRECTORY_HISTORY_TOGGLE:-'^G'} toggle-per-directory-history
 # Replace cd command with zoxide for smart directory jumping
 # Disabled for LLM agents as zoxide's __zoxide_z function causes "command not found" errors
 ## TODO: consider rewriting __zoxide_z_complete to fix autocomplete behavior
-if ! _is_llm_agent && [[ -x "$(command -v zoxide)" ]]; then
+if [[ "$_IS_LLM_AGENT" != "1" ]] && [[ -x "$(command -v zoxide)" ]]; then
   eval "$(zoxide init --cmd cd zsh)"
 fi
 
@@ -164,3 +161,4 @@ zstyle -e ':completion:*:(ssh|scp|sftp|rsh|rsync):hosts' hosts 'reply=(${=${${(f
 if [[ -f "$HOME/.claude/local/claude" ]]; then
   alias claude="~/.claude/local/claude"
 fi
+export PATH="$HOME/.local/bin:$PATH"

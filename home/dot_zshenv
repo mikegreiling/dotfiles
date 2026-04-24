@@ -1,3 +1,23 @@
+# Detect LLM agents and ensure GPG pinentry behaves appropriately
+if [[ "$CODEX_SHELL" == "1" ]]; then
+    export _IS_CODEX=1
+fi
+
+if [[ "$CLAUDECODE" == "1" ]]; then
+    export _IS_CLAUDE=1
+fi
+
+if [[ "$CURSOR_AGENT" == "1" ]]; then
+    export _IS_CURSOR=1
+fi
+
+if [[ "$_IS_CODEX" == "1" || "$_IS_CLAUDE" == "1" || "$_IS_CURSOR" == "1" ]]; then
+    export _IS_LLM_AGENT=1
+    export PINENTRY_USER_DATA='no-tty'
+else
+    export PINENTRY_USER_DATA='tty'
+fi
+
 if [[ -f /opt/homebrew/bin/brew ]]; then
     # Homebrew exists at /opt/homebrew for arm64 macos
     eval "$(/opt/homebrew/bin/brew shellenv)"

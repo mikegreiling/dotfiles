@@ -3,28 +3,27 @@
 # Smart pinentry script for GPG that automatically selects the appropriate
 # pinentry interface based on the calling environment:
 #
-# - Claude Code sessions: Uses pinentry-mac (GUI with macOS keychain integration)
-# - All other contexts: Uses pinentry-curses (terminal-based prompts)
+# - PINENTRY_USER_DATA=no-tty: Uses pinentry-mac
+# - All other contexts: Uses pinentry-curses
 #
 # This works by checking the PINENTRY_USER_DATA environment variable, which
-# Claude Code automatically sets to "claude-code" via its settings.json configuration.
-# GPG passes environment variables from the calling process to pinentry scripts,
-# allowing us to detect the originating context reliably.
+# the calling environment can set before invoking GPG. GPG forwards this value
+# through to pinentry, allowing us to switch behavior for contexts where a
+# terminal UI is undesirable or unsuitable.
 #
 # Setup:
-# 1. Claude Code settings (~/.claude/settings.json) contains:
-#    "env": { "PINENTRY_USER_DATA": "claude-code" }
+# 1. The calling environment sets PINENTRY_USER_DATA to "no-tty" when needed
 # 2. GPG agent config (~/.gnupg/gpg-agent.conf) contains:
 #    pinentry-program /path/to/this/script
 
-# Simple function to check if running in Claude Code environment
-is_claude_code() {
-    [ "$PINENTRY_USER_DATA" = "claude-code" ]
+# Detect whether the current request should use GUI pinentry.
+should_use_gui_pinentry() {
+    [[ "$PINENTRY_USER_DATA" == "no-tty" ]]
 }
 
 # Select appropriate pinentry program based on environment
-if is_claude_code; then
-    # Claude Code environment: Use GUI pinentry with macOS keychain
+if should_use_gui_pinentry; then
+    # Non-terminal-friendly environment: use GUI pinentry.
     if command -v pinentry-mac >/dev/null 2>&1; then
         exec pinentry-mac "$@"
     else
@@ -32,6 +31,6 @@ if is_claude_code; then
         exit 1
     fi
 else
-    # All other environments: Use terminal-based pinentry
+    # All other environments: use terminal-based pinentry.
     TERM=xterm-256color exec /opt/homebrew/bin/pinentry-curses "$@"
 fi

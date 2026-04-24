@@ -64,13 +64,28 @@ complete -o "nospace" -W "Contacts Calendar Dock Finder Mail Safari SystemUIServ
 [ -s "/opt/homebrew/opt/asdf/libexec/asdf.sh" ] && \. "/opt/homebrew/opt/asdf/libexec/asdf.sh"
 [ -s "/opt/homebrew/opt/asdf/etc/bash_completion.d/asdf.bash" ] && \. "/opt/homebrew/opt/asdf/etc/bash_completion.d/asdf.bash"
 
-# Detect if the current shell session is being used by an LLM agent
-function _is_llm_agent() {
-	[[ "$CLAUDECODE" == "1" || ("$TERM_PROGRAM" == "vscode" && "$PAGER" == 'head -n 10000 | cat') || "$_IS_LLM_AGENT" == "1" ]]
-}
+# Detect LLM agent shells and set pinentry behavior explicitly.
+if [[ "$CODEX_SHELL" == "1" ]]; then
+	export _IS_CODEX=1
+fi
+
+if [[ "$CLAUDECODE" == "1" ]]; then
+	export _IS_CLAUDE=1
+fi
+
+if [[ "$CURSOR_AGENT" == "1" ]]; then
+	export _IS_CURSOR=1
+fi
+
+if [[ "$_IS_CODEX" == "1" || "$_IS_CLAUDE" == "1" || "$_IS_CURSOR" == "1" ]]; then
+	export _IS_LLM_AGENT=1
+	export PINENTRY_USER_DATA='no-tty'
+else
+	export PINENTRY_USER_DATA='tty'
+fi
 
 # Replace cd command with zoxide for smart directory jumping
 # Disabled for LLM agents as zoxide's __zoxide_z function causes "command not found" errors
-if ! _is_llm_agent; then
+if [[ "$_IS_LLM_AGENT" != "1" ]]; then
   eval "$(zoxide init --cmd cd bash)"
 fi

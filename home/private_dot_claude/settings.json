@@ -1,6 +1,5 @@
 {
   "env": {
-    "PINENTRY_USER_DATA": "claude-code",
     "HUSKY": "0"
   },
   "permissions": {
