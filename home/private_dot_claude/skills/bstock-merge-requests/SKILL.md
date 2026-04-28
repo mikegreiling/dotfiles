@@ -115,15 +115,21 @@ Do not guess the assignee. If you do not yet know the creator's user ID, create 
 
 Always use the project's merge request template as the basis for the MR body.
 
+### Critical: templates are unique per project
+
+**Every project has its own template files with its own filenames, sections, and checklist items.** Do not assume a template's filename, content, or checklist from memory or from another project. Always discover and read the actual template from the repository for each MR you create.
+
+Template filenames vary significantly across projects. For example, some projects use `PATCH.md` while others use `PATCH - Tweaks and Refinements.md`. Guessing the filename will cause a lookup failure that silently falls through to the wrong fallback.
+
 ### Retrieval order
 
-1. First, try the per-prefix template from the repository at:
-   - `.gitlab/merge_request_templates/MAJOR.md`
-   - `.gitlab/merge_request_templates/MINOR.md`
-   - `.gitlab/merge_request_templates/PATCH.md`
-   - `.gitlab/merge_request_templates/NO-RELEASE.md`
-2. If no matching per-prefix template exists, fall back to the project-level default merge request template from GitLab settings.
-3. If both are empty or unavailable, use a sensible fallback structure.
+1. **List** the template directory to discover the actual filenames:
+   ```
+   mcp__gitlab__get_repository_tree(project_id, path=".gitlab/merge_request_templates", recursive=true)
+   ```
+   Then fetch the file whose name matches the semver prefix (MAJOR, MINOR, PATCH, or NO-RELEASE). Do not guess filenames — always list first.
+2. If no `.gitlab/merge_request_templates` directory exists, call `mcp__gitlab__get_project` and read the `merge_requests_template` field — this is the project-level default template configured in GitLab settings (not stored as a repo file).
+3. If both are empty or unavailable, use the fallback structure below.
 
 ### Template handling rules
 

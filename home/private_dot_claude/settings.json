@@ -116,8 +116,13 @@
       "mcp__gitlab__update_merge_request_note",
       "mcp__ide__getDiagnostics"
     ],
-    "deny": ["Bash(chezmoi cd:*)"],
-    "ask": ["Bash(chezmoi apply:*)", "Bash(rm:*)"],
+    "deny": [
+      "Bash(chezmoi cd:*)"
+    ],
+    "ask": [
+      "Bash(chezmoi apply:*)",
+      "Bash(rm:*)"
+    ],
     "defaultMode": "auto"
   },
   "model": "opusplan",
@@ -136,6 +141,7 @@
   },
   "alwaysThinkingEnabled": true,
   "skipDangerousModePermissionPrompt": true,
+  "autoCompactEnabled": false,
   "skipAutoPermissionPrompt": true,
   "feedbackSurveyState": {
     "lastShownTime": 1953997328049

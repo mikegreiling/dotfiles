@@ -71,6 +71,10 @@ Common close resolutions: "Won't Do", "Duplicate", "Cannot Reproduce"
 
 ## Ticket Creation Guidelines
 
+### Issue Type Default
+
+Always use **Story** (id `10010`), never **Task** (id `10006`). This applies to all B-Stock projects.
+
 ### Parent Epic Assignment
 
 Most tickets (outside `BUGS` project) should have a parent epic. Always ask what parent epic a new ticket belongs to before creating.

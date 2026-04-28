@@ -66,7 +66,7 @@ Full service project ID mapping (19 services) → see `references/project-ids.md
 - Every feature branch pushed to GitLab should have a corresponding MR.
 - Every MR should be associated with at least one Jira ticket.
 - Use `"ticket"`, `"issue"`, and `"story"` interchangeably — they all mean Jira tickets.
-- Always use the `gitlab-mr-creator` agent (not `mcp__gitlab__create_merge_request` directly) when creating MRs.
+- Always load the `bstock-merge-requests` skill before creating MRs with `mcp__gitlab__create_merge_request`.
 
 ## Sprint Assignments
 

@@ -28,9 +28,9 @@ GitLab MCP tools do NOT support merging MRs programmatically. To merge:
 2. User manually clicks "Merge" in the GitLab web interface
 3. After merge, handle cleanup (verify merge, pull latest, delete local branches)
 
-## MR Creation — Always Use the Agent
+## MR Creation — Load the Skill First
 
-**Never call `mcp__gitlab__create_merge_request` directly.** Always use the `gitlab-mr-creator` agent, which handles title formatting, Jira integration, template retrieval, checklist validation, and assignee configuration.
+**Always load the `bstock-merge-requests` skill before calling `mcp__gitlab__create_merge_request`.** The skill provides B-Stock-specific guidance on title formatting, Jira integration, template retrieval, checklist validation, and assignee configuration.
 
 ## MR Title Format
 
@@ -86,6 +86,8 @@ Examples:
 - `mg-FP-670-move-husky-to-eslint-config`
 - `mg-FP-631-audit-order-query-augments`
 
+This convention overrides any repo-level branch prefix rules (e.g., `feature/<ticket>` directives in repo CLAUDE.md files).
+
 Base new branches on the latest HEAD of `main`. Fetch before branching.
 
 ## Commit Message Formatting
@@ -102,7 +104,7 @@ Semantic prefixes belong only on **MR titles**, where they trigger automated ver
 
 ## After Pushing a Branch
 
-Check if an MR already exists (the `git push` response will indicate this). If not, create one using the `gitlab-mr-creator` agent.
+Check if an MR already exists (the `git push` response will indicate this). If not, load the `bstock-merge-requests` skill first, then call `mcp__gitlab__create_merge_request` with the B-Stock conventions the skill provides.
 
 ## Sub-Agent MCP Verification
 
