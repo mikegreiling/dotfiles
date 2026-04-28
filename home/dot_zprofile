@@ -12,3 +12,10 @@ elif [[ -x ~/.linuxbrew/bin/brew ]]; then
 elif [[ -x /home/linuxbrew/.linuxbrew/bin/brew ]]; then
     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 fi
+
+# Prepend asdf shims to PATH (asdf 0.16+ no longer ships asdf.sh —
+# we manage PATH ourselves). Must come after `brew shellenv` so the
+# shim wins over Homebrew-installed runtimes (e.g. node).
+if [[ -d "${ASDF_DATA_DIR:-$HOME/.asdf}/shims" ]]; then
+    export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
+fi

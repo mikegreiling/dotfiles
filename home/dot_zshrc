@@ -122,9 +122,6 @@ if [[ "$_IS_LLM_AGENT" != "1" ]] && [[ -x "$(command -v zoxide)" ]]; then
   eval "$(zoxide init --cmd cd zsh)"
 fi
 
-# Load asdf shims
-[ -s "/opt/homebrew/opt/asdf/libexec/asdf.sh" ] && \. "/opt/homebrew/opt/asdf/libexec/asdf.sh"
-
 # Format zsh completion menu
 local char_arrow="›"
 local char_newline=$'\n'
