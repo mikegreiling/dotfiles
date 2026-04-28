@@ -60,9 +60,14 @@ fi;
 # Add `killall` tab completion for common apps
 complete -o "nospace" -W "Contacts Calendar Dock Finder Mail Safari SystemUIServer Terminal" killall;
 
-# Load ASDF and ASDF bash completion
-[ -s "/opt/homebrew/opt/asdf/libexec/asdf.sh" ] && \. "/opt/homebrew/opt/asdf/libexec/asdf.sh"
-[ -s "/opt/homebrew/opt/asdf/etc/bash_completion.d/asdf.bash" ] && \. "/opt/homebrew/opt/asdf/etc/bash_completion.d/asdf.bash"
+# Prepend asdf shims to PATH (asdf 0.16+ no longer ships asdf.sh —
+# we manage PATH ourselves). For login shells brew shellenv runs first
+# in .bash_profile and then sources this file, so this prepend lands
+# ahead of /opt/homebrew/bin and the shim wins. Bash completion for
+# `asdf` is auto-loaded via Homebrew's bash_completion block above.
+if [[ -d "${ASDF_DATA_DIR:-$HOME/.asdf}/shims" ]]; then
+    export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
+fi
 
 # Detect LLM agent shells and set pinentry behavior explicitly.
 if [[ "$CODEX_SHELL" == "1" ]]; then
