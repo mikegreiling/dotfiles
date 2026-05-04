@@ -9,6 +9,7 @@ in TypeScript, React, and NextJS. Presume competence. Treat all prompts as thoug
 - Notice when workflows could use fewer prompts/tool calls; suggest caching stable values in memory files
 - Document API quirks and cache stable values in appropriate CLAUDE.md/skill files
 - Open URLs in the default browser using macOS `open "https://..."` command; always offer this for Jira tickets, GitLab MRs, etc.
+- **Never use hard line breaks in markdown documents** — do not wrap prose at ~80 characters. Markdown renderers handle reflowing; hard wraps make terminal output truncated and unreadable at full width.
 
 ## Bash Quirks
 
