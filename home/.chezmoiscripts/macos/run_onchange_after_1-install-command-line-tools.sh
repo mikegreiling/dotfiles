@@ -21,6 +21,8 @@ brew bundle install \
 	--quiet \
 	--file=/dev/stdin <<BREWS
 tap "homebrew/bundle"
+tap "datadog/pack" # pup CLI
+tap "atlassian/homebrew-acli" # acli
 
 # Install essentials
 brew "coreutils"
@@ -41,6 +43,7 @@ brew "zsh-fast-syntax-highlighting"
 brew "zsh-history-substring-search"
 
 # Install some useful command-line utilities
+brew "atlassian/homebrew-acli/acli"
 brew "ack"
 brew "age"
 brew "asdf"
@@ -57,6 +60,7 @@ brew "fzf"
 brew "git"
 brew "git-lfs"
 brew "git-absorb"
+brew "gh"
 brew "gitlab-ci-local"
 brew "glab"
 brew "grep"
@@ -73,6 +77,7 @@ brew "nano"
 brew "p7zip"
 brew "pigz"
 brew "pnpm"
+brew "datadog/pack/pup"
 brew "pv"
 brew "ripgrep"
 brew "sd"
