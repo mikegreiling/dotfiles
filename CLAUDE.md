@@ -8,6 +8,10 @@ This repository (`~/.local/share/chezmoi`, aliased to `~/Projects/dotfiles`) con
 - **Purpose**: Version control for user preferences, shell configuration, scripts, and system settings
 - **Management**: Uses chezmoi to maintain dotfiles across machines while handling machine-specific differences
 
+## Git Workflow
+
+This is a personal single-contributor repository. **Do not create feature branches or pull requests.** Commit directly to `main` and push with `git push origin main`. There is no need for a review process.
+
 ## Critical Safety Rules
 
 ### 1. Always Consult Documentation First
