@@ -23,23 +23,32 @@ All IDs in this file are stable cached values. Do not look these up via MCP tool
 | Project | ID |
 |---------|-----|
 | `fe-core` | `506` |
-| `bstock-eslint-config` | `525` |
-| `fe-scripts` | _(look up if needed)_ |
-| `accounts-portal` | _(look up if needed)_ |
-| `cs-portal` | _(look up if needed)_ |
-| `seller-portal` | _(look up if needed)_ |
-| `home-portal` | _(look up if needed)_ |
+| `fe-scripts` | `544` |
+| `accounts-portal` | `400` |
+| `cs-portal` | `721` |
+| `seller-portal` | `508` |
+| `home-portal` | `768` |
 | `cops-portal` | _(look up if needed)_ |
+| `cms-portal` | `891` |
+| `crosslister` | `888` |
+| `dsk` | `41` |
+| `sunrise` | `61` |
 
 ## GitLab Project IDs — 3MP Microservices
 
-All 3MP services live under `b-stock/code/three-mp/svc/` in GitLab.
+Most 3MP services live under `b-stock/code/three-mp/svc/` in GitLab. Common libraries live under `b-stock/code/three-mp/common/`.
+
+### svc/
 
 | Service Name | Project ID |
 |-------------|-----------|
 | `account` | `522` |
+| `api-client-generator` | `614` |
 | `auction` | `582` |
+| `bridge` | `607` |
 | `contract` | `759` |
+| `crosslisting` | `887` |
+| `dead-letter` | `831` |
 | `dispute` | `504` |
 | `docserv` | `565` |
 | `erp` | `605` |
@@ -47,16 +56,43 @@ All 3MP services live under `b-stock/code/three-mp/svc/` in GitLab.
 | `integration` | `770` |
 | `listing` | `628` |
 | `location` | `546` |
+| `notification` | `576` |
 | `offering` | `735` |
 | `order` | `515` |
-| `order_process` | `722` |
-| `payments_methods` | `520` |
-| `payments_transactions` | `519` |
+| `order-process` | `722` |
+| `payments/methods` | `520` |
+| `payments/payments-shared` | `563` |
+| `payments/transactions` | `519` |
+| `pdf-gen` | `626` |
+| `review` | `583` |
 | `risk` | `802` |
-| `saved_search` | `798` |
+| `saved-search` | `798` |
 | `search` | `603` |
+| `seller-migration` | `625` |
 | `shipment` | `524` |
 | `subscription` | `577` |
+| `tax` | `923` |
+| `tms` | `516` |
+| `watchlist` | `561` |
+| `3mp-att-aomp-orders` | `892` |
+
+### common/
+
+| Library Name | Project ID |
+|-------------|-----------|
+| `agent-skills` | `840` |
+| `authorization` | `528` |
+| `ci` | `685` |
+| `ci-libs` | `820` |
+| `ci-pipelines` | `819` |
+| `ci-tools` | `821` |
+| `code-quality` | `525` _(formerly `bstock-eslint-config`)_ |
+| `dev-deps` | `569` |
+| `i18n-shared` | `838` |
+| `logging` | `529` |
+| `nestjs-utils` | `532` |
+| `qa-assistant` | `897` |
+| `skeleton-nestjs` | `514` |
 
 ## Jira Project IDs
 

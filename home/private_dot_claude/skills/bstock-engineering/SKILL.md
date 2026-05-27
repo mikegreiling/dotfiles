@@ -83,6 +83,7 @@ Load the appropriate reference file when performing these tasks:
 | Package versioning, release pipeline, changelog | `references/release-pipeline.md` |
 | Swagger docs, microservice API lookup | `references/api-docs.md` |
 | All stable project IDs and cached values | `references/project-ids.md` |
+| GitLab MR required-approver lookup, SME/code-owner routing | `references/mr-approval-rules.md` |
 
 ## MCP Tool Requirements
 

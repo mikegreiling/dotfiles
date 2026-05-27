@@ -230,6 +230,7 @@ Use this mode when the user wants the MR created or updated in GitLab and MCP to
 8. Create or update the MR with the proper configuration.
 9. Open the MR URL in the browser by default unless the user says not to.
 10. Confirm the result and call out any uncertainties or follow-up actions.
+11. Cross-reference `bstock-engineering/references/mr-approval-rules.md` for the project and report the required approvers (any-member count, named rules like SMEs/Code Review/Lead, and any file/directory code-owners if the MR touches owned paths). If the project isn't in the cache, fetch its rules via `mcp__gitlab__get_merge_request_approval_state` on the new MR and offer to add it to the cache.
 
 ## Error handling and fallbacks
 
