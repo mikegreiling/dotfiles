@@ -22,6 +22,7 @@ in TypeScript, React, and NextJS. Presume competence. Treat all prompts as thoug
 - **NEVER delete lock files** (package-lock.json, yarn.lock, composer.lock, etc.) — EVER
 - To resolve lock file conflicts: `git checkout HEAD package-lock.json` or `npm install`
 - This applies to ALL package managers: npm, yarn, composer, bundler, pip, etc.
+- **NEVER use `--legacy-peer-deps` under any circumstances** — it is never the correct solution. It silently drops peer dependencies from the lockfile, breaking installs for other developers and in CI. When a peer conflict arises, fix the root cause: upgrade (or downgrade) the conflicting package to a version with compatible peer declarations.
 
 ## Git Safety
 

@@ -68,7 +68,7 @@ Legend: ✓ = checked out under `bstock-projects/`. "req" = approvals required.
 | Project | ID | ✓ | Required to merge |
 |---------|----|----|-------------------|
 | common/agent-skills | 840 | ✓ | any-member (1) + SME Approvers (1 of: mary, alvarobstock, alex.garcia, al, justinjames, paul, mike.greiling). Code-owners (path-specific, see below) |
-| common/authorization | 528 | ✓ | any-member (2) |
+| common/authorization | 528 | ✓ | any-member (2) + SMEs (1 of: mary, alexandra, michael.ilchuk, yury, al, justinjames, michael, joseph.spandrusyszyn) |
 | common/ci | 685 | ✓ | any-member (2) |
 | common/code-quality | 525 | ✓ | any-member (2). *(Formerly cached as `bstock-eslint-config`.)* |
 | common/i18n-shared | 838 | ✓ | any-member (0) — **no required approval** |
