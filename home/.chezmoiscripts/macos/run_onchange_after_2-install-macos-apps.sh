@@ -50,6 +50,7 @@ cask "zoom"
 
 # Install some command-line tools that interface with macOS
 brew "pinentry-mac"
+cask "gcloud-cli" # Google Cloud SDK (gcloud/gsutil/bq); formerly the "google-cloud-sdk" cask. Used by the gws Workspace CLI's `auth setup`.
 
 # Pin CleanShot X to v4.5.1 as that is the latest version my license supports
 cask "https://raw.githubusercontent.com/Homebrew/homebrew-cask/cfa5ab5a9291d080b8c82fd06d28f27b665bf136/Casks/cleanshot.rb"
