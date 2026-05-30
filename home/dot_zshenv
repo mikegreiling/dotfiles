@@ -18,6 +18,12 @@ else
     export PINENTRY_USER_DATA='tty'
 fi
 
+# Keep PATH entries unique. zsh promotes a re-added entry to its newest
+# position and drops the stale copy, so the asdf-shims prepend below (and
+# the duplicate one in .zprofile, which login+interactive shells also
+# source) collapses to a single entry that still wins over Homebrew.
+typeset -U path PATH
+
 if [[ -x /opt/homebrew/bin/brew ]]; then
     # Homebrew exists at /opt/homebrew for arm64 macOS
     eval "$(/opt/homebrew/bin/brew shellenv)"
