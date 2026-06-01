@@ -12,6 +12,42 @@ sudo -v -p 'Enter password for %p:'
 # Keep-alive: update existing `sudo` time stamp until this script has finished
 while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 
+# Pin CleanShot X to v4.7.6 — the newest version Homebrew packaged in the 4.7.x
+# line. My license is valid through 4.7.7, and CleanShot's own license-gated
+# in-app updater makes that final hop; pinning only keeps a fresh machine from
+# installing the *latest* build, which is past my license.
+#
+# Two Homebrew constraints force this shape:
+#   1. Homebrew no longer installs casks by URL or file path ("casks must live
+#      in a tap"), so the old `cask "https://.../cleanshot.rb"` pin stopped working.
+#   2. Homebrew's own archived 4.7.6 cask no longer parses on current Homebrew
+#      (it used `depends_on macos: :mojave`, since removed), so we can't drop it
+#      in verbatim either.
+# So we stage a minimal cask carrying Homebrew's official 4.7.6 values (url +
+# sha256, verified to match the live dmg) in a tiny local tap. `auto_updates true`
+# is what keeps `brew upgrade` / `brew bundle` from ever bumping it past my license.
+# To bump the pin: change version + sha256 from
+#   curl -sL "https://updates.getcleanshot.com/v3/CleanShot-X-<ver>.dmg" | shasum -a 256
+PINNED_TAP="$(brew --repository)/Library/Taps/mike/homebrew-pinned"
+mkdir -p "${PINNED_TAP}/Casks"
+cat > "${PINNED_TAP}/Casks/cleanshot.rb" <<'RUBY'
+cask "cleanshot" do
+  version "4.7.6"
+  sha256 "677178b8060c5e3d579d5a534792c2b9649c835b1d07aa307f18a28a73307b55"
+
+  url "https://updates.getcleanshot.com/v3/CleanShot-X-#{version}.dmg"
+  name "CleanShot"
+  desc "Screen capturing tool"
+  homepage "https://getcleanshot.com/"
+
+  auto_updates true
+
+  app "CleanShot X.app"
+
+  uninstall quit: "pl.maketheweb.cleanshotx"
+end
+RUBY
+
 # Update homebrew and install required packages
 HOMEBREW_NO_ENV_HINTS=1 HOMEBREW_AUTO_UPDATE_SECS=3600 \
 brew bundle install \
@@ -52,8 +88,8 @@ cask "zoom"
 brew "pinentry-mac"
 cask "gcloud-cli" # Google Cloud SDK (gcloud/gsutil/bq); formerly the "google-cloud-sdk" cask. Used by the gws Workspace CLI's `auth setup`.
 
-# Pin CleanShot X to v4.5.1 as that is the latest version my license supports
-cask "https://raw.githubusercontent.com/Homebrew/homebrew-cask/cfa5ab5a9291d080b8c82fd06d28f27b665bf136/Casks/cleanshot.rb"
+# Pin CleanShot X to a license-compatible version (staged in the mike/pinned tap above)
+cask "mike/pinned/cleanshot"
 BREWS
 
 # Save the list of installed packages to a Brewfile for inspection
