@@ -146,7 +146,7 @@ printf '%s' "$input" | jq --argjson baseline "$BASELINE_ALLOW" '
   .statusLine = {"type":"command","command":"npx -y ccstatusline@latest","padding":0} |
   .permissions.defaultMode = "auto" |
   .permissions.deny = ["Bash(chezmoi cd:*)"] |
-  .permissions.ask = ["Bash(chezmoi apply:*)","Bash(rm:*)"] |
+  .permissions.ask = ["Bash(chezmoi apply:*)"] |
   .skipDangerousModePermissionPrompt = true |
   .skipAutoPermissionPrompt = true |
 
