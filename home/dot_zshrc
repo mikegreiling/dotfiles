@@ -159,3 +159,11 @@ if [[ -f "$HOME/.claude/local/claude" ]]; then
   alias claude="~/.claude/local/claude"
 fi
 export PATH="$HOME/.local/bin:$PATH"
+
+# gws (Google Workspace CLI) — the default `gws` uses ~/.config/gws (personal
+# mike.greiling@gmail.com). `gws-bstock` points at a separate credential store
+# for the work account. Each config dir holds its own client_secret.json +
+# encrypted credentials; they share one machine-local keyring key, so switching
+# never requires re-auth. Authenticate the work account once with:
+#   gws-bstock auth login --scopes <explicit,scope,list>
+gws-bstock() { GOOGLE_WORKSPACE_CLI_CONFIG_DIR="${HOME}/.config/gws-bstock" gws "$@"; }
