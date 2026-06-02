@@ -52,7 +52,7 @@ RUBY
 HOMEBREW_NO_ENV_HINTS=1 HOMEBREW_AUTO_UPDATE_SECS=3600 \
 brew bundle install \
 	--quiet \
-	--file=/dev/stdin <<BREWS
+	--file=/dev/stdin <<'BREWS'
 tap "homebrew/bundle"
 
 # Install some fonts
