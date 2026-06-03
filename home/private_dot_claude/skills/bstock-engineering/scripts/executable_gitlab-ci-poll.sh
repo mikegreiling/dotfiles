@@ -23,6 +23,9 @@
 #   --host <host>      GitLab host (default gitlab.bstock.io)
 #   --no-logs          on failure, do NOT tail failed-job logs
 #   --log-lines <n>    lines of each failed job's log to tail (default 40)
+#   --success-grep <re> on success, grep the job/pipeline trace(s) for extended
+#                      regex <re> (case-insensitive) and print matching lines in
+#                      the summary — e.g. capture a published version string
 #   -h, --help         show this help
 #
 # Exit codes: 0 success/skipped/manual · 1 failed · 2 canceled · 124 timeout
@@ -34,6 +37,7 @@ INTERVAL=30
 TIMEOUT=3600
 LOG_LINES=40
 TAIL_LOGS=1
+SUCCESS_GREP=""
 PROJECT="" PIPELINE="" JOB="" REF="" MR=""
 
 usage() { sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
@@ -51,6 +55,7 @@ while [[ $# -gt 0 ]]; do
     --host)      HOST="$2"; shift 2;;
     --no-logs)   TAIL_LOGS=0; shift;;
     --log-lines) LOG_LINES="$2"; shift 2;;
+    --success-grep) SUCCESS_GREP="$2"; shift 2;;
     -h|--help)   usage 0;;
     *)           die "unknown argument: $1";;
   esac
@@ -134,6 +139,35 @@ for j in json.load(sys.stdin):
   done <<< "$failed"
 }
 
+# On success, grep the trace(s) for a caller-supplied pattern and print matches.
+# For a single --job, greps that job's trace; for a pipeline, greps every job's
+# trace. Matching is case-insensitive extended regex.
+dump_success_grep() {
+  [[ -n "$SUCCESS_GREP" ]] || return 0
+  echo
+  echo "──── lines matching /$SUCCESS_GREP/ ────"
+  local found=0
+  grep_trace() {
+    local jid="$1" out
+    out="$(api "projects/$PROJ_ENC/jobs/$jid/trace" 2>/dev/null | grep -iE "$SUCCESS_GREP")"
+    [[ -n "$out" ]] && { printf '%s\n' "$out"; found=1; }
+  }
+  if [[ -n "$JOB" ]]; then
+    grep_trace "$JOB"
+  else
+    local ids
+    ids="$(api "projects/$PROJ_ENC/pipelines/$PIPELINE/jobs?per_page=100" 2>/dev/null \
+      | python3 -c 'import sys,json
+for j in json.load(sys.stdin):
+    print(j["id"])')"
+    while read -r jid; do
+      [[ -n "$jid" ]] || continue
+      grep_trace "$jid"
+    done <<< "$ids"
+  fi
+  (( found )) || echo "(no matching lines)"
+}
+
 main() {
   resolve_pipeline
   local label
@@ -170,7 +204,7 @@ main() {
   case "$result" in
     failed)   dump_failed_logs; exit 1;;
     canceled) exit 2;;
-    *)        exit 0;;   # success, skipped, manual
+    *)        dump_success_grep; exit 0;;   # success, skipped, manual
   esac
 }
 

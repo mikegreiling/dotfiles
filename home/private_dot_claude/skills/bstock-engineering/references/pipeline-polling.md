@@ -36,6 +36,7 @@ Bash(run_in_background: true):
 | `--timeout <sec>` | `3600` | give up after this long → exit 124 |
 | `--log-lines <n>` | `40` | lines of each failed job's log to tail |
 | `--no-logs` | off | skip failed-job log tailing |
+| `--success-grep <re>` | off | on success, grep the job/pipeline trace(s) for case-insensitive extended regex `<re>` and print matching lines in the summary — use it to surface a value the job emits (e.g. a published prerelease version) so it lands in the wake-up without a follow-up trace fetch |
 | `--host <host>` | `gitlab.bstock.io` | |
 
 ## Output & exit codes
