@@ -28,6 +28,7 @@ in TypeScript, React, and NextJS. Presume competence. Treat all prompts as thoug
 
 - Never commit to default branches (`main` or `master`) — always use feature branches
 - If asked to commit while on a default branch, suggest creating or switching to a feature branch first
+- **Exception — my dotfiles repo** (`~/.local/share/chezmoi`): I am the sole contributor, so commit directly to `main` there. Do not create feature branches for dotfiles changes; commit (and push when asked) straight to `main`.
 - **ALWAYS use `--force-with-lease`** instead of `--force` for git pushes
 - After creating a new branch, run the appropriate dependency install command (`npm ci`, `composer install`, etc.)
 - When encountering unexplained lint/type/build failures, try `npm ci` (or equivalent) first before investigating code
