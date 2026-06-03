@@ -41,7 +41,9 @@ Bash(run_in_background: true):
 
 ## Output & exit codes
 
-On completion it prints the final status, elapsed time, and web URL. On **failure** it lists the failed jobs and tails each one's log so you wake up with the actual error, not just "failed".
+On completion it prints the final status, elapsed time, and web URL. For a pipeline target it then prints a **job table** — `id · status · stage · name` for every job — so you wake up holding each job id and can fast-follow a targeted `glab api projects/<id>/jobs/<job-id>/trace` on whatever you want to inspect, without a separate "list the jobs" call. On **failure** it additionally tails each failed job's log (default 40 lines, `--log-lines` to adjust) so the actual error is already in front of you, not just "failed".
+
+The poller's job is to wake you up *oriented* — terminal status, the job roster, and a failure tail — not to parse logs for you. Deciding which job's full trace to pull, and reading test vs. lint vs. tsc output, is your call once you're awake: grab the id from the table and fast-follow.
 
 | Exit | Meaning |
 |------|---------|

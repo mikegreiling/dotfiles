@@ -125,12 +125,6 @@ for j in json.load(sys.stdin):
     if j.get("status")=="failed":
         print(f'\''{j["id"]}\t{j["stage"]}\t{j["name"]}'\'')')"
   [[ -n "$failed" ]] || return 0
-  echo
-  echo "Failed jobs:"
-  while IFS=$'\t' read -r jid stage name; do
-    [[ -n "$jid" ]] || continue
-    echo "  • [$stage] $name (job $jid)"
-  done <<< "$failed"
   while IFS=$'\t' read -r jid stage name; do
     [[ -n "$jid" ]] || continue
     echo
@@ -168,6 +162,23 @@ for j in json.load(sys.stdin):
   (( found )) || echo "(no matching lines)"
 }
 
+# Print a compact table of every job in the pipeline (id, status, stage, name)
+# on any terminal state, so the caller wakes with every job id in hand and can
+# fast-follow a targeted `glab api .../jobs/<id>/trace` without a separate
+# "list the jobs" round-trip. Skipped for single --job targets (the summary
+# line already identifies it).
+dump_job_table() {
+  [[ -n "$JOB" ]] && return 0
+  local jobs
+  jobs="$(api "projects/$PROJ_ENC/pipelines/$PIPELINE/jobs?per_page=100" 2>/dev/null)" || return 0
+  [[ -n "$jobs" ]] || return 0
+  echo
+  echo "Jobs:"
+  printf '%s' "$jobs" | python3 -c 'import sys,json
+for j in json.load(sys.stdin):
+    print("  %-9s %-10s %-14s %s" % (j["id"], j["status"], j["stage"], j["name"]))'
+}
+
 main() {
   resolve_pipeline
   local label
@@ -200,6 +211,8 @@ main() {
   echo
   echo "[$(date '+%H:%M:%S')] $label finished: ${result} (after ${elapsed}s)"
   [[ -n "${web_url:-}" ]] && echo "URL: $web_url"
+
+  dump_job_table
 
   case "$result" in
     failed)   dump_failed_logs; exit 1;;
