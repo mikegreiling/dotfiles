@@ -32,7 +32,8 @@ in TypeScript, React, and NextJS. Presume competence. Treat all prompts as thoug
 - After creating a new branch, run the appropriate dependency install command (`npm ci`, `composer install`, etc.)
 - When encountering unexplained lint/type/build failures, try `npm ci` (or equivalent) first before investigating code
 
-## MCP Tool Availability
+## Tool Preferences
 
-- If Atlassian or GitLab MCP tools are unavailable: **STOP** and prompt user to run `/mcp` to authenticate
-- Never fall back to `curl`, CLI tools (`gh`, `glab`), or manual alternatives for MCP-dependent operations
+- Prefer purpose-built tools — `glab`, `gh`, and MCP servers — over hand-rolled HTTP. Raw `curl` against an API endpoint is a **last resort**, used only when no `glab`/`gh`/MCP tool covers the operation.
+- `glab`/`gh` are encouraged and often *preferred* over the equivalent MCP server: they keep large responses out of the context window and run well as background tasks (e.g. polling CI). Use whichever fits the job — just don't drop to `curl` when one of them exists.
+- If an MCP server you actually need (e.g. Atlassian/Jira, which has no CLI) is unavailable: **STOP** and prompt the user to run `/mcp` to authenticate — don't silently work around it with `curl`.

@@ -84,17 +84,16 @@ Load the appropriate reference file when performing these tasks:
 | Swagger docs, microservice API lookup | `references/api-docs.md` |
 | All stable project IDs and cached values | `references/project-ids.md` |
 | GitLab MR required-approver lookup, SME/code-owner routing | `references/mr-approval-rules.md` |
+| Waiting for / polling CI pipelines & jobs (background task) | `references/pipeline-polling.md` |
 
-## MCP Tool Requirements
+## Tool Preferences (GitLab & Atlassian)
 
-Before any workflow involving GitLab or Atlassian MCP tools:
+Prefer purpose-built tools — `glab`, `gh`, and MCP — over hand-rolled HTTP. Raw `curl` against an API endpoint is a **last resort**, only when no `glab`/`gh`/MCP tool covers the operation.
 
-- Verify GitLab MCP tools are available (check for `mcp__gitlab__search_repositories`)
-- Verify Atlassian MCP tools are available (check for `mcp__atlassian__getVisibleJiraProjects`)
-- If unavailable: STOP and prompt user to run `/mcp` to authenticate
-- Never fall back to curl, `glab`, or manual alternatives
-
-If a GitLab tool call returns 403/401, prompt the user to set `BSTOCK_GITLAB_TOKEN` environment variable with a personal access token.
+- **GitLab**: `glab` (authenticated to `gitlab.bstock.io`) and the GitLab MCP tools are both first-class. Prefer `glab` for waiting on / polling CI — see `references/pipeline-polling.md` — and use it freely for reads and routine ops; it keeps responses out of the context window. The GitLab MCP tools remain handy for richer structured queries and are required by the `bstock-merge-requests` skill for MR creation.
+- **Atlassian/Jira**: no CLI equivalent — use the Atlassian MCP tools.
+- If the **Atlassian** MCP tools are unavailable (check for `mcp__atlassian__getVisibleJiraProjects`): STOP and prompt the user to run `/mcp` to authenticate.
+- If a GitLab MCP call returns 403/401, prompt the user to set the `BSTOCK_GITLAB_TOKEN` environment variable with a personal access token. (`glab` uses its own stored credential, so it often still works.)
 
 ## Jira API Response Optimization
 
@@ -125,3 +124,4 @@ For detailed workflow guidance, load:
 - **`references/release-pipeline.md`** — Package version management, automated release pipeline, changelog requirements
 - **`references/api-docs.md`** — Swagger documentation retrieval, service-to-project-ID mapping
 - **`references/project-ids.md`** — Complete stable ID cache: all GitLab project IDs, Atlassian IDs, Jira field IDs
+- **`references/pipeline-polling.md`** — Wait for CI pipelines/jobs via the bundled `gitlab-ci-poll.sh` background task (replaces the old `polling-agent`)
