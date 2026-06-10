@@ -10,7 +10,33 @@ This repository (`~/.local/share/chezmoi`, aliased to `~/Projects/dotfiles`) con
 
 ## Git Workflow
 
-This is a personal single-contributor repository. **Do not create feature branches or pull requests.** Commit directly to `main` and push with `git push origin main`. There is no need for a review process.
+This is a personal single-contributor repository. **Do not create feature branches or pull requests.** Commit directly to `main`. There is no need for a review process.
+
+### Remotes — always push to both
+
+This repo is mirrored to two remotes:
+
+- `origin` → `git@github.com:mikegreiling/dotfiles.git` (GitHub)
+- `gitlab` → `git@gitlab.com:mikegreiling/dotfiles.git` (GitLab)
+
+**When pushing, push to BOTH remotes.** Use `--force-with-lease` (never `--force`). Two equivalent options:
+
+```bash
+# Option A — explicit, two commands (no extra config required)
+git push --force-with-lease origin main
+git push --force-with-lease gitlab main
+```
+
+```bash
+# Option B — single command, after one-time config that adds a second
+# push URL to `origin` so `git push origin` fans out to both remotes:
+git remote set-url --add --push origin git@github.com:mikegreiling/dotfiles.git
+git remote set-url --add --push origin git@gitlab.com:mikegreiling/dotfiles.git
+# thereafter:
+git push --force-with-lease origin main   # pushes to GitHub AND GitLab
+```
+
+Note for Option B: adding the first `--push` URL replaces the implicit default, so you must add **both** URLs explicitly (as shown) or GitHub will be dropped from the fan-out. This config lives in local `.git/config` and is not tracked in the repo, so it must be set up per-clone.
 
 ## Critical Safety Rules
 
