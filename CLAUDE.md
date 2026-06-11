@@ -14,13 +14,22 @@ This is a personal single-contributor repository. **Do not create feature branch
 
 ### Pushing — `git push` mirrors to GitHub and GitLab
 
-This repo is mirrored to both GitHub and GitLab. The `origin` remote is configured with **two push URLs**, so a plain `git push` (or `git push origin main`) fans out to both. Always push with `--force-with-lease`, never `--force`.
+This repo is mirrored to both GitHub and GitLab. The `origin` remote is configured with **two push URLs**, so a plain `git push` (or `git push origin main`) fans out to both:
 
 ```bash
-git push --force-with-lease   # pushes to GitHub AND GitLab
+git push   # pushes to GitHub AND GitLab
 ```
 
-**If a push is NOT reaching both remotes** (e.g. a freshly provisioned machine where the dotfiles repo was just cloned — push-URL config lives in local `.git/config` and is not tracked in the repo), repair it with:
+Normal commits are fast-forwards, so a plain `git push` is all that's needed — **do not add `--force-with-lease` to the fan-out push.** With two push URLs on one remote it does not work: the first URL (GitHub) succeeds and advances the shared `refs/remotes/origin/main` tracking ref, which then makes the lease check reject the second URL (GitLab) as `stale info`, leaving the remotes out of sync.
+
+**On the rare occasion you must force-push** (rewriting already-pushed history), don't use the fan-out — push to each remote separately so each gets its own correct lease. A separate named `gitlab` remote is kept alongside `origin` for exactly this:
+
+```bash
+git push --force-with-lease origin main    # GitHub (origin's first push URL wins the lease)
+git push --force-with-lease gitlab main    # GitLab
+```
+
+**If a plain `git push` is NOT reaching both remotes** (e.g. a freshly provisioned machine where the dotfiles repo was just cloned — push-URL config lives in local `.git/config` and is not tracked in the repo), repair `origin`'s push URLs with:
 
 ```bash
 git config --unset-all remote.origin.pushurl 2>/dev/null   # clear any partial state
