@@ -120,9 +120,21 @@ Get the current sprint ID from `~/.claude/caches/bstock-current-sprint-cache.md`
 
 ## Atlassian API Limitations
 
-### Cannot Create Issue Links Programmatically
+### Issue Links — CAN Be Created via API
 
-The "blocks/is blocked by" relationship cannot be set via API. Instruct user to add these manually in Jira UI.
+Issue links CAN be created programmatically via `mcp__atlassian__createIssueLink` (verified 2026-06-03 — created Relates + Parent-Child links successfully). Common link type IDs:
+
+| Link Type | ID | inward / outward |
+|-----------|-----|------------------|
+| Relates | `10003` | relates to / relates to |
+| Blocks | `10000` | is blocked by / blocks |
+| Parent-Child | `10208` | is child of / is parent of |
+| Duplicate | `10002` | is duplicated by / duplicates |
+| Cloners | `10001` | is cloned by / clones |
+
+For `createIssueLink`, `inwardIssue` takes the subject of the OUTWARD verb (e.g. for Parent-Child, `inwardIssue` = the parent, `outwardIssue` = the child; for Blocks, `inwardIssue` = the blocker).
+
+**Hierarchy caveat:** a Story cannot be a hierarchy `parent` of another Story — the `parent` field only accepts a higher level (Epic). To express "child of" between same-level issues (e.g. a Story under the GLOB-2674 umbrella Story), use a **Parent-Child link**, not the `parent` field.
 
 ### Story Points on Bug Issue Types
 

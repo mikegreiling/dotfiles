@@ -113,6 +113,9 @@ Most 3MP services live under `b-stock/code/three-mp/svc/` in GitLab. Common libr
 
 | Field | Custom Field ID |
 |-------|----------------|
-| Story Points | `customfield_10049` |
+| Story Points | `customfield_10049` (classic float field; the FP board reads this) |
+| Story point estimate | `customfield_10043` (newer jsw field; also present on FP Stories — harmless to set both) |
 | Sprint | `customfield_10018` |
 | Epic Link | `customfield_10013` |
+
+Jira link type IDs are documented in `jira-workflow.md`
