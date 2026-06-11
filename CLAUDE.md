@@ -12,31 +12,23 @@ This repository (`~/.local/share/chezmoi`, aliased to `~/Projects/dotfiles`) con
 
 This is a personal single-contributor repository. **Do not create feature branches or pull requests.** Commit directly to `main`. There is no need for a review process.
 
-### Remotes — always push to both
+### Pushing — `git push` mirrors to GitHub and GitLab
 
-This repo is mirrored to two remotes:
-
-- `origin` → `git@github.com:mikegreiling/dotfiles.git` (GitHub)
-- `gitlab` → `git@gitlab.com:mikegreiling/dotfiles.git` (GitLab)
-
-**When pushing, push to BOTH remotes.** Use `--force-with-lease` (never `--force`). Two equivalent options:
+This repo is mirrored to both GitHub and GitLab. The `origin` remote is configured with **two push URLs**, so a plain `git push` (or `git push origin main`) fans out to both. Always push with `--force-with-lease`, never `--force`.
 
 ```bash
-# Option A — explicit, two commands (no extra config required)
-git push --force-with-lease origin main
-git push --force-with-lease gitlab main
+git push --force-with-lease   # pushes to GitHub AND GitLab
 ```
 
+**If a push is NOT reaching both remotes** (e.g. a freshly provisioned machine where the dotfiles repo was just cloned — push-URL config lives in local `.git/config` and is not tracked in the repo), repair it with:
+
 ```bash
-# Option B — single command, after one-time config that adds a second
-# push URL to `origin` so `git push origin` fans out to both remotes:
+git config --unset-all remote.origin.pushurl 2>/dev/null   # clear any partial state
 git remote set-url --add --push origin git@github.com:mikegreiling/dotfiles.git
 git remote set-url --add --push origin git@gitlab.com:mikegreiling/dotfiles.git
-# thereafter:
-git push --force-with-lease origin main   # pushes to GitHub AND GitLab
 ```
 
-Note for Option B: adding the first `--push` URL replaces the implicit default, so you must add **both** URLs explicitly (as shown) or GitHub will be dropped from the fan-out. This config lives in local `.git/config` and is not tracked in the repo, so it must be set up per-clone.
+Verify with `git remote -v` — `origin` should list **two** `(push)` lines (GitHub and GitLab). The `--unset-all` first step is important: adding a push URL without clearing first can duplicate an entry.
 
 ## Critical Safety Rules
 
