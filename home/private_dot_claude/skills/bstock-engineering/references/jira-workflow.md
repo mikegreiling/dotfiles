@@ -71,9 +71,10 @@ Common close resolutions: "Won't Do", "Duplicate", "Cannot Reproduce"
 
 ## Epic Sizing & Story-Point Estimation
 
-Sourced from the Engineering (`EN`) Confluence space. There is **no published page that defines what each
-T-shirt size means quantitatively** (no weeks/points/stories mapping) — sizing is a dev-lead judgment call
-relative to other epics. Capture only what the docs actually say; don't invent a scale.
+Sourced from the Engineering (`EN`) Confluence space. A canonical quantitative definition of the T-shirt
+sizes **has not been located yet** — one may well exist (a team wiki, the Jira field config, a sizing
+rubric) that simply hasn't been found and linked here. If you need the authoritative scale, it's worth
+searching for. Until it surfaces, size **relative to peer epics**.
 
 ### Epic intake → delivery workflow
 
@@ -91,14 +92,24 @@ Per **Jira Epic Workflow**:
 ### T-shirt size field
 
 - Field: `customfield_10394` ("T-Shirt Size"), options **XS / S / M / L / XL**.
-- ⚠️ No documented quantitative definition — estimate relative to peers. Observed reference points:
-  `GLOB-3930` (Parcel Phase 1, Backend) = **L**; `GLOB-2842` = **M**.
+- Quantitative definition of each size: **not found yet** (see note above) — until located, estimate
+  **relative to peer epics**. Observed reference points: `GLOB-3930` (Parcel Phase 1, Backend) = **L**;
+  `GLOB-2842` = **M**; `GLOB-4588` (Parcel Phase 1, Frontend) = **M**.
 
 ### Story points
 
-- **Fibonacci scale**, 13-point ceiling (1, 2, 3, 5, 8, 13). Per **ShapeUp at B-Stock**, stories should be
-  "right sized" with **5–8 points the sweet spot**; split anything that would exceed 13.
-- Field: `customfield_10049`.
+- Scale: **Fibonacci** (1, 2, 3, 5, 8, 13, …). Field: `customfield_10049`.
+- **Estimate the effort assuming the engineer is NOT using AI assistance** — i.e. how much effort the story
+  would take *without* Claude Code / Codex / Cursor. This is a deliberate current policy: points are held to
+  a pre-AI baseline so that **velocity** (the term for story points closed per sprint, tracked over time)
+  trends upward, and that increase can be attributed to AI tooling. The VP of Engineering uses this signal to
+  quantify company-wide productivity gains and justify AI token spend. **Do not deflate an estimate just
+  because AI will make the work fast** — size it as the pre-AI effort.
+- **The old "split anything over 13 points" rule is relaxed.** Per-sprint point ceilings are now higher, and
+  larger **vertical slices** can be taken on as single stories rather than chopped into bite-sized chunks —
+  AI lets an engineer carry more in parallel and tackle bigger slices than was practical before adoption. The
+  ShapeUp "5–8 points is the sweet spot" note (per **ShapeUp at B-Stock**) is now a historical reference
+  point, not a hard cap.
 - **QA-handoff threshold** (per **QA Handoffs**): an epic/feature totaling **≥ 25 story points requires a QA
   handoff**; **≤ 24 makes it optional**.
 
