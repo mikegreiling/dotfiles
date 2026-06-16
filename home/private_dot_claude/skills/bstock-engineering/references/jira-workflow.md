@@ -69,6 +69,48 @@ Path to close:
 
 Common close resolutions: "Won't Do", "Duplicate", "Cannot Reproduce"
 
+## Epic Sizing & Story-Point Estimation
+
+Sourced from the Engineering (`EN`) Confluence space. There is **no published page that defines what each
+T-shirt size means quantitatively** (no weeks/points/stories mapping) — sizing is a dev-lead judgment call
+relative to other epics. Capture only what the docs actually say; don't invent a scale.
+
+### Epic intake → delivery workflow
+
+Per **Jira Epic Workflow**:
+
+`Open → Needs Requirements (if needed) → Ready for Sizing → T-Shirt Sized → In Shaping → Shaped → In Development → Dev Complete → Quality Review → Release Candidate → Released to Production`
+
+- **Ready for Sizing** — defined enough for dev leads to estimate.
+- **T-Shirt Sized** — dev leads assign a rough size (XS / S / M / L / XL) in the **T-Shirt Size** field
+  (`customfield_10394`). *Dev leads set this status* — not individual contributors by default.
+- **In Shaping / Shaped** — ShapeUp shaping breaks the epic into stories.
+- An epic typically only appears on the team **kanban board columns once it reaches In Development**; earlier
+  planning statuses live in the board's **Backlog**.
+
+### T-shirt size field
+
+- Field: `customfield_10394` ("T-Shirt Size"), options **XS / S / M / L / XL**.
+- ⚠️ No documented quantitative definition — estimate relative to peers. Observed reference points:
+  `GLOB-3930` (Parcel Phase 1, Backend) = **L**; `GLOB-2842` = **M**.
+
+### Story points
+
+- **Fibonacci scale**, 13-point ceiling (1, 2, 3, 5, 8, 13). Per **ShapeUp at B-Stock**, stories should be
+  "right sized" with **5–8 points the sweet spot**; split anything that would exceed 13.
+- Field: `customfield_10049`.
+- **QA-handoff threshold** (per **QA Handoffs**): an epic/feature totaling **≥ 25 story points requires a QA
+  handoff**; **≤ 24 makes it optional**.
+
+### Reference docs (Confluence → Engineering space)
+
+| Doc | URL |
+|-----|-----|
+| Jira Epic Workflow | https://bstock.atlassian.net/wiki/spaces/EN/pages/3260448770 |
+| Epic Documentation Process (Pre-Development) | https://bstock.atlassian.net/wiki/spaces/EN/pages/3255861267 |
+| QA Handoffs | https://bstock.atlassian.net/wiki/spaces/EN/pages/3253043214 |
+| ShapeUp at B-Stock | https://bstock.atlassian.net/wiki/spaces/EN/pages/2542567478 |
+
 ## Ticket Creation Guidelines
 
 ### Issue Type Default

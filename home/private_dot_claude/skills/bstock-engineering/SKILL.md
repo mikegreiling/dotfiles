@@ -79,7 +79,7 @@ Load the appropriate reference file when performing these tasks:
 | Task | Reference File |
 |------|---------------|
 | GitLab MR creation, branch naming, pipeline ops, MCP quirks | `references/gitlab-workflow.md` |
-| Jira ticket creation, status transitions, QA workflow | `references/jira-workflow.md` |
+| Jira ticket creation, status transitions, QA workflow, epic sizing & story-point estimation | `references/jira-workflow.md` |
 | Package versioning, release pipeline, changelog | `references/release-pipeline.md` |
 | Swagger docs, microservice API lookup | `references/api-docs.md` |
 | All stable project IDs and cached values | `references/project-ids.md` |
@@ -120,7 +120,7 @@ mcp__atlassian__getJiraIssue({
 For detailed workflow guidance, load:
 
 - **`references/gitlab-workflow.md`** — GitLab MCP configuration, MR conventions, branch naming, commit formatting, MCP tool quirks and workarounds
-- **`references/jira-workflow.md`** — Jira ticket transitions, QA workflow logic, ticket creation guidelines, API limitations
+- **`references/jira-workflow.md`** — Jira ticket transitions, QA workflow logic, ticket creation guidelines, epic sizing & story-point estimation policy, API limitations
 - **`references/release-pipeline.md`** — Package version management, automated release pipeline, changelog requirements
 - **`references/api-docs.md`** — Swagger documentation retrieval, service-to-project-ID mapping
 - **`references/project-ids.md`** — Complete stable ID cache: all GitLab project IDs, Atlassian IDs, Jira field IDs
