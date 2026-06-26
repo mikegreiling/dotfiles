@@ -3,62 +3,162 @@
 # libby2m4b — turn a LibbyRip audiobook export into a single tagged .m4b
 #
 # Usage:
-#   libby2m4b "/path/to/Author - Title"            # writes "<dir>.m4b" inside the dir
-#   libby2m4b "/path/to/book" "/path/to/out.m4b"   # explicit output path
+#   libby2m4b [options] <input> [<input> ...]
 #
-# Expects the LibbyRip layout:
-#   <dir>/Part 001.mp3 ... Part NNN.mp3
-#   <dir>/metadata/metadata.json
-#   <dir>/metadata/cover.*            (optional)
+#   <input> may be a .zip file (a LibbyRip "Export audiobook" download) or an
+#   already-extracted directory. Multiple inputs are processed in turn.
+#
+# Options:
+#   --keep        Do NOT move the source to the Trash after a successful convert
+#                 (default: source is moved to Trash once the .m4b is verified).
+#   --force       Proceed past the "no metadata / no chapters" guard, and
+#                 overwrite an existing output file without asking.
+#   -o FILE       Explicit output path (only valid with a single input).
+#   -h, --help    Show this help.
+#
+# Env:
+#   AAC_BITRATE   AAC bitrate (default 128k).
+#
+# Expects the LibbyRip layout (at the input root, or the zip's root):
+#   Part 001.mp3 ... Part NNN.mp3
+#   metadata/metadata.json
+#   metadata/cover.*            (optional)
 #
 # Concatenates the parts, encodes to AAC, embeds whole-book chapter markers
 # (derived from metadata.json) + cover art, and flags the file as an Audiobook
-# so Apple Books / Music route it correctly.
-#
-# Env overrides:
-#   AAC_BITRATE  (default 128k)
+# so Apple Books / Music route it correctly. The .m4b is written next to the
+# input (its parent directory) so it survives the source being trashed.
 #
 set -euo pipefail
 
-die() { printf 'libby2m4b: %s\n' "$*" >&2; exit 1; }
+PROG=libby2m4b
+err()  { printf '%s: %s\n' "$PROG" "$*" >&2; }
+die()  { err "$*"; exit 1; }
+note() { printf '%s: %s\n' "$PROG" "$*"; }
 
-[ $# -ge 1 ] || die "usage: libby2m4b <book-dir> [output.m4b]"
+usage() { sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
 
-BOOK="${1%/}"
-[ -d "$BOOK" ] || die "not a directory: $BOOK"
+# Desktop notification (best-effort).
+notify() {
+  command -v terminal-notifier >/dev/null 2>&1 || return 0
+  terminal-notifier -title "libby2m4b" -message "$1" >/dev/null 2>&1 || true
+}
 
-META="$BOOK/metadata/metadata.json"
-[ -f "$META" ] || die "missing $META (did you 'Export audiobook' from LibbyRip?)"
+# Move a path to the macOS Trash (recoverable). Never a permanent delete.
+to_trash() {
+  local p="$1"
+  if command -v trash >/dev/null 2>&1; then
+    trash "$p"
+  else
+    osascript -e "tell application \"Finder\" to delete (POSIX file \"$p\")" >/dev/null
+  fi
+}
 
-OUT="${2:-$BOOK/$(basename "$BOOK").m4b}"
+# Ask a yes/no question when interactive; otherwise honor $FORCE.
+confirm() {
+  local prompt="$1"
+  if [ "$FORCE" -eq 1 ]; then return 0; fi
+  if [ -t 0 ]; then
+    local ans=""
+    read -r -p "$prompt [y/N] " ans || true
+    [[ "$ans" =~ ^[Yy] ]]
+  else
+    return 1   # non-interactive and not forced -> decline
+  fi
+}
+
+# --- option parsing ---
+KEEP=0; FORCE=0; OUT_OVERRIDE=""
+inputs=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --keep)  KEEP=1 ;;
+    --force) FORCE=1 ;;
+    -o)      shift; OUT_OVERRIDE="${1:-}"; [ -n "$OUT_OVERRIDE" ] || die "-o requires a path" ;;
+    -h|--help) usage 0 ;;
+    --) shift; while [ $# -gt 0 ]; do inputs+=("$1"); shift; done; break ;;
+    -*) die "unknown option: $1 (use --help)" ;;
+    *)  inputs+=("$1") ;;
+  esac
+  shift
+done
+
+[ "${#inputs[@]}" -ge 1 ] || usage 1
+[ -z "$OUT_OVERRIDE" ] || [ "${#inputs[@]}" -eq 1 ] || die "-o is only valid with a single input"
+
 BITRATE="${AAC_BITRATE:-128k}"
 
-# --- dependency checks ---
-command -v ffmpeg     >/dev/null || die "ffmpeg not found (brew install ffmpeg)"
-command -v python3    >/dev/null || die "python3 not found"
+# --- shared dependency checks ---
+command -v ffmpeg  >/dev/null || die "ffmpeg not found (brew install ffmpeg)"
+command -v python3 >/dev/null || die "python3 not found"
 HAVE_AP=1; command -v AtomicParsley >/dev/null || HAVE_AP=0
 
-# --- pick the audio encoder: AudioToolbox on macOS, else native aac ---
+# pick the audio encoder: AudioToolbox on macOS, else native aac
 if ffmpeg -hide_banner -encoders 2>/dev/null | grep -q ' aac_at '; then
   ACODEC=aac_at
 else
   ACODEC=aac
 fi
 
-# --- find cover art (cover.* in metadata/, any case) ---
-COVER=""
-for c in "$BOOK"/metadata/cover.* "$BOOK"/metadata/Cover.*; do
-  [ -f "$c" ] && { COVER="$c"; break; }
-done
+# Locate the book root inside an extracted/given directory: the dir itself if it
+# holds metadata/ or Part files, else a lone subdir that does. Echoes the path.
+find_book_root() {
+  local d="$1"
+  if [ -d "$d/metadata" ] || compgen -G "$d/Part *.mp3" >/dev/null 2>&1; then
+    printf '%s\n' "$d"; return 0
+  fi
+  local subs=() s
+  while IFS= read -r s; do subs+=("$s"); done < <(find "$d" -mindepth 1 -maxdepth 1 -type d)
+  if [ "${#subs[@]}" -eq 1 ]; then
+    s="${subs[0]}"
+    if [ -d "$s/metadata" ] || compgen -G "$s/Part *.mp3" >/dev/null 2>&1; then
+      printf '%s\n' "$s"; return 0
+    fi
+  fi
+  printf '%s\n' "$d"   # fall back to the dir; validation will catch problems
+}
 
-TMP="$(mktemp -d)"
-trap 'rm -rf "$TMP"' EXIT
-FFMETA="$TMP/ffmetadata.txt"
-CONCAT="$TMP/concat.txt"
+# Convert one resolved book root -> $OUT. Returns 0 on verified success.
+convert_book() {
+  local root="$1" out="$2" label="$3"
+  local META="$root/metadata/metadata.json"
 
-# --- build ffmetadata (chapters with absolute whole-book offsets) ---
-# Prints "<title>\t<author>" on stdout; writes the ffmetadata file to $FFMETA.
-IFS=$'\t' read -r TITLE AUTHOR < <(python3 - "$META" "$FFMETA" <<'PY'
+  # count Part files (case-insensitive), find cover
+  local nparts cover=""
+  nparts=$(find "$root" -maxdepth 1 -iname 'Part *.mp3' | wc -l | tr -d ' ')
+  local c
+  for c in "$root"/metadata/cover.* "$root"/metadata/Cover.*; do
+    [ -f "$c" ] && { cover="$c"; break; }
+  done
+
+  # --- validation / classification ---
+  if [ "$nparts" -eq 0 ]; then
+    err "$label: not a recognized Libby audiobook export (no 'Part N.mp3' files found)."
+    return 2
+  fi
+  local have_meta=0
+  [ -f "$META" ] && have_meta=1
+  if [ "$have_meta" -eq 0 ]; then
+    err "$label: found $nparts parts but NO metadata/metadata.json."
+    err "    Converting now produces an audiobook with no chapters and no cover —"
+    err "    that is usually a mistake (wrong folder, or an incomplete export)."
+    confirm "Concatenate anyway with no chapters?" || { err "$label: skipped."; return 3; }
+  elif [ -z "$cover" ]; then
+    note "$label: no cover art found in metadata/ — continuing without a cover."
+  fi
+
+  # --- output collision guard ---
+  if [ -e "$out" ]; then
+    confirm "$(basename "$out") already exists — overwrite?" || { err "$label: skipped (output exists)."; return 4; }
+  fi
+
+  local TMP; TMP="$(mktemp -d)"
+  local FFMETA="$TMP/ffmetadata.txt" CONCAT="$TMP/concat.txt"
+  local TITLE="" AUTHOR=""
+
+  # --- chapters/title metadata (only when metadata.json exists) ---
+  if [ "$have_meta" -eq 1 ]; then
+    IFS=$'\t' read -r TITLE AUTHOR < <(python3 - "$META" "$FFMETA" <<'PY'
 import json, re, sys
 meta_path, out_path = sys.argv[1], sys.argv[2]
 m = json.load(open(meta_path, encoding="utf-8"))
@@ -83,45 +183,109 @@ for i, (t, start) in enumerate(chaps):
               f"START={int(start*1000)}", f"END={int(end*1000)}",
               f"title={esc(t)}", ""]
 open(out_path, "w", encoding="utf-8").write("\n".join(lines))
-# tab-separated so the shell can split title/author cleanly
 print(f"{title}\t{author}")
 PY
 )
+  fi
 
-# --- build the concat list (sorted Part *.mp3) ---
-: > "$CONCAT"
-found=0
-while IFS= read -r f; do
-  printf "file '%s'\n" "$f" >> "$CONCAT"
-  found=$((found+1))
-done < <(find "$BOOK" -maxdepth 1 -name 'Part *.mp3' | sort)
-[ "$found" -gt 0 ] || die "no 'Part *.mp3' files found in $BOOK"
+  # --- concat list (sorted, case-insensitive Part *.mp3) ---
+  : > "$CONCAT"
+  while IFS= read -r f; do
+    printf "file '%s'\n" "$f" >> "$CONCAT"
+  done < <(find "$root" -maxdepth 1 -iname 'Part *.mp3' | sort)
 
-nchap=$(grep -c '^\[CHAPTER\]' "$FFMETA" || true)
-printf 'libby2m4b: "%s" — %d parts, %d chapters, encoder=%s @ %s\n' \
-  "$TITLE" "$found" "$nchap" "$ACODEC" "$BITRATE"
+  local exp_chap=0
+  [ "$have_meta" -eq 1 ] && exp_chap=$(grep -c '^\[CHAPTER\]' "$FFMETA" || true)
+  note "$label — ${nparts} parts, ${exp_chap} chapters, encoder=${ACODEC} @ ${BITRATE}"
 
-# --- encode ---
-maps=(-map 0:a)
-[ -n "$COVER" ] && maps+=(-map 2:v)
-inputs=(-f concat -safe 0 -i "$CONCAT" -i "$FFMETA")
-[ -n "$COVER" ] && inputs+=(-i "$COVER")
+  # --- encode ---
+  local inputs_arr=(-f concat -safe 0 -i "$CONCAT")
+  local maps=(-map 0:a)
+  local meta_idx=-1 cover_idx=-1 idx=1
+  if [ "$have_meta" -eq 1 ]; then inputs_arr+=(-i "$FFMETA"); meta_idx=$idx; idx=$((idx+1)); fi
+  if [ -n "$cover" ];        then inputs_arr+=(-i "$cover");  cover_idx=$idx; idx=$((idx+1)); fi
+  [ "$cover_idx" -ge 0 ] && maps+=(-map "$cover_idx:v")
 
-ffmpeg -y -hide_banner -loglevel warning -stats \
-  "${inputs[@]}" \
-  "${maps[@]}" \
-  -map_metadata 1 -map_chapters 1 \
-  -c:a "$ACODEC" -b:a "$BITRATE" \
-  ${COVER:+-c:v copy -disposition:v:0 attached_pic} \
-  -f ipod "$OUT"
+  local meta_args=()
+  [ "$meta_idx" -ge 0 ] && meta_args=(-map_metadata "$meta_idx" -map_chapters "$meta_idx")
 
-# --- flag as audiobook so Apple Books/Music categorize it correctly ---
-if [ "$HAVE_AP" -eq 1 ]; then
-  AtomicParsley "$OUT" --stik Audiobook --genre "Audiobook" \
-    ${TITLE:+--album "$TITLE"} ${AUTHOR:+--albumArtist "$AUTHOR"} \
-    --overWrite >/dev/null
-else
-  printf 'libby2m4b: AtomicParsley not found — skipping audiobook flag (brew install atomicparsley)\n' >&2
-fi
+  if ! ffmpeg -y -hide_banner -loglevel warning -stats \
+        "${inputs_arr[@]}" \
+        "${maps[@]}" \
+        "${meta_args[@]}" \
+        -c:a "$ACODEC" -b:a "$BITRATE" \
+        ${cover:+-c:v copy -disposition:v:0 attached_pic} \
+        -f ipod "$out"; then
+    err "$label: ffmpeg failed."
+    rm -rf "$TMP"; return 5
+  fi
 
-printf 'libby2m4b: done -> %s\n' "$OUT"
+  # --- flag as audiobook ---
+  if [ "$HAVE_AP" -eq 1 ]; then
+    AtomicParsley "$out" --stik Audiobook --genre "Audiobook" \
+      ${TITLE:+--album "$TITLE"} ${AUTHOR:+--albumArtist "$AUTHOR"} \
+      --overWrite >/dev/null
+  else
+    err "AtomicParsley not found — skipping audiobook flag (brew install atomicparsley)"
+  fi
+
+  rm -rf "$TMP"
+
+  # --- verify before we trust it enough to trash the source ---
+  local dur got_chap
+  dur=$(ffprobe -hide_banner -v error -show_entries format=duration -of csv=p=0 "$out" 2>/dev/null || echo 0)
+  got_chap=$(ffprobe -hide_banner -v error -show_chapters "$out" 2>/dev/null | grep -c '^\[CHAPTER\]' || true)
+  if ! awk "BEGIN{exit !($dur>0)}"; then
+    err "$label: output verification failed (duration=$dur)."; return 6
+  fi
+  if [ "$have_meta" -eq 1 ] && [ "$got_chap" -ne "$exp_chap" ]; then
+    err "$label: chapter count mismatch (expected $exp_chap, got $got_chap)."; return 6
+  fi
+  return 0
+}
+
+# --- main loop over inputs ---
+rc=0
+for in in "${inputs[@]}"; do
+  in="${in%/}"
+  [ -e "$in" ] || { err "no such file or directory: $in"; rc=1; continue; }
+
+  label="$(basename "$in")"
+  parent="$(cd "$(dirname "$in")" && pwd)"
+  src_to_trash="$parent/$label"   # absolute path to the original input
+  extract_tmp=""
+
+  # resolve book root + default output base name
+  base="$label"; root=""
+  shopt -s nocasematch
+  if [[ "$in" == *.zip && -f "$in" ]]; then
+    base="${label%.*}"
+    extract_tmp="$(mktemp -d)"
+    note "extracting $label …"
+    ditto -x -k "$in" "$extract_tmp" || { err "$label: failed to unzip."; rm -rf "$extract_tmp"; rc=1; shopt -u nocasematch; continue; }
+    root="$(find_book_root "$extract_tmp")"
+  elif [ -d "$in" ]; then
+    root="$in"
+  else
+    err "$label: unsupported input (expected a .zip or a directory)."; rc=1; shopt -u nocasematch; continue
+  fi
+  shopt -u nocasematch
+
+  out="${OUT_OVERRIDE:-$parent/$base.m4b}"
+
+  if convert_book "$root" "$out" "$label"; then
+    note "done -> $out"
+    if [ "$KEEP" -eq 0 ]; then
+      to_trash "$src_to_trash" && note "moved source to Trash: $label" \
+        || err "$label: converted OK but could not Trash the source."
+    fi
+    notify "Converted: $base"
+  else
+    rc=1
+    notify "Failed: $label"
+  fi
+
+  [ -n "$extract_tmp" ] && rm -rf "$extract_tmp"
+done
+
+exit "$rc"

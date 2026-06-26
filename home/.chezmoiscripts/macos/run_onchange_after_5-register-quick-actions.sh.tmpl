@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+#
+# Register the "Convert to M4B" Finder Quick Action after chezmoi applies (or
+# updates) its workflow bundle. The hashes below make chezmoi re-run this script
+# whenever either file in the bundle changes:
+#   document.wflow: {{ include "private_Library/private_Services/Convert to M4B.workflow/Contents/document.wflow" | sha256sum }}
+#   Info.plist:     {{ include "private_Library/private_Services/Convert to M4B.workflow/Contents/Info.plist" | sha256sum }}
+#
+set -eu
+
+# Refresh the Services / Quick Actions registration so Finder shows the menu
+# item without requiring a logout. (pbs scans ~/Library/Services.)
+if [ -x /System/Library/CoreServices/pbs ]; then
+  /System/Library/CoreServices/pbs -flush || true
+fi
+
+echo "Registered 'Convert to M4B' Quick Action (Finder ▸ right-click ▸ Quick Actions)."

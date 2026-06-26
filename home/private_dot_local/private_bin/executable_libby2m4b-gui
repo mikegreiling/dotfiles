@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+#
+# libby2m4b-gui — Terminal front-end for the "Convert to M4B" Finder Quick Action.
+#
+# The Quick Action collects the selected Finder items into a newline-delimited
+# list file and opens Terminal running:  libby2m4b-gui <listfile>
+#
+# This wrapper exists so the Quick Action never has to escape arbitrary
+# filenames into AppleScript — only the (safe) mktemp list-file path is passed.
+#
+# It reads the paths, runs the core converter on each, prints a summary, and
+# pauses so the window stays readable. The list file is removed when done.
+#
+set -uo pipefail
+
+LIST="${1:-}"
+[ -n "$LIST" ] && [ -f "$LIST" ] || { echo "libby2m4b-gui: usage: libby2m4b-gui <list-file>" >&2; exit 2; }
+
+CORE="$HOME/.local/bin/libby2m4b"
+[ -x "$CORE" ] || CORE="$(command -v libby2m4b || true)"
+[ -n "$CORE" ] || { echo "libby2m4b-gui: cannot find libby2m4b on PATH" >&2; exit 127; }
+
+# Read input paths (one per line, skip blanks).
+inputs=()
+while IFS= read -r line || [ -n "$line" ]; do
+  [ -n "$line" ] && inputs+=("$line")
+done < "$LIST"
+rm -f "$LIST"
+
+[ "${#inputs[@]}" -ge 1 ] || { echo "libby2m4b-gui: no input paths." >&2; exit 1; }
+
+echo "================  Convert to M4B  ================"
+printf 'Items: %d\n\n' "${#inputs[@]}"
+
+ok=0; fail=0
+for in in "${inputs[@]}"; do
+  echo "----------------------------------------------------------------"
+  echo ">> $(basename "$in")"
+  if "$CORE" "$in"; then
+    ok=$((ok+1))
+  else
+    fail=$((fail+1))
+  fi
+  echo
+done
+
+echo "================================================================"
+printf 'Done. %d converted, %d failed/skipped.\n' "$ok" "$fail"
+echo
+# Keep the Terminal window readable until acknowledged.
+read -r -p "Press Return to close this window… " _ || true
