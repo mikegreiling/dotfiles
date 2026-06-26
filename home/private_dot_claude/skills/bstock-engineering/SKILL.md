@@ -1,5 +1,5 @@
 ---
-name: B-Stock Engineering
+name: bstock-engineering
 description: This skill should be used when working on any B-Stock engineering task, including "create a merge request", "create MR", "push a branch", "create a branch", "check pipeline status", "monitor a release", "package release", "update changelog", "create a Jira ticket", "transition a ticket", "move ticket to done", "mark ticket as complete", "create a story", "assign a ticket", "look up swagger", "API docs", "api-client", "microservice API", "B-Stock workflow", or any task involving GitLab, Jira, or B-Stock projects. Always load this skill when working in the bstock-projects directory.
 version: 0.1.0
 ---
@@ -68,6 +68,18 @@ Full service project ID mapping (19 services) → see `references/project-ids.md
 - Use `"ticket"`, `"issue"`, and `"story"` interchangeably — they all mean Jira tickets.
 - Always load the `bstock-merge-requests` skill before creating MRs with `mcp__gitlab__create_merge_request`.
 
+## Verify Latest `origin/main` Before Planning or Exploration
+
+Before doing **any** planning or codebase-exploration work on a B-Stock project, make sure you are reading the *latest* `origin/main` — not a stale local copy and not an unrelated feature branch. Planning against outdated code wastes effort: assumptions about dependency versions and related in-flight work get invalidated the moment implementation branches off a fresh `origin/main`.
+
+For **each** project you inspect, check the current branch and working-tree state, then follow this ladder:
+
+1. **Not on `main`** → Ask whether to switch to `main`. Exploration based on an unintegrated feature branch is almost never what we want. **Exception:** the task is explicitly meant to build *on top of* that feature branch — then stay, and say so.
+2. **On `main`, clean working tree** → `git pull` to fast-forward to the latest `origin/main`.
+3. **On `main` but dirty, OR on a feature branch you cannot switch away from** → `git fetch`, then inspect files as they exist on `origin/main` *without* checking out (e.g. `git show origin/main:<path>`, `git diff origin/main`, `git log origin/main`). This is the least-ideal path — note in your findings that it was used, and avoid it whenever a clean switch is possible.
+
+**Never** base research or a plan on an outdated branch or a feature branch unless that is your explicit, stated intent.
+
 ## Sprint Assignments
 
 To get current sprint assignments, read `~/.claude/caches/bstock-current-sprint-cache.md`. This file is managed by the `/list-assignments` command, which can refresh it with current data.
@@ -79,7 +91,7 @@ Load the appropriate reference file when performing these tasks:
 | Task | Reference File |
 |------|---------------|
 | GitLab MR creation, branch naming, pipeline ops, MCP quirks | `references/gitlab-workflow.md` |
-| Jira ticket creation, status transitions, QA workflow, epic sizing & story-point estimation | `references/jira-workflow.md` |
+| Jira ticket creation, title/prefix conventions, spikes, status transitions, QA workflow, epic sizing & story-point estimation | `references/jira-workflow.md` |
 | Package versioning, release pipeline, changelog | `references/release-pipeline.md` |
 | Swagger docs, microservice API lookup | `references/api-docs.md` |
 | All stable project IDs and cached values | `references/project-ids.md` |
@@ -120,7 +132,7 @@ mcp__atlassian__getJiraIssue({
 For detailed workflow guidance, load:
 
 - **`references/gitlab-workflow.md`** — GitLab MCP configuration, MR conventions, branch naming, commit formatting, MCP tool quirks and workarounds
-- **`references/jira-workflow.md`** — Jira ticket transitions, QA workflow logic, ticket creation guidelines, epic sizing & story-point estimation policy, API limitations
+- **`references/jira-workflow.md`** — Jira ticket transitions, QA workflow logic, ticket creation guidelines, title/prefix policy, spike-ticket conventions, epic sizing & story-point estimation policy, API limitations
 - **`references/release-pipeline.md`** — Package version management, automated release pipeline, changelog requirements
 - **`references/api-docs.md`** — Swagger documentation retrieval, service-to-project-ID mapping
 - **`references/project-ids.md`** — Complete stable ID cache: all GitLab project IDs, Atlassian IDs, Jira field IDs

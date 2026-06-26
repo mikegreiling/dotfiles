@@ -136,27 +136,70 @@ Most tickets (outside `BUGS` project) should have a parent epic. Always ask what
 
 **Default project**: When creating tickets not immediately assigned to Mike, use `GLOB` project unless specified otherwise.
 
-### Ticket Title Formatting
+### Title Formatting & Prefix Policy
 
-Use bracketed tags to indicate affected project(s) or service(s):
+**Structure:** `[<scope tag(s)>] <Action verb> <concise description>`
 
+Prefixes are **bracketed tags identifying the affected app, service, domain, or work-type**. A tag describes *what the work touches* and is independent of the Jira project key the ticket lives in — a Seller Portal ticket is tagged `[SP]` whether it's filed under `FP` or `GLOB`. Roughly half of recent tickets carry a leading bracket tag and the rest are plain descriptive titles, so tags are **encouraged but not mandatory**. Multiple tags stack left-to-right from broad to specific (e.g. `[3MP][Net Terms]`, `[Epic A][must-have]`).
+
+After the tag(s), lead with an **action verb** (Fix, Update, Add, Remove, Audit, Investigate, Evaluate, Standardize, Harden…) and keep it concise.
+
+**Canonical tags by category:**
+
+*Work-type — how the ticket behaves in the workflow:*
 | Tag | Meaning |
 |-----|---------|
-| `[SPIKE]` | Research/prototyping — not QA-testable |
-| `[fe-core]` | Frontend core shared library |
-| `[AP]` | Accounts Portal |
+| `[SPIKE]` | Research / investigation / prototyping. Time-boxed, **not QA-testable** → see **Spikes** below. |
+| `[SHAPE]` | ShapeUp shaping work (breaking an epic into stories). |
+| `[UXD]` | UX design / exploration work. |
+
+*Frontend apps — use the short code, never the long name (`[SP]`, not `[seller-portal]`):*
+| Tag | App |
+|-----|-----|
+| `[AP]` / `[ACCT]` | Accounts Portal |
 | `[BP]` | Buyer Portal |
 | `[SP]` | Seller Portal |
 | `[CSP]` | CS Portal |
 | `[HP]` | Home Portal |
-| `[FE]` | General frontend work |
-| `[Account svc]`, `[Search svc]` | Backend services |
-| `[SP/CSP]`, `[FE Portals]` | Multiple projects |
+| `[fe-core]` | Frontend shared library — **lowercase is canonical** (`[FE-CORE]` appears in history; normalize to lowercase) |
+| `[FE]` | General / cross-cutting frontend |
 
-After tags, use descriptive titles with action verbs (Fix, Update, Remove, Audit, etc.):
+*Backend, services & platform:*
+| Tag | Scope |
+|-----|-------|
+| `[3MP]` | The 3MP marketplace/platform **as a whole** (the system of microservices). Often stacked with a sub-domain: `[3MP erp]`, `[3MP][Disputes]`. |
+| `[erp]` / `[3MP erp]` | ERP / NetSuite integration surface. |
+| `[order-service]`, `[<name> svc]`, `[BE - …]` | A specific backend service (e.g. `[Account svc]`, `[Search svc]`, `[BE - ERP Service]`). |
+
+*Domain / feature / initiative* — free-form domain tags are common and acceptable: `[Payments]`, `[Contracts]`, `[Net Terms]`, `[Disputes]`, `[Notifications]`, `[Order]`, `[shipment]`, `[payment-methods]`, `[Credit Cards]`, `[Seller Collects]`; numbered initiatives like `[002-multi-currency]`; customer tags like `[Costco]`.
+
+*Multi-scope* — combine with `/`, `+`, or stacked brackets: `[SP/CSP]`, `[CSP + BP]`, `[HP + ACCT]`, `[FE Portals]`.
+
+**Not established conventions — don't invent these:**
+- `[CI]` — **not used.** CI/pipeline work is tagged by the affected area (e.g. `[fe-core]`) or just described plainly. (See `gitlab-workflow.md` / `pipeline-polling.md` for CI ops.)
+- Long-form app names (`[seller-portal]`, `[home-portal]`) — use the short codes above.
+
+**Housekeeping convention:** a relocated/superseded ticket is renamed `[DO NOT USE - moved to FP-xxxx] <original title>` rather than deleted.
+
+**Shaped-epic task enumeration** (mostly `GLOB`, AI-generated story breakdowns): tasks may carry a `T<n>:` sequence id, `[P]` (parallelizable), `[US<n>]` (user-story ref), and `[must-have]`/`[nice-to-have]` priority — e.g. `T156 [P] [US10]: Wire saved-view…`. Mirror the surrounding epic's scheme when adding to such an epic; don't impose it elsewhere.
+
+**Examples:**
 - `[fe-core] Fix logging context token + trace details`
 - `[SP] Update deprecated 'legacyBehavior' Next Link component`
-- `[SPIKE] Evaluate parallelized tests through Jira/Vitest sharding in CI`
+- `[3MP erp] Standardize order identifiers in invoice & payment queue failure logs`
+- `[SPIKE] cs-portal Vitest migration: evaluate V8 vs Istanbul coverage provider performance`
+
+### Spikes (research / investigation tickets)
+
+There is **no "Spike" issue type** in B-Stock Jira — the available types are Epic / Story / Task / Sub-task / Bug. A spike is therefore an ordinary **Story** (the default type), distinguished purely by convention:
+
+- **Prefix the summary with `[SPIKE]`** (uppercase). This title prefix — not a label — is the reliable signal across the project history. A `spike` label exists and is sometimes applied, but inconsistently; add it if you like, but the prefix is what defines a spike.
+- **Story points still apply** — size the investigation effort like any story (Fibonacci, pre-AI baseline; see **Story points** above). Small spikes are commonly 1–3.
+- **Spikes are not QA-testable.** Apply the **`nontestable`** label and close via **QA BYPASS** (see *QA Workflow Decision Logic*) rather than routing through Quality Review. Confirm with Mike before using QA BYPASS, per the workflow rules.
+- **Description = research scope:** the question being answered, why it matters, and what's out of scope — *not* implementation steps. Capture the actual results/conclusion as a **comment** on the ticket once the research is done, so the finding is preserved for future reference.
+- Give it a **parent epic** like any ticket (the catch-all `GLOB-1987` "Optimization Cabal" fits DX / performance / tech-debt research) and link related work with a **Relates** link.
+
+Reference examples: `FP-1968` (Jest vs Vitest perf research), `FP-2256` (V8 vs Istanbul coverage), `GLOB-4479` (`[SPIKE]` Frontend Error Visibility).
 
 ### Sprint Assignment
 

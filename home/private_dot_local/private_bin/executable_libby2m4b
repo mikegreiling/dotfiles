@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+#
+# libby2m4b — turn a LibbyRip audiobook export into a single tagged .m4b
+#
+# Usage:
+#   libby2m4b "/path/to/Author - Title"            # writes "<dir>.m4b" inside the dir
+#   libby2m4b "/path/to/book" "/path/to/out.m4b"   # explicit output path
+#
+# Expects the LibbyRip layout:
+#   <dir>/Part 001.mp3 ... Part NNN.mp3
+#   <dir>/metadata/metadata.json
+#   <dir>/metadata/cover.*            (optional)
+#
+# Concatenates the parts, encodes to AAC, embeds whole-book chapter markers
+# (derived from metadata.json) + cover art, and flags the file as an Audiobook
+# so Apple Books / Music route it correctly.
+#
+# Env overrides:
+#   AAC_BITRATE  (default 128k)
+#
+set -euo pipefail
+
+die() { printf 'libby2m4b: %s\n' "$*" >&2; exit 1; }
+
+[ $# -ge 1 ] || die "usage: libby2m4b <book-dir> [output.m4b]"
+
+BOOK="${1%/}"
+[ -d "$BOOK" ] || die "not a directory: $BOOK"
+
+META="$BOOK/metadata/metadata.json"
+[ -f "$META" ] || die "missing $META (did you 'Export audiobook' from LibbyRip?)"
+
+OUT="${2:-$BOOK/$(basename "$BOOK").m4b}"
+BITRATE="${AAC_BITRATE:-128k}"
+
+# --- dependency checks ---
+command -v ffmpeg     >/dev/null || die "ffmpeg not found (brew install ffmpeg)"
+command -v python3    >/dev/null || die "python3 not found"
+HAVE_AP=1; command -v AtomicParsley >/dev/null || HAVE_AP=0
+
+# --- pick the audio encoder: AudioToolbox on macOS, else native aac ---
+if ffmpeg -hide_banner -encoders 2>/dev/null | grep -q ' aac_at '; then
+  ACODEC=aac_at
+else
+  ACODEC=aac
+fi
+
+# --- find cover art (cover.* in metadata/, any case) ---
+COVER=""
+for c in "$BOOK"/metadata/cover.* "$BOOK"/metadata/Cover.*; do
+  [ -f "$c" ] && { COVER="$c"; break; }
+done
+
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+FFMETA="$TMP/ffmetadata.txt"
+CONCAT="$TMP/concat.txt"
+
+# --- build ffmetadata (chapters with absolute whole-book offsets) ---
+# Prints "<title>\t<author>" on stdout; writes the ffmetadata file to $FFMETA.
+IFS=$'\t' read -r TITLE AUTHOR < <(python3 - "$META" "$FFMETA" <<'PY'
+import json, re, sys
+meta_path, out_path = sys.argv[1], sys.argv[2]
+m = json.load(open(meta_path, encoding="utf-8"))
+spines = m["spine"]
+offsets = [sum(s["duration"] for s in spines[:i]) for i in range(len(spines))]
+total = sum(s["duration"] for s in spines)
+chaps = [(c["title"], c["offset"] + offsets[c["spine"]]) for c in m["chapters"]]
+
+esc = lambda s: re.sub(r"(=|;|#|\\|\n)", r"\\\1", s)
+contrib = {c["role"]: c["name"] for c in m["creator"]}
+author = contrib.get("author") or contrib.get("author and narrator") or ""
+title = m["title"]
+
+lines = [";FFMETADATA1", f"title={esc(title)}"]
+if author:
+    lines.append(f"artist={esc(author)}")
+lines.append("")
+starts = [s for _, s in chaps] + [total]
+for i, (t, start) in enumerate(chaps):
+    end = starts[i + 1]
+    lines += ["[CHAPTER]", "TIMEBASE=1/1000",
+              f"START={int(start*1000)}", f"END={int(end*1000)}",
+              f"title={esc(t)}", ""]
+open(out_path, "w", encoding="utf-8").write("\n".join(lines))
+# tab-separated so the shell can split title/author cleanly
+print(f"{title}\t{author}")
+PY
+)
+
+# --- build the concat list (sorted Part *.mp3) ---
+: > "$CONCAT"
+found=0
+while IFS= read -r f; do
+  printf "file '%s'\n" "$f" >> "$CONCAT"
+  found=$((found+1))
+done < <(find "$BOOK" -maxdepth 1 -name 'Part *.mp3' | sort)
+[ "$found" -gt 0 ] || die "no 'Part *.mp3' files found in $BOOK"
+
+nchap=$(grep -c '^\[CHAPTER\]' "$FFMETA" || true)
+printf 'libby2m4b: "%s" — %d parts, %d chapters, encoder=%s @ %s\n' \
+  "$TITLE" "$found" "$nchap" "$ACODEC" "$BITRATE"
+
+# --- encode ---
+maps=(-map 0:a)
+[ -n "$COVER" ] && maps+=(-map 2:v)
+inputs=(-f concat -safe 0 -i "$CONCAT" -i "$FFMETA")
+[ -n "$COVER" ] && inputs+=(-i "$COVER")
+
+ffmpeg -y -hide_banner -loglevel warning -stats \
+  "${inputs[@]}" \
+  "${maps[@]}" \
+  -map_metadata 1 -map_chapters 1 \
+  -c:a "$ACODEC" -b:a "$BITRATE" \
+  ${COVER:+-c:v copy -disposition:v:0 attached_pic} \
+  -f ipod "$OUT"
+
+# --- flag as audiobook so Apple Books/Music categorize it correctly ---
+if [ "$HAVE_AP" -eq 1 ]; then
+  AtomicParsley "$OUT" --stik Audiobook --genre "Audiobook" \
+    ${TITLE:+--album "$TITLE"} ${AUTHOR:+--albumArtist "$AUTHOR"} \
+    --overWrite >/dev/null
+else
+  printf 'libby2m4b: AtomicParsley not found — skipping audiobook flag (brew install atomicparsley)\n' >&2
+fi
+
+printf 'libby2m4b: done -> %s\n' "$OUT"
