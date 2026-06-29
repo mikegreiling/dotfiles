@@ -1,0 +1,7 @@
+node_modules/
+.auth/
+test-results/
+videos/
+playwright-report/
+creds.json
+*.zip
