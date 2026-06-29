@@ -30,16 +30,32 @@ const FA: Record<string, { authBase: string; clientId: string }> = {
   },
 }
 
-function resolvePassword(): string {
-  if (process.env.BSTOCK_DEMO_PASSWORD) return process.env.BSTOCK_DEMO_PASSWORD
-  const credsPath = resolve(here, 'creds.json')
-  if (existsSync(credsPath)) {
-    const c = JSON.parse(readFileSync(credsPath, 'utf8'))
-    if (c?.buyer?.password) return c.buyer.password as string
+/**
+ * Resolve the login identity. The skill is AGNOSTIC about where credentials live
+ * and which account is used — any of these works (first match wins):
+ *   1. env vars  BSTOCK_DEMO_EMAIL + BSTOCK_DEMO_PASSWORD
+ *   2. a git-ignored demo/creds.json  { "email": "…", "password": "…" }
+ *      (also accepts the nested form { "buyer": { "email": "…", "password": "…" } })
+ * The agent populates one of these from whatever the user provides (a creds file
+ * they point to, a typed-in pair, an already-exported env var). No path is assumed.
+ */
+function resolveCreds(): { email: string; password: string } {
+  const fromFile = (() => {
+    const p = resolve(here, 'creds.json')
+    if (!existsSync(p)) return {}
+    const c = JSON.parse(readFileSync(p, 'utf8'))
+    return { email: c.email ?? c.buyer?.email, password: c.password ?? c.buyer?.password }
+  })()
+  const email = process.env.BSTOCK_DEMO_EMAIL || fromFile.email
+  const password = process.env.BSTOCK_DEMO_PASSWORD || fromFile.password
+  if (!email || !password) {
+    throw new Error(
+      '[global-setup] missing login credentials. Provide an email + password via ' +
+        'env (BSTOCK_DEMO_EMAIL / BSTOCK_DEMO_PASSWORD) or demo/creds.json ' +
+        '{"email":"…","password":"…"}. The skill does not assume where creds live.'
+    )
   }
-  throw new Error(
-    '[global-setup] no password — set BSTOCK_DEMO_PASSWORD or create demo/creds.json {"buyer":{"password":"…"}} (see README).'
-  )
+  return { email, password }
 }
 
 /**
@@ -54,8 +70,7 @@ export default async function globalSetup(_config: FullConfig) {
   const env = config.env ?? 'dev'
   const fa = FA[env]
   if (!fa) throw new Error(`[global-setup] unknown env "${env}"`)
-  const email = config.buyer.email
-  const password = resolvePassword()
+  const { email, password } = resolveCreds()
 
   const authParams: Record<string, string> = {
     client_id: fa.clientId,

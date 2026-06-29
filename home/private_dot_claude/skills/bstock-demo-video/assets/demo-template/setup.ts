@@ -9,7 +9,7 @@
  *
  * See references/setup-teardown.md for the intended design. Until then: seed the
  * record manually (or via existing fe-scripts commands), put its ID in
- * demo.config.records, and flag the gap to Mike (+ propose codifying it here).
+ * demo.config.records, and flag the gap to the user (+ propose codifying it here).
  */
 export async function setup(): Promise<Record<string, string>> {
   throw new Error(

@@ -32,10 +32,13 @@ from `fe-scripts/src/api/accounts.ts` `login()`, BUGS-5218):
    `bstock_access_token`/`bstock_refresh_token`; then `context.storageState(...)`.
 Re-running globalSetup mints fresh each run, unattended.
 
-Per-env FA client ids + hosts: see `fusionauth-client-ids.md`. Buyer email is in
-`demo.config.ts`; password from `BSTOCK_DEMO_PASSWORD` or git-ignored
-`demo/creds.json` — never embed it. Some features need the buyer to have a saved
-destination address (e.g. shipping quotes throw `destinationLocationId required`).
+Per-env FA client ids + hosts: see `fusionauth-client-ids.md`. The login identity
+(email + password) is resolved at runtime — env `BSTOCK_DEMO_EMAIL`/
+`BSTOCK_DEMO_PASSWORD` or git-ignored `demo/creds.json` `{"email","password"}` —
+and is intentionally NOT in `demo.config.ts`. The skill assumes no path; the agent
+gets the pair from the user (a file they point to + which account, typed in, or
+already-exported env). Some features need the account to have a saved destination
+address (e.g. shipping quotes throw `destinationLocationId required`).
 
 ## 2. Force LaunchDarkly flags (`ld-intercept.ts` → `forceFlags`)
 Most flags have **no in-app override**. Intercept the client SDK: rewrite
@@ -84,20 +87,19 @@ Trim the SSR/hydration white lead-in (negate + `blackdetect` → input-seek), th
 `libx264 -pix_fmt yuv420p -movflags +faststart`; concat per-scenario clips into
 `combined.mp4`. Eyeball the first output frame (mostly-white pages can over-trim).
 
-## 7. Deliver (`bundle.sh` + routing)
+## 7. Package & hand off (distribution is OUT OF SCOPE)
 - `encode.sh` → `videos/*.mp4`. `bundle.sh` → lean `…-bundle.zip` (excludes the
-  **entire** node_modules + outputs + secrets).
-- Routing (Mike's standard): video **and** the zip on **both** the MR and the Jira
-  ticket. MR side is automatable via `mcp__gitlab__upload_markdown` (see
-  `bstock-engineering` / `bstock-merge-requests`). Jira side is **manual** — the
-  installed `acli` can't upload attachments and the Atlassian MCP has no
-  attachment tool, so hand the files to Mike (`SendUserFile`) with a paste-ready
-  summary for him to drag onto the ticket.
+  **entire** node_modules + outputs + secrets) — the portable artifact others
+  replay locally (`npm ci && npx playwright test`, given VPN + their own creds +
+  the record IDs in the README).
+- Hand the video(s) + bundle to the user (e.g. `SendUserFile`). **Stop there.** This
+  skill does **not** upload/attach/post artifacts to a GitLab MR, Jira ticket,
+  Slack, etc. — how they're shared is the user's decision, not this workflow's.
 
 ## 8. Guardrails
 - **Stop before the real submit** unless a scenario sets `submit:true` on a
   disposable/seeded record. Selecting options / the user's own choices is fine.
 - Don't mutate shared dev records others rely on.
-- Don't commit `demo/` or `@playwright/test` to the feature MR.
+- Don't commit `demo/` or `@playwright/test` into the target repo's tracked tree.
 - See `pitfalls.md` for the first-try gotchas, and `setup-teardown.md` for the
   (future) resource-seeding extension point.

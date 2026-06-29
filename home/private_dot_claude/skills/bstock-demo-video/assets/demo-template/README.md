@@ -20,16 +20,16 @@ scenario. `npm run encode` trims + transcodes them to `.mp4` (+ a combined clip)
      deployed env (e.g. `https://bstock-dev.com`) — nothing to run locally.
    - If **not yet merged**, run that branch's dev server locally (e.g. home-portal
      `npm run dev` → `http://localhost:3030`) and keep `baseUrl` on localhost.
-4. **Buyer credentials** (never committed): the buyer **email** is in
-   `demo.config.ts` (swap it for your own test account). The **password** is read
-   from either the `BSTOCK_DEMO_PASSWORD` env var **or** a git-ignored
-   `creds.json` (`{"buyer":{"password":"…"}}`) — pick whichever you prefer:
+4. **Login credentials** (never committed): a dev test account's **email +
+   password**. Not stored in `demo.config.ts` — supply them via env vars **or** a
+   git-ignored `creds.json`, whichever you prefer:
    ```sh
-   export BSTOCK_DEMO_PASSWORD='…'        # option A
-   echo '{"buyer":{"password":"…"}}' > creds.json   # option B (git-ignored)
+   export BSTOCK_DEMO_EMAIL='…' BSTOCK_DEMO_PASSWORD='…'      # option A
+   echo '{"email":"…","password":"…"}' > creds.json          # option B (git-ignored)
    ```
-   Use a B-Stock dev test account you have access to. (B-Stock teammates: these
-   accounts are catalogued internally; ask the author if you need one.)
+   Use any B-Stock dev test account you have that can see the demo's resources
+   (and has a destination address if the feature needs one). These are throwaway
+   dev-env accounts.
 5. **Subject record IDs** in `demo.config.ts` `records` (listings/orders/etc.).
    Auction listings expire — refresh with `npm run discover` and paste fresh IDs.
 6. **ffmpeg** (for `npm run encode`): `brew install ffmpeg`.
@@ -38,7 +38,7 @@ scenario. `npm run encode` trims + transcodes them to `.mp4` (+ a combined clip)
 ```sh
 npm ci
 npx playwright install chromium
-# ensure VPN + the app at baseUrl + BSTOCK_DEMO_PASSWORD are set
+# ensure VPN + the app at baseUrl + credentials (env or creds.json) are set
 npm test          # records .webm per scenario into test-results/
 npm run encode    # → videos/*.mp4 (+ combined.mp4)
 ```

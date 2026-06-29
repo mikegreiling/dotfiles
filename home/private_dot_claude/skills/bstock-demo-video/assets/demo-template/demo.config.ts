@@ -4,8 +4,10 @@
  * (which env, which records/IDs, which flags, which scenarios) live HERE so the
  * Playwright script stays replayable: swap these values, re-run, get the video.
  *
- * Secrets are NEVER stored here. The buyer password comes from the
- * BSTOCK_DEMO_PASSWORD env var or a git-ignored demo/creds.json (see README).
+ * The LOGIN IDENTITY (email + password) is deliberately NOT here — it is a
+ * credential resolved at runtime (env BSTOCK_DEMO_EMAIL/BSTOCK_DEMO_PASSWORD or a
+ * git-ignored demo/creds.json). The skill is agnostic about which account is used
+ * and where it lives; the agent supplies it from whatever the user provides.
  */
 
 export type Scenario = {
@@ -22,7 +24,6 @@ export type DemoConfig = {
   baseUrl: string
   /** Where to land after login (any authenticated path is fine). */
   afterLogin?: string
-  buyer: { email: string }
   /** LaunchDarkly flag keys to force ON (kebab-case), or [] for none. */
   forceFlags: string[]
   /** Recording size — viewport AND video are locked to this (avoids gray borders). */
@@ -39,7 +40,9 @@ const config: DemoConfig = {
   env: 'dev',
   baseUrl: 'http://localhost:3030',
   afterLogin: '/buy/user/bids',
-  buyer: { email: 'lana.kukharchyk+buyer.40f16f32-9772-48bb-a03b-703cf0d7ce6f@bstock.com' },
+  // Login identity comes from env/creds.json (see README). The parcel example
+  // needs a BUYER account with visibility to the listings below + a saved
+  // destination address.
   forceFlags: ['enable-parcel-quotes'],
   size: { width: 1440, height: 1024 },
   records: {
