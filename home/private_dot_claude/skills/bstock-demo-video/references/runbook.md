@@ -87,14 +87,12 @@ Trim the SSR/hydration white lead-in (negate + `blackdetect` → input-seek), th
 `libx264 -pix_fmt yuv420p -movflags +faststart`; concat per-scenario clips into
 `combined.mp4`. Eyeball the first output frame (mostly-white pages can over-trim).
 
-## 7. Package & hand off (distribution is OUT OF SCOPE)
+## 7. Package & hand off
 - `encode.sh` → `videos/*.mp4`. `bundle.sh` → lean `…-bundle.zip` (excludes the
   **entire** node_modules + outputs + secrets) — the portable artifact others
   replay locally (`npm ci && npx playwright test`, given VPN + their own creds +
   the record IDs in the README).
-- Hand the video(s) + bundle to the user (e.g. `SendUserFile`). **Stop there.** This
-  skill does **not** upload/attach/post artifacts to a GitLab MR, Jira ticket,
-  Slack, etc. — how they're shared is the user's decision, not this workflow's.
+- Hand the video(s) + bundle to the user (e.g. `SendUserFile`).
 
 ## 8. Guardrails
 - **Stop before the real submit** unless a scenario sets `submit:true` on a

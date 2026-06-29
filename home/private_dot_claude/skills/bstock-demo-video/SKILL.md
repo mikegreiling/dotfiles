@@ -1,6 +1,6 @@
 ---
 name: bstock-demo-video
-description: Use this skill to build a deterministic Playwright workflow that demonstrates a B-Stock frontend feature/change OR reproduces a frontend bug, records a polished video of it, and packages that script as a self-contained bundle others can replay on their own dev/QA workstation. Triggers include "create a demo video", "record the feature", "show the new UI", "demonstrate this change", "reproduce this bug with a video", "make a deterministic repro", "make a replayable QA/Playwright script", or any request to visually capture frontend behavior in a B-Stock portal (home/seller/cs/accounts/cops). Drives the real dev backend, mints a session past Cloudflare Turnstile, forces LaunchDarkly flags, hides dev overlays, and records a natural-cursor walkthrough. Does NOT post/attach artifacts anywhere — distribution is out of scope.
+description: Use this skill to build a deterministic Playwright workflow that demonstrates a B-Stock frontend feature/change OR reproduces a frontend bug, records a polished video of it, and packages that script as a self-contained bundle others can replay on their own dev/QA workstation. Triggers include "create a demo video", "record the feature", "show the new UI", "demonstrate this change", "reproduce this bug with a video", "make a deterministic repro", "make a replayable QA/Playwright script", or any request to visually capture frontend behavior in a B-Stock portal (home/seller/cs/accounts/cops). Drives the real dev backend, mints a session past Cloudflare Turnstile, forces LaunchDarkly flags, hides dev overlays, and records a natural-cursor walkthrough.
 version: 0.1.0
 ---
 
@@ -14,14 +14,12 @@ Turnstile, forcing flags, finding real data, cursor/scroll polish, ffmpeg) are
 pre-solved in the bundled template; per task you mostly fill **parameters** and
 author a thin scenario.
 
-## Scope
-- **In scope:** the Playwright workflow, the recorded video (to the styling
-  standards), and the portable bundle for local replay by others.
-- **Out of scope:** *distributing* the artifacts. Do **not** upload/attach/post the
-  video or bundle to a GitLab MR, Jira ticket, Slack, etc. Produce them and hand
-  them to the user; how they share is their call.
-- A scenario can equally **demonstrate** (happy path) or **reproduce a bug** (drive
-  the exact steps that trigger it and let the video capture the broken behavior).
+## What this skill does
+- Builds the Playwright workflow, records the video (to the styling standards), and
+  packages a portable bundle another engineer can replay locally on their own
+  dev/QA workstation.
+- A scenario can equally **demonstrate** a feature (happy path) or **reproduce a
+  bug** (drive the exact steps that trigger it and let the video capture it).
 - Not limited to "open a modal, scroll, close" — that's the *shipped example*. The
   core is reusable interaction primitives + a scenario you author for **any**
   frontend change, touring the **window** or **any** scrollable region.
@@ -69,8 +67,7 @@ author a thin scenario.
    frame: no white start, no dev overlays, centered cursor, full tour, visible close.
 8. **Bundle** `npm run bundle` → `…-bundle.zip` (verify `node_modules` NOT in it) —
    this is the portable artifact others replay locally.
-9. **Hand off.** Give the user the video(s) + the bundle (e.g. `SendUserFile`). Stop
-   there — **do not** attach/post them to an MR, ticket, or chat (out of scope).
+9. **Hand off.** Give the user the video(s) + the bundle (e.g. `SendUserFile`).
 10. **Report** caveats: replay prereqs (VPN/creds/Node/baseUrl), param staleness,
     and what was/wasn't submitted.
 11. **Self-revise.** Propose concrete skill edits for anything you had to figure out,
@@ -101,8 +98,6 @@ feature needs one). The identity is intentionally **not** in `demo.config.ts`.
 - Don't commit `demo/` or `@playwright/test` into the target repo's tracked tree.
 
 ## Cross-references
-- `bstock-engineering` — general B-Stock context (project IDs, `glab`/GitLab + Jira
-  tooling) if a task needs it. (Distribution of these artifacts is still out of scope.)
 - `references/runbook.md` — full detail behind every step above.
 - A local memory note may hold worked-example record IDs/accounts (e.g. the parcel
   demo) — use it only if present.
