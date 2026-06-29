@@ -2,6 +2,14 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.mikegreiling.services.convert-to-m4b</string>
+	<key>CFBundleName</key>
+	<string>Convert to M4B</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
 	<key>NSServices</key>
 	<array>
 		<dict>
