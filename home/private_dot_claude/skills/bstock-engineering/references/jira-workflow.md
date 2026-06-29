@@ -76,6 +76,26 @@ sizes **has not been located yet** — one may well exist (a team wiki, the Jira
 rubric) that simply hasn't been found and linked here. If you need the authoritative scale, it's worth
 searching for. Until it surfaces, size **relative to peer epics**.
 
+### Epic shaping & sizing policy (work under our purview)
+
+When assigned work needs shaping into an Epic:
+
+- Scope each Epic to be **independently deployable** and **separable for organizational traceability** — so a
+  specific Epic ticket # can be referenced at a production deployment.
+- An Epic represents one coherent, independently deployable iterative step; its stories are pieces that don't
+  make sense to deploy on their own or execute out of order — that interdependence is *why* they're bundled
+  under one Epic.
+- **Never** let an Epic sit open and idle for months. Size it to flow shaping → development → production
+  cleanly within an agile cycle, then close.
+- Target roughly **15–40 story points per Epic** (wide range for now; may narrow later) — big enough to hold
+  several stories, small enough to finish in a cycle or two.
+- Epics may **bundle work across multiple projects/repos** and do **not** have to split frontend vs backend —
+  that split is situational, not a rule. (Parcel Phase 1 split FE/BE because the two were separately
+  deployable and separately owned; the per-requirement epics `GLOB-3930`↔`GLOB-4588`, `GLOB-4613`↔`GLOB-4672`,
+  `GLOB-4614`↔`GLOB-4673`, `GLOB-4615`↔`GLOB-4674` are 1:1 BE↔FE pairs.)
+- When a counterpart team uses per-requirement epics, **mirror with a 1:1 paired epic** (linked "relates to")
+  to keep deployment tracking clean.
+
 ### Epic intake → delivery workflow
 
 Per **Jira Epic Workflow**:
