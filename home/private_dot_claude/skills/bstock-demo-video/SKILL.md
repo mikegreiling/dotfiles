@@ -49,8 +49,8 @@ core is reusable interaction primitives + a parameterized scenario you author fo
 3. **Scaffold.** `bash scripts/scaffold.sh <repo>` → copies template to
    `<repo>/demo`, git-excludes it, installs Playwright.
 4. **Fill `demo.config.ts`** — env, baseUrl, buyer email, `forceFlags`, `size`,
-   `records` (the non-deterministic IDs), `scenarios` (+ `submit` opt-in). Set
-   `BSTOCK_DEMO_PASSWORD` (or `demo/creds.json`) from `-docs/dev-test-credentials.md`.
+   `records` (the non-deterministic IDs), `scenarios` (+ `submit` opt-in). Then
+   resolve the buyer password (see **Credentials** below) — never hardcode it.
 5. **Author `demo.spec.ts`** for the feature by composing `human.ts` (navigate →
    `tour` the relevant region → interact → `confirmOrClose`). Copy the parcel
    example's shape; keep IDs in `records`.
@@ -71,6 +71,20 @@ core is reusable interaction primitives + a parameterized scenario you author fo
 12. **Commit (chezmoi).** Skill files live under chezmoi — per `dotfiles-workflow`:
     edit live under `~/.claude/skills/bstock-demo-video/`, then `chezmoi add` and
     commit to `~/.local/share/chezmoi` (straight to `main`).
+
+## Credentials (portable — never hardcode a path or secret)
+The buyer **email** is a non-secret param in `demo.config.ts` (swap per task/account).
+The **password** is resolved at runtime by `global-setup.ts` in this order:
+1. `BSTOCK_DEMO_PASSWORD` env var (preferred — e.g. run `BSTOCK_DEMO_PASSWORD=… npx playwright test`, or have the user export it);
+2. a git-ignored `demo/creds.json` → `{"buyer":{"password":"…"}}`;
+3. otherwise it throws.
+
+When neither is set, **ask the user** to provide the password (or to point you at
+their own credentials file/secret store) and set it via option 1 or 2 for the run.
+Do **not** assume any path exists. As a *personal convenience only*, Mike keeps
+B-Stock dev test accounts in `-docs/dev-test-credentials.md` — read it **if it
+exists**, but treat its absence as normal (coworkers won't have it). The secret is
+never written into the project, the bundle, or the repo.
 
 ## Guardrails
 - Stop before the real submit unless a scenario sets `submit:true` on a

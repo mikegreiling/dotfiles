@@ -20,9 +20,16 @@ scenario. `npm run encode` trims + transcodes them to `.mp4` (+ a combined clip)
      deployed env (e.g. `https://bstock-dev.com`) — nothing to run locally.
    - If **not yet merged**, run that branch's dev server locally (e.g. home-portal
      `npm run dev` → `http://localhost:3030`) and keep `baseUrl` on localhost.
-4. **Buyer credentials**: set `BSTOCK_DEMO_PASSWORD` (or create `creds.json` =
-   `{"buyer":{"password":"…"}}`, git-ignored). The buyer email is in
-   `demo.config.ts`. B-Stock test accounts live in `-docs/dev-test-credentials.md`.
+4. **Buyer credentials** (never committed): the buyer **email** is in
+   `demo.config.ts` (swap it for your own test account). The **password** is read
+   from either the `BSTOCK_DEMO_PASSWORD` env var **or** a git-ignored
+   `creds.json` (`{"buyer":{"password":"…"}}`) — pick whichever you prefer:
+   ```sh
+   export BSTOCK_DEMO_PASSWORD='…'        # option A
+   echo '{"buyer":{"password":"…"}}' > creds.json   # option B (git-ignored)
+   ```
+   Use a B-Stock dev test account you have access to. (B-Stock teammates: these
+   accounts are catalogued internally; ask the author if you need one.)
 5. **Subject record IDs** in `demo.config.ts` `records` (listings/orders/etc.).
    Auction listings expire — refresh with `npm run discover` and paste fresh IDs.
 6. **ffmpeg** (for `npm run encode`): `brew install ffmpeg`.
