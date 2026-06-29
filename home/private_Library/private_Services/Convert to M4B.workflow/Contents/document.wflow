@@ -59,9 +59,14 @@
 				<key>ActionParameters</key>
 				<dict>
 					<key>COMMAND_STRING</key>
-					<string>list="$(/usr/bin/mktemp -t libby2m4b)"
-printf '%s\n' "$@" | /usr/bin/tee "$list"
-/usr/bin/osascript -e "tell application \"Terminal\" to do script \"$HOME/.local/bin/libby2m4b-gui '$list'\"" -e 'tell application "Terminal" to activate'
+					<string>LOG="$HOME/Library/Logs/libby2m4b-quickaction.log"
+echo "[$(date)] Convert to M4B invoked with $# item(s)" | /usr/bin/tee -a "$LOG"
+d="$(/usr/bin/mktemp -d -t libby2m4b)"
+printf '%s\n' "$@" | /usr/bin/tee "$d/list.txt"
+printf '#!/bin/zsh\n"$HOME/.local/bin/libby2m4b-gui" "%s/list.txt"\n' "$d" | /usr/bin/tee "$d/run.command"
+/bin/chmod +x "$d/run.command"
+/usr/bin/open "$d/run.command"
+echo "[$(date)] opened $d/run.command (rc=$?)" | /usr/bin/tee -a "$LOG"
 </string>
 					<key>CheckedForUserDefaultShell</key>
 					<true/>
