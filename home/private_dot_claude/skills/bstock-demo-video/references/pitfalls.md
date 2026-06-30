@@ -41,3 +41,23 @@ usually just works.
 
 10. **Never auto-submit.** Stop before the real Confirm unless `submit:true` on a
     disposable record — placing a real bid / completing an order mutates shared dev.
+
+11. **cs-portal `/demo/*` pages 302 away under `npm run dev`.** cs-portal's
+    `server.js` gates demo pages with `allowDemoPages = !(dev || ['dev','qa']
+    .includes(PUBLIC_APP_ENV))`, so in a local dev server every `/csportal/demo/*`
+    request redirects to the base path (you'll see the default Accounts page, not
+    your demo). The fixture-fed `DemoPage` approach for component-isolation capture
+    therefore needs a temporary local edit to that block (`const allowDemoPages =
+    true`) + a server restart — revert before commit (`server.js` is tracked).
+    Other portals may differ; check their custom server before assuming `/demo`
+    is reachable in dev.
+
+12. **No real parcel *order* on dev (FP-1947).** Parcel quote/markup data only
+    exists on a real parcel order, of which there are effectively none on dev
+    (scanned 1,800 recent buyer orders → 0 PARCEL; the 66 parcel *shipment*
+    fixtures 404 in the order service). For a component-isolation capture, feed the
+    card parcel-coerced fixture data via a throwaway `DemoPage` rather than hunting
+    for a live order. To find/confirm orders by transport mode: order `findAll` has
+    NO transportMode filter, so resolve each order's `shipping.quoteId` against the
+    shipment service `GET /v1/quotes?_id=<csv>` (param is `_id`, not `id`) and read
+    `quote.transportMode`; or list parcel shipments via `GET /v1/shipments?mode=PARCEL`.

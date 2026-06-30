@@ -3,6 +3,10 @@
 # Usage: bash scaffold.sh /path/to/repo-or-worktree
 set -euo pipefail
 REPO="${1:?usage: scaffold.sh <repo-dir>}"
+# Resolve REPO to an absolute path. DEST is used as a relative `cp` target from
+# inside `cd "$TEMPLATE"` below, so a relative REPO (e.g. ".") would copy the
+# template into the template dir instead of the repo. Absolute paths avoid that.
+REPO="$(cd "$REPO" && pwd)"
 SKILL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 TEMPLATE="$SKILL_DIR/assets/demo-template"
 DEST="$REPO/demo"
