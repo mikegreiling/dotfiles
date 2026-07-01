@@ -3,7 +3,7 @@
 # Register the "Convert to M4B" Finder Quick Action after chezmoi applies (or
 # updates) its workflow bundle. The hashes below make chezmoi re-run this script
 # whenever either file in the bundle changes:
-#   document.wflow: {{ include "private_Library/private_Services/Convert to M4B.workflow/Contents/Resources/document.wflow" | sha256sum }}
+#   document.wflow: {{ include "private_Library/private_Services/Convert to M4B.workflow/Contents/document.wflow" | sha256sum }}
 #   Info.plist:     {{ include "private_Library/private_Services/Convert to M4B.workflow/Contents/Info.plist" | sha256sum }}
 #
 set -eu

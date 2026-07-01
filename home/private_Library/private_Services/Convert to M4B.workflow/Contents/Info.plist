@@ -2,21 +2,15 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleDevelopmentRegion</key>
-	<string>en</string>
-	<key>CFBundleIdentifier</key>
-	<string>com.mikegreiling.services.convert-to-m4b</string>
-	<key>CFBundleName</key>
-	<string>Convert to M4B</string>
-	<key>CFBundleShortVersionString</key>
-	<string>1.0</string>
 	<key>NSServices</key>
 	<array>
 		<dict>
 			<key>NSBackgroundColorName</key>
 			<string>background</string>
+			<key>NSBackgroundSystemColorName</key>
+			<string>systemOrangeColor</string>
 			<key>NSIconName</key>
-			<string>NSActionTemplate</string>
+			<string>NSTouchBarBookmarks</string>
 			<key>NSMenuItem</key>
 			<dict>
 				<key>default</key>
@@ -31,8 +25,7 @@
 			</dict>
 			<key>NSSendFileTypes</key>
 			<array>
-				<string>public.zip-archive</string>
-				<string>public.folder</string>
+				<string>public.item</string>
 			</array>
 		</dict>
 	</array>
