@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+#
+# libby2m4b-quickaction — entry point for the "Convert to M4B" Finder Quick
+# Action. Automator calls this with the selected Finder items as arguments
+# (Run Shell Script, "Pass input: as arguments"):
+#
+#     exec "$HOME/.local/bin/libby2m4b-quickaction" "$@"
+#
+# All real logic lives here (and in libby2m4b / libby2m4b-gui) so the Automator
+# bundle stays a thin, stable wrapper we never have to touch again.
+#
+# It stages the selected paths into a temp list + a .command launcher, then
+# `open`s it so the conversion runs in a visible Terminal window (Launch
+# Services — no Automation/AppleEvents permission required).
+#
+set -uo pipefail
+
+LOG="$HOME/Library/Logs/libby2m4b-quickaction.log"
+{ echo "[$(date)] quick action invoked with $# item(s):"; printf '    %s\n' "$@"; } >> "$LOG" 2>/dev/null || true
+
+if [ "$#" -eq 0 ]; then
+  /usr/bin/osascript -e 'display notification "No items were passed" with title "Convert to M4B"' 2>/dev/null || true
+  exit 1
+fi
+
+d="$(mktemp -d -t libby2m4b)"
+printf '%s\n' "$@" > "$d/list.txt"
+
+cat > "$d/run.command" <<EOF
+#!/bin/zsh
+"\$HOME/.local/bin/libby2m4b-gui" "$d/list.txt"
+EOF
+chmod +x "$d/run.command"
+
+if /usr/bin/open "$d/run.command"; then
+  echo "[$(date)] opened $d/run.command" >> "$LOG" 2>/dev/null || true
+else
+  rc=$?
+  echo "[$(date)] open failed rc=$rc" >> "$LOG" 2>/dev/null || true
+  /usr/bin/osascript -e "display notification \"Could not open Terminal (rc=$rc)\" with title \"Convert to M4B\"" 2>/dev/null || true
+  exit "$rc"
+fi
