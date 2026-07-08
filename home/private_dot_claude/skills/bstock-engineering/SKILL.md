@@ -80,9 +80,9 @@ For **each** project you inspect, check the current branch and working-tree stat
 
 **Never** base research or a plan on an outdated branch or a feature branch unless that is your explicit, stated intent.
 
-## Sprint Assignments
+## Current Assignments
 
-To get current sprint assignments, read `~/.claude/caches/bstock-current-sprint-cache.md`. This file is managed by the `/list-assignments` command, which can refresh it with current data.
+To get Mike's current assignments, read `~/.claude/caches/bstock-assignments-cache.md`. This file is managed by the `/list-assignments` command, which can refresh it with current data. The team uses a kanban board of epics (no sprints).
 
 ## Workflow Reference Files
 

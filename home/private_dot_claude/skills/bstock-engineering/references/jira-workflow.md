@@ -232,7 +232,7 @@ To assign a ticket to the current sprint, use `customfield_10018` with a direct 
 { "customfield_10018": [3660] }
 ```
 
-Get the current sprint ID from `~/.claude/caches/bstock-current-sprint-cache.md`.
+**Note (2026-07): the Foundations Pod no longer runs sprints — work is tracked on a kanban board of epics.** `customfield_10018` is generally no longer set. The mechanics above remain only for the rare case a sprint field is still required. `~/.claude/caches/bstock-assignments-cache.md` no longer contains a sprint ID.
 
 ## Atlassian API Limitations
 
