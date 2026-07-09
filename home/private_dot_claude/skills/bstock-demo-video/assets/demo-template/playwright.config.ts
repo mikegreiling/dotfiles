@@ -18,6 +18,12 @@ export default defineConfig({
   globalSetup: './global-setup.ts',
   use: {
     baseURL: demo.baseUrl,
+    // Chromium's Local Network Access checks block XHR from http://localhost to
+    // VPN-routed *.bstock-dev.com (private address space); client-side fetches
+    // then fail and error boundaries leak into captures. See pitfalls.md #13.
+    launchOptions: {
+      args: ['--disable-features=LocalNetworkAccessChecks'],
+    },
     storageState: '.auth/buyer.json',
     viewport: SIZE,
     actionTimeout: 30_000,

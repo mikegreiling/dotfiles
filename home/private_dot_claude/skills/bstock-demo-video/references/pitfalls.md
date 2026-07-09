@@ -61,3 +61,31 @@ usually just works.
     NO transportMode filter, so resolve each order's `shipping.quoteId` against the
     shipment service `GET /v1/quotes?_id=<csv>` (param is `_id`, not `id`) and read
     `quote.transportMode`; or list parcel shipments via `GET /v1/shipments?mode=PARCEL`.
+
+13. **Chromium Local Network Access blocks localhost→VPN XHR.** Client-side
+    XHR from `http://localhost:<port>` to VPN-routed `*.bstock-dev.com` (private
+    address space) is denied by Chromium's LNA checks ("Permission was denied for
+    this request to access the `local` address space") → BuyerInfo/docserv-meta
+    style client fetches fail and error boundaries leak into captures (often only
+    seconds AFTER load, so early screenshots look fine while videos catch the
+    error). The template config now launches with
+    `--disable-features=LocalNetworkAccessChecks` — keep it.
+
+14. **seller-portal notes (FP-2369 run).** Route:
+    `/sell/<accountId>/orders/<formattedPrettyId>/details` (UUID 308s to pretty).
+    Data is SSR-prefetched via `spGsspMiddleware` → use the SSR-document rewrite
+    (same `stampParcelMode` trick as cs-portal). Wait on the `Shipment` h2, never
+    networkidle. UI baseline: for SELLER + BINDING the Carrier & Tracking block is
+    ALREADY read-only pre-parcel-guard and the manual "Status: …" button is hidden
+    (`showUpdateShipment` needs type !== BINDING) — the guard's only *visible* SP
+    delta is on non-BINDING shipments (e.g. BUYER_PICKUP status button). A dev
+    SERVICE login can view any seller's SP pages (`isService` is supported) — handy
+    when a specific seller's password isn't on file. Old (2023) order shipments may
+    be embedded only in the ORDER service payload (`order.shipments`) and not
+    findable via shipment-service `orderReferencePrettyId`/`orderId` params — grep
+    the SSR HTML for the `_id` instead.
+
+15. **encode.sh can abort mid-loop.** One failing ffmpeg encode (short/odd clip)
+    used to kill the whole loop under `set -e` — later clips + combined.mp4 never
+    produced. The template now continues past per-clip failures; if a clip is
+    missing, check the printed warning.

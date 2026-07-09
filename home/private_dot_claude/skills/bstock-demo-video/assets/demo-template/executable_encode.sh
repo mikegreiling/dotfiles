@@ -16,7 +16,8 @@ trim_encode() {
       | grep -oE "black_start:0 black_end:[0-9.]+" | head -1 | grep -oE "[0-9.]+$" || true)
   [ -z "$t" ] && t=0
   echo "  $out  (trim ${t}s)"
-  "$FF" -y -ss "$t" -i "$src" -c:v libx264 -pix_fmt yuv420p -movflags +faststart "$OUT/$out" >/dev/null 2>&1
+  "$FF" -y -ss "$t" -i "$src" -c:v libx264 -pix_fmt yuv420p -movflags +faststart "$OUT/$out" >/dev/null 2>&1 \
+    || echo "  WARNING: encode failed for $src — skipping"
 }
 
 # One mp4 per scenario, named by the test-results dir (Playwright names it after the test).
