@@ -161,6 +161,20 @@ If no usable template exists, use a simple structure like:
 [Known caveats, rollout concerns, or reviewer guidance]
 ```
 
+## Screenshots & video evidence: upload and embed, never local paths
+
+When an MR description cites screenshots or videos as evidence, **upload the files to the GitLab project and embed them** — never reference paths on the local filesystem (`~/Desktop/...`, `/Users/...`). Reviewers cannot see the local disk, so a path is useless as evidence.
+
+How:
+
+1. Upload each file: `mcp__gitlab__upload_markdown` with `project_id` + `file_path` (or `glab api "projects/<id>/uploads" -F "file=@<path>"`).
+2. Paste the returned `![name](/uploads/<hash>/<file>)` markdown into the MR description. Uploaded `.mp4` files render as an inline video player.
+3. Before finalizing any MR description, scan it for `Desktop`, `/Users/`, or other local paths and replace them with uploads.
+
+Uploads are project-scoped: re-upload per project rather than cross-linking another project's `/uploads/` URL.
+
+**Prefer before/after pairs.** For UI changes, a single "after" capture often leaves reviewers digging to spot what's new. Capture the same page/state on the target branch (or production/dev) as the "before", and on the MR branch as the "after", and present them as a labeled pair (side-by-side table or consecutive images). For behavioral changes, a short before-video and after-video pair beats one combined clip. Skip the pair only when the change is additive on a previously empty surface (state "no prior UI existed" instead).
+
 ## Checklist validation requirements
 
 Before checking any box in an MR template, inspect the actual file changes and only mark items that are supported by evidence.
