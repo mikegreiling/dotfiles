@@ -89,3 +89,23 @@ usually just works.
     used to kill the whole loop under `set -e` — later clips + combined.mp4 never
     produced. The template now continues past per-clip failures; if a clip is
     missing, check the printed warning.
+
+16. **home-portal (buyer-portal) notes (FP-2370 run).** Buyer order-detail route:
+    `/buy/user/<accountId>/orders/details/<orderUuid>` (order UUID `_id`, not the
+    pretty id; wait on the `Shipments` h2). Data is SSR-prefetched
+    (`gsspMiddleware` + `buyerOrderDetailsQuery.prefetch`) → the SSR-document
+    rewrite (`stampParcelMode`) works unchanged. UI baseline: for portal=BUYER the
+    fe-core `TrackingInfo` state machine resolves EVERY shipping type to
+    DATA_READONLY/HIDDEN and `Actions.js` only shows the manual "Status: …" button
+    for CS/SELLER — so the parcel read-only guard has NO buyer-visible delta on any
+    shipment type (mode-null vs mode-PARCEL captures are byte-identical). To prove
+    a stamp landed, assert on `__NEXT_DATA__` (`"_id":"<id>","mode":"PARCEL"`)
+    rather than pixels. Also strip literal `"mode":null` before inserting — a later
+    duplicate key would win at JSON.parse.
+
+17. **`referencePrettyId` ≠ dedashed `formattedPrettyId`.** Formatted
+    `5KR4C-OTL-K85Q` is stored as reference `5KR4C0TLK85Q` — the display form
+    substitutes `O` where the stored id has `0` (and inserts dashes). Shipment
+    service `?orderReferencePrettyId=` lookups with the dedashed *formatted* id
+    silently return empty. Get the real `referencePrettyId` from the order
+    payload (orders `findAll` returns both), never by string-munging the pretty id.
