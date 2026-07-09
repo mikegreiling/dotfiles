@@ -109,3 +109,25 @@ usually just works.
     service `?orderReferencePrettyId=` lookups with the dedashed *formatted* id
     silently return empty. Get the real `referencePrettyId` from the order
     payload (orders `findAll` returns both), never by string-munging the pretty id.
+
+18. **Full-page screenshots paint sticky/fixed elements mid-image.** Playwright's
+    `fullPage: true` stitches scrolled segments, so `position: sticky`/`fixed`
+    chrome (e.g. cs-portal's "Cancel Order / Request Refund" action footer) gets
+    baked wherever the viewport happened to be — floating awkwardly over the
+    middle of the capture. Neutralize before any full-page shot:
+
+    ```ts
+    await page.evaluate(() => {
+      for (const el of Array.from(document.querySelectorAll<HTMLElement>('*'))) {
+        const pos = getComputedStyle(el).position
+        if (pos === 'fixed' || pos === 'sticky')
+          el.style.setProperty('position', 'static', 'important')
+      }
+    })
+    await page.screenshot({ fullPage: true, ... })
+    await page.reload()  // restore real layout if the page is used again
+    ```
+
+    `static` re-slots the element at its DOM position (usually the true bottom),
+    which reads naturally; use `visibility: hidden` instead only if the element
+    duplicates content. Element/locator screenshots (tight crops) don't need this.

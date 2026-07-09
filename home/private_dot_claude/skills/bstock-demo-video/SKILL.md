@@ -97,6 +97,15 @@ feature needs one). The identity is intentionally **not** in `demo.config.ts`.
 - Never embed secrets in the project/zip (creds via env/`creds.json`).
 - Don't commit `demo/` or `@playwright/test` into the target repo's tracked tree.
 
+## Video vs screenshot — pick by interactivity
+Record a **video only when there is an interactive component** to demonstrate:
+opening a modal, a disclosure/expand control, scrolling to reveal, a state
+transition, a multi-step flow. A widget that renders **statically** needs only
+screenshots — a tight crop of the widget plus, for changes to existing UI, a
+labeled **before/after pair** (see the bstock-merge-requests skill's evidence
+section). Full-page context shots are optional extras; if taken, neutralize
+sticky/fixed chrome first (pitfall 18).
+
 ## Cross-references
 - `references/runbook.md` — full detail behind every step above.
 - A local memory note may hold worked-example record IDs/accounts (e.g. the parcel

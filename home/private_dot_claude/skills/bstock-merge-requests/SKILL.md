@@ -175,6 +175,8 @@ Uploads are project-scoped: re-upload per project rather than cross-linking anot
 
 **Prefer before/after pairs.** For UI changes, a single "after" capture often leaves reviewers digging to spot what's new. Capture the same page/state on the target branch (or production/dev) as the "before", and on the MR branch as the "after", and present them as a labeled pair (side-by-side table or consecutive images). For behavioral changes, a short before-video and after-video pair beats one combined clip. Skip the pair only when the change is additive on a previously empty surface (state "no prior UI existed" instead).
 
+**Video only for interactive behavior.** If the change renders statically (a widget, a row, a label), screenshots suffice — don't attach a walkthrough video. Reserve video for changes with an interactive component: modals, disclosure controls, scroll-reveals, state transitions, multi-step flows. When taking full-page context screenshots, neutralize sticky/fixed page chrome first so it doesn't paint mid-image (recipe: bstock-demo-video skill, pitfall 18).
+
 ## Checklist validation requirements
 
 Before checking any box in an MR template, inspect the actual file changes and only mark items that are supported by evidence.
