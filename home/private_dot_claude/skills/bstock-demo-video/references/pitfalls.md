@@ -130,4 +130,19 @@ usually just works.
 
     `static` re-slots the element at its DOM position (usually the true bottom),
     which reads naturally; use `visibility: hidden` instead only if the element
-    duplicates content. Element/locator screenshots (tight crops) don't need this.
+    duplicates content. This applies to **element/locator screenshots too**, not
+    just full-page: when the captured element is taller than the viewport,
+    Playwright scroll-stitches it the same way and sticky chrome can occlude the
+    middle of the crop (seen on a cs-portal order-detail element capture).
+    Neutralize first whenever the captured region scrolls.
+
+19. **Playwright's headless shell has no PDF viewer.** A demo whose click opens
+    a PDF in a new tab renders an empty/blank popup headless. Run those specs
+    headed: `test.use({ headless: false })` on the video spec (screenshots of
+    non-PDF states can stay headless).
+
+20. **Popup windows record as a separate video file.** With video recording on,
+    a `window.open` popup produces its own `video-1.webm` next to the main
+    page's clip. Produce one deliverable by concatenating main + popup with
+    ffmpeg; trim the popup's white/black lead-in first (ffmpeg `blackdetect`
+    finds the cut point).
