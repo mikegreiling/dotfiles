@@ -161,6 +161,10 @@ If no usable template exists, use a simple structure like:
 [Known caveats, rollout concerns, or reviewer guidance]
 ```
 
+## Reviewers: never set the reviewer field unassisted
+
+**Do NOT set the GitLab "reviewers" field on any MR unless Mike explicitly instructs it for that MR.** Assigning `assignee: mike.greiling` is standard and always fine; requesting review from specific people is a social act Mike does himself. Instead of assigning reviewers, state the required-approver rule (from the approval-rules lookup) as plain text in the MR description so Mike knows who to ping. If an MR is found with reviewers set that Mike didn't ask for, clear them.
+
 ## Screenshots & video evidence: upload and embed, never local paths
 
 When an MR description cites screenshots or videos as evidence, **upload the files to the GitLab project and embed them** — never reference paths on the local filesystem (`~/Desktop/...`, `/Users/...`). Reviewers cannot see the local disk, so a path is useless as evidence.
