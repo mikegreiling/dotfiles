@@ -155,6 +155,27 @@ function g() {
 	fi;
 }
 
+# Run Pi using the newest asdf-managed Node.js version that has Pi installed,
+# regardless of the current project's .nvmrc or .tool-versions Node version.
+function pi() {
+	local version;
+
+	version="$(
+		asdf shimversions pi 2> /dev/null \
+			| awk '$1 == "nodejs" && $2 ~ /^[0-9]+[.][0-9]+[.][0-9]+$/ { split($2, v, "."); printf "%06d.%06d.%06d %s\n", v[1], v[2], v[3], $2 }' \
+			| sort \
+			| tail -n 1 \
+			| awk '{ print $2 }'
+	)";
+
+	if [[ -z "${version}" ]]; then
+		echo "No asdf nodejs version provides pi. Install Pi with npm -g, then run asdf reshim nodejs <version>." >&2;
+		return 127;
+	fi;
+
+	ASDF_NODEJS_VERSION="${version}" asdf exec pi "$@";
+}
+
 # `code` will launch Microsoft Visual Studio Code with the given arguments
 code () { VSCODE_CWD="$PWD" open -n -b "com.microsoft.VSCode" --args $* ;}
 
