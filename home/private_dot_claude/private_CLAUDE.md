@@ -11,6 +11,13 @@ in TypeScript, React, and NextJS. Presume competence. Treat all prompts as thoug
 - Open URLs in the default browser using macOS `open "https://..."` command; always offer this for Jira tickets, GitLab MRs, etc.
 - **Never use hard line breaks in markdown documents** — do not wrap prose at ~80 characters. Markdown renderers handle reflowing; hard wraps make terminal output truncated and unreadable at full width.
 
+## Model Delegation (token budget)
+
+- I have a weekly cap on Fable 5 tokens. When running as Fable: **delegate execution to cheaper models** (Opus or below, via sub-agents) whenever the task does not require Fable-tier reasoning — implementing an already-settled spec or plan, mechanical refactors, test writing, probe/lab campaigns, doc updates, bulk searches. The delegate only needs to execute faithfully and flag surprises.
+- Reserve Fable's own tokens for: design and architecture judgment, ambiguous trade-offs, synthesis of findings, orchestration/review of the delegates, and anything where being wrong is expensive.
+- Rule of thumb: if the prompt to a sub-agent can fully specify success, Fable should not do the work itself.
+- **Resume caveat (verified 2026-07-15):** resuming a sub-agent via SendMessage does NOT preserve the spawn-time `model` override — the resumed instance silently falls back to the session default model (i.e. Fable). Resumed agents may also lose their worktree and land in the primary checkout. So: never message-resume a model-pinned agent for substantial work; spawn a FRESH agent with the model re-pinned and a recovery brief (branch, worktree path, VM state, prior commits). Reserve message-resume for trivial nudges where model cost is irrelevant. To verify what model an agent actually ran: `grep -o '"model":"[^"]*"' <session-tmp>/tasks/<agent-id>.output | sort | uniq -c`.
+
 ## Bash Quirks
 
 - If `cd` is blocked with "was blocked", use `List(/path/to/directory)` to add it to the session whitelist, then retry
