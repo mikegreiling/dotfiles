@@ -137,7 +137,7 @@ This command leverages:
 - **Analysis Script**: `~/.claude/scripts/analyze-git-branch.sh` for comprehensive branch data
 - **Cleanup Agent**: `git-branch-cleanup` for parallel analysis and intelligent categorization
 - **Deletion Script**: `~/.claude/scripts/delete-branches.sh` for safe branch deletion with logging
-- **GitLab MCP Tools**: For merge request correlation and verification
+- **glab CLI**: For merge request correlation and verification
 - **Project Context**: Reads CLAUDE.md for project-specific configuration
 
 ## Output Format

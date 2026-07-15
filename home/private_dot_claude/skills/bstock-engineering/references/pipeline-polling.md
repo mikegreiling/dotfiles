@@ -8,7 +8,7 @@ It talks to `gitlab.bstock.io` via `glab` (already authenticated). Verify once w
 
 ## How to use it
 
-1. Resolve the target id first (you usually already have it — e.g. the pipeline id returned when creating an MR, or `mcp__gitlab__get_merge_request` / `glab` to look one up).
+1. Resolve the target id first (you usually already have it — e.g. the pipeline id returned when creating an MR, or use `glab` to look one up).
 2. Launch the script with the **`Bash` tool and `run_in_background: true`**. Do **not** `&`-background it yourself, and do **not** poll it on an interval — the harness tracks the process and re-invokes you on exit.
 3. When the `<task-notification>` arrives, `Read` the output file and summarize the result.
 
@@ -55,4 +55,4 @@ The poller's job is to wake you up *oriented* — terminal status, the job roste
 
 ## When NOT to use this
 
-This is for **waiting**. To read pipeline/job *details into context* or to *act* on GitLab (create/merge MRs, retry pipelines, post notes), use `glab` directly or the GitLab MCP tools — not this poller.
+This is for **waiting**. To read pipeline/job *details into context* or to *act* on GitLab (create/merge MRs, retry pipelines, post notes), use `glab` directly — not this poller.

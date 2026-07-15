@@ -31,22 +31,23 @@ A second pipeline triggers automatically after the version bump commit. The `pub
 1. Builds and publishes the new package version to B-Stock's npm registry
 2. Makes the new version available for portal projects to consume
 
-## Monitoring Package Releases with GitLab MCP Tools
+## Monitoring Package Releases with glab
 
-```javascript
-// 1. List recent pipelines on main branch
-mcp__gitlab__list_pipelines({ project_id: "PROJECT_ID", ref: "main", per_page: 5 })
+```bash
+# 1. List recent pipelines on main branch (run inside the repo, or use the api form)
+GITLAB_HOST=gitlab.bstock.io glab ci list --ref main --per-page 5
+# api equivalent (keys off numeric project id): glab api "projects/PROJECT_ID/pipelines?ref=main&per_page=5"
 
-// 2. Find the version bump pipeline — look for bump_version job
-mcp__gitlab__list_pipeline_jobs({ project_id: "PROJECT_ID", pipeline_id: "PIPELINE_ID" })
-// Look for: stage: "version", name: "bump_version", status: "success"
+# 2. Find the version bump pipeline — look for bump_version job
+GITLAB_HOST=gitlab.bstock.io glab api "projects/PROJECT_ID/pipelines/PIPELINE_ID/jobs"
+# Look for: stage: "version", name: "bump_version", status: "success"
 
-// 3. Find the publishing pipeline — look for chore(release) commit
-// commit.title format: "chore(release): X.Y.Z" by semantic-release-bot
+# 3. Find the publishing pipeline — look for chore(release) commit
+# commit.title format: "chore(release): X.Y.Z" by semantic-release-bot
 
-// 4. Verify publish-package job
-mcp__gitlab__list_pipeline_jobs({ project_id: "PROJECT_ID", pipeline_id: "PUBLISH_PIPELINE_ID" })
-// Look for: stage: "build", name: "publish-package", status: "success"
+# 4. Verify publish-package job
+GITLAB_HOST=gitlab.bstock.io glab api "projects/PROJECT_ID/pipelines/PUBLISH_PIPELINE_ID/jobs"
+# Look for: stage: "build", name: "publish-package", status: "success"
 ```
 
 **Key pipeline identifiers:**

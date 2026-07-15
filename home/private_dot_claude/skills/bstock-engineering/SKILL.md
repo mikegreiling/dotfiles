@@ -62,11 +62,11 @@ Full service project ID mapping (19 services) → see `references/project-ids.md
 
 ## Important Cross-Workflow Rules
 
-- B-Stock uses **Jira** (not GitLab Issues) for ticket tracking. Never use GitLab MCP tools for issue/ticket/story operations.
+- B-Stock uses **Jira** (not GitLab Issues) for ticket tracking. Never use `glab` for issue/ticket/story operations.
 - Every feature branch pushed to GitLab should have a corresponding MR.
 - Every MR should be associated with at least one Jira ticket.
 - Use `"ticket"`, `"issue"`, and `"story"` interchangeably — they all mean Jira tickets.
-- Always load the `bstock-merge-requests` skill before creating MRs with `mcp__gitlab__create_merge_request`.
+- Always load the `bstock-merge-requests` skill before creating MRs with `glab mr create`.
 
 ## Verify Latest `origin/main` Before Planning or Exploration
 
@@ -90,7 +90,7 @@ Load the appropriate reference file when performing these tasks:
 
 | Task | Reference File |
 |------|---------------|
-| GitLab MR creation, branch naming, pipeline ops, MCP quirks | `references/gitlab-workflow.md` |
+| GitLab MR creation, branch naming, pipeline ops | `references/gitlab-workflow.md` |
 | Jira ticket creation, title/prefix conventions, spikes, status transitions, QA workflow, epic sizing & story-point estimation | `references/jira-workflow.md` |
 | Package versioning, release pipeline, changelog | `references/release-pipeline.md` |
 | Swagger docs, microservice API lookup | `references/api-docs.md` |
@@ -102,10 +102,10 @@ Load the appropriate reference file when performing these tasks:
 
 Prefer purpose-built tools — `glab`, `gh`, and MCP — over hand-rolled HTTP. Raw `curl` against an API endpoint is a **last resort**, only when no `glab`/`gh`/MCP tool covers the operation.
 
-- **GitLab**: `glab` (authenticated to `gitlab.bstock.io`) and the GitLab MCP tools are both first-class. Prefer `glab` for waiting on / polling CI — see `references/pipeline-polling.md` — and use it freely for reads and routine ops; it keeps responses out of the context window. The GitLab MCP tools remain handy for richer structured queries and are required by the `bstock-merge-requests` skill for MR creation.
+- **GitLab**: `glab` (authenticated to `gitlab.bstock.io`) is the tool for all GitLab work — reads, routine ops, CI polling (see `references/pipeline-polling.md`), and MR creation. Use it freely; it keeps responses out of the context window. Anything the subcommands don't cover directly is reachable via `GITLAB_HOST=gitlab.bstock.io glab api <endpoint>`.
 - **Atlassian/Jira**: no CLI equivalent — use the Atlassian MCP tools.
 - If the **Atlassian** MCP tools are unavailable (check for `mcp__atlassian__getVisibleJiraProjects`): STOP and prompt the user to run `/mcp` to authenticate.
-- If a GitLab MCP call returns 403/401, prompt the user to set the `BSTOCK_GITLAB_TOKEN` environment variable with a personal access token. (`glab` uses its own stored credential, so it often still works.)
+- If a `glab` call returns 401/403, run `GITLAB_HOST=gitlab.bstock.io glab auth status`; re-authenticate with `glab auth login --hostname gitlab.bstock.io` if needed.
 
 ## Jira API Response Optimization
 
@@ -131,7 +131,7 @@ mcp__atlassian__getJiraIssue({
 
 For detailed workflow guidance, load:
 
-- **`references/gitlab-workflow.md`** — GitLab MCP configuration, MR conventions, branch naming, commit formatting, MCP tool quirks and workarounds
+- **`references/gitlab-workflow.md`** — glab configuration, MR conventions, branch naming, commit formatting
 - **`references/jira-workflow.md`** — Jira ticket transitions, QA workflow logic, ticket creation guidelines, title/prefix policy, spike-ticket conventions, epic sizing & story-point estimation policy, API limitations
 - **`references/release-pipeline.md`** — Package version management, automated release pipeline, changelog requirements
 - **`references/api-docs.md`** — Swagger documentation retrieval, service-to-project-ID mapping

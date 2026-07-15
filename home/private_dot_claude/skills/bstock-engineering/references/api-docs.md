@@ -15,21 +15,17 @@ All B-Stock 3MP microservices following the `@b-stock/SERVICE_NAME-api-client` n
 
 Use cached project IDs from `references/project-ids.md` when available:
 
-```javascript
-mcp__gitlab__get_file_contents({
-  project_id: "PROJECT_ID_FROM_CACHE",
-  file_path: "swagger.json",
-  ref: "main"
-})
+```bash
+GITLAB_HOST=gitlab.bstock.io glab api "projects/PROJECT_ID_FROM_CACHE/repository/files/swagger.json/raw?ref=main"
 ```
 
 If the service is not in the cache:
 
 1. Search for the repository:
-   ```javascript
-   mcp__gitlab__search_repositories({ search: "SERVICE_NAME" })
+   ```bash
+   GITLAB_HOST=gitlab.bstock.io glab api "search?scope=projects&search=SERVICE_NAME"
    ```
-2. Extract the `project_id` from results
+2. Extract the project's `id` from results
 3. Add the new project_id to `references/project-ids.md` for future use
 4. Retrieve swagger using the project_id
 

@@ -1,36 +1,33 @@
 # GitLab Workflow Reference
 
-## GitLab MCP Tool Configuration
+## GitLab (glab) Configuration
 
-B-Stock's GitLab instance is at `https://gitlab.bstock.io`. The MCP server is configured in each project's `.mcp.json` with a default **read-only** token. For write operations (creating MRs, posting comments, etc.), the user must set `BSTOCK_GITLAB_TOKEN` to a personal access token.
+B-Stock's GitLab instance is at `https://gitlab.bstock.io`. All GitLab work goes through the `glab` CLI, which stores its own credential for that host. Prefix commands with `GITLAB_HOST=gitlab.bstock.io` so `glab` targets the B-Stock instance regardless of the current directory. Anything a subcommand doesn't cover is reachable via `GITLAB_HOST=gitlab.bstock.io glab api <endpoint>`.
 
-- On 403/401 errors: prompt user to configure `BSTOCK_GITLAB_TOKEN`
+- Check auth with `GITLAB_HOST=gitlab.bstock.io glab auth status`; re-authenticate with `glab auth login --hostname gitlab.bstock.io`
+- On 401/403 errors: re-run `glab auth status` and re-authenticate if the stored credential has expired
 - Do not guess the user's username — ask if unknown
 - Mike's GitLab username: `mike.greiling` (ID: `421`)
 
-## Known MCP Tool Limitations
+## Pipeline & Job Operations
 
-### Coverage Parsing Bug
+Use `glab` for CI status and control:
 
-`get_pipeline` and `retry_pipeline` fail with:
-```
-MCP error -32603: Invalid arguments: coverage: Expected number, received string
-```
+- `GITLAB_HOST=gitlab.bstock.io glab ci list --ref main` — list recent pipelines on a ref
+- `GITLAB_HOST=gitlab.bstock.io glab ci get` — detail for a pipeline (defaults to current branch; pass `--pipeline-id <id>` or `--branch <ref>`)
+- `GITLAB_HOST=gitlab.bstock.io glab ci retry <job-id>` — retry a failed job
 
-**Workarounds**:
-- Use `list_pipelines` instead of `get_pipeline` to check pipeline status
-- `retry_pipeline` actually **succeeds** despite showing this error — the retry action completes but the response parsing fails. Use the tool and ignore the coverage-related error.
+For long waits, use the background poller in `references/pipeline-polling.md` rather than polling inline.
 
-### Merge Limitation
+### Merging
 
-GitLab MCP tools do NOT support merging MRs programmatically. To merge:
-1. Open the MR URL in the browser: `open "https://gitlab.bstock.io/..."`
-2. User manually clicks "Merge" in the GitLab web interface
-3. After merge, handle cleanup (verify merge, pull latest, delete local branches)
+`glab mr merge <iid> --squash --remove-source-branch` merges an MR and works against the B-Stock instance.
+
+**Policy:** merge only on Mike's explicit instruction for that MR — do not merge proactively. Once he says to merge, run the `glab` merge (or open the MR in the browser if he prefers to click through), then handle cleanup: verify the merge, pull latest `main`, and delete the local branch.
 
 ## MR Creation — Load the Skill First
 
-**Always load the `bstock-merge-requests` skill before calling `mcp__gitlab__create_merge_request`.** The skill provides B-Stock-specific guidance on title formatting, Jira integration, template retrieval, checklist validation, and assignee configuration.
+**Always load the `bstock-merge-requests` skill before running `glab mr create`.** The skill provides B-Stock-specific guidance on title formatting, Jira integration, template retrieval, checklist validation, and assignee configuration.
 
 ## MR Title Format
 
@@ -58,20 +55,19 @@ NO-RELEASE: FP-456 Update TypeScript strict mode config
 
 ## MR Default Configuration
 
-When creating MRs with `create_merge_request`, always include:
-```javascript
-{
-  remove_source_branch: true,  // "Delete source branch" checkbox
-  squash: true,                 // "Squash commits" checkbox
-  assignee_ids: [creator_user_id]
-}
-```
+When creating MRs with `glab mr create`, always include these flags:
 
-For the assignee: if the creator's user ID is unknown, create the MR first without an assignee, then read the `author.id` from the MR response and update with `update_merge_request`.
+```bash
+GITLAB_HOST=gitlab.bstock.io glab mr create \
+  -t "<title>" -d "<body>" \
+  --assignee mike.greiling \
+  --remove-source-branch --squash-before-merge \
+  --target-branch main --yes
+```
 
 ## MR Assignee
 
-Always assign MRs to the creator. Mike's GitLab user ID is `421`.
+Always assign MRs to the creator via `--assignee mike.greiling`. There is no user-ID lookup dance — pass the username directly. (Mike's GitLab username is `mike.greiling`, ID `421`.)
 
 ## Branch Naming Convention
 
@@ -104,16 +100,15 @@ Semantic prefixes belong only on **MR titles**, where they trigger automated ver
 
 ## After Pushing a Branch
 
-Check if an MR already exists (the `git push` response will indicate this). If not, load the `bstock-merge-requests` skill first, then call `mcp__gitlab__create_merge_request` with the B-Stock conventions the skill provides.
+Check if an MR already exists (the `git push` response will indicate this). If not, load the `bstock-merge-requests` skill first, then run `glab mr create` with the B-Stock conventions the skill provides.
 
-## Sub-Agent MCP Verification
+## Sub-Agent Preflight Verification
 
-Before running parallel Task tool operations that use GitLab or Atlassian MCP tools:
+Before running parallel Task tool operations that use GitLab or Atlassian:
 
-1. Verify GitLab: `mcp__gitlab__search_repositories`
+1. Verify GitLab: `GITLAB_HOST=gitlab.bstock.io glab auth status`
 2. Verify Atlassian: `mcp__atlassian__getVisibleJiraProjects`
-3. If either unavailable: STOP and prompt user to run `/mcp`
-4. Check token permissions: GitLab may be read-only without `BSTOCK_GITLAB_TOKEN`
+3. If GitLab is unauthenticated: re-authenticate with `glab auth login --hostname gitlab.bstock.io`. If Atlassian is unavailable: STOP and prompt the user to run `/mcp`.
 
 ## Jira/GitLab Integration
 

@@ -47,11 +47,11 @@ For actual MR creation:
 
 If the branch is not ready for creation, do not bluff your way through it. Explain what is missing and offer to draft the title, description, and checklist content first.
 
-Before creating or updating a B-Stock MR in GitLab, verify that GitLab MCP tools are available by checking for the presence of `mcp__gitlab__create_merge_request` in the available tools.
+Before creating or updating a B-Stock MR in GitLab, verify that `glab` is authenticated to the B-Stock instance with `GITLAB_HOST=gitlab.bstock.io glab auth status`.
 
-If GitLab MCP tools are unavailable:
+If `glab` is unavailable or not authenticated:
 - do not attempt live MR creation or MR updates in GitLab
-- tell the user: "GitLab MCP tools are unavailable. Please run `/mcp` to authenticate or restart Claude to restore access. I can still draft the merge request title, description, semver recommendation, and checklist guidance for you."
+- tell the user: "glab is not authenticated to gitlab.bstock.io. Please run `glab auth login --hostname gitlab.bstock.io` to restore access. I can still draft the merge request title, description, semver recommendation, and checklist guidance for you."
 - continue in draft/prep mode if that would still help
 
 ## Communication style
@@ -105,11 +105,21 @@ Warn the user if a `MAJOR` or `MINOR` MR is missing this block.
 ## MR configuration standards
 
 When creating B-Stock MRs, use these defaults unless the user asks otherwise:
-- `remove_source_branch: true`
-- `squash: true`
-- assign the MR to the MR creator
+- `--remove-source-branch`
+- `--squash-before-merge`
+- assign the MR to the MR creator (`--assignee mike.greiling`)
 
-Do not guess the assignee. If you do not yet know the creator's user ID, create the MR without an assignee, retrieve the MR, read the creator ID associated with the GitLab MCP token, and then update the MR with that creator ID as the assignee using `mcp__gitlab__update_merge_request`.
+Create the MR with a single `glab` command — pass the creator's username directly, there is no assignee-lookup dance:
+
+```bash
+GITLAB_HOST=gitlab.bstock.io glab mr create \
+  -t "<title>" -d "<body>" \
+  --assignee mike.greiling \
+  --remove-source-branch --squash-before-merge \
+  --target-branch main --yes
+```
+
+Update an existing MR with `GITLAB_HOST=gitlab.bstock.io glab mr update <iid>` (for example `--title` / `--description`).
 
 ## Merge request template usage
 
@@ -123,12 +133,12 @@ Template filenames vary significantly across projects. For example, some project
 
 ### Retrieval order
 
-1. **List** the template directory to discover the actual filenames:
+1. **List** the template directory to discover the actual filenames. If the repo is checked out locally, `ls .gitlab/merge_request_templates/`; otherwise read the tree remotely:
+   ```bash
+   GITLAB_HOST=gitlab.bstock.io glab api "projects/:id/repository/tree?path=.gitlab/merge_request_templates&recursive=true"
    ```
-   mcp__gitlab__get_repository_tree(project_id, path=".gitlab/merge_request_templates", recursive=true)
-   ```
-   Then fetch the file whose name matches the semver prefix (MAJOR, MINOR, PATCH, or NO-RELEASE). Do not guess filenames — always list first.
-2. If no `.gitlab/merge_request_templates` directory exists, call `mcp__gitlab__get_project` and read the `merge_requests_template` field — this is the project-level default template configured in GitLab settings (not stored as a repo file).
+   Then use the template whose name matches the semver prefix (MAJOR, MINOR, PATCH, or NO-RELEASE). When the repo is checked out locally, `glab mr create --template <name>` pre-populates the description from that template by name (the `.md` extension is optional). Do not guess filenames — always list first.
+2. If no `.gitlab/merge_request_templates` directory exists, read the project-level default with `GITLAB_HOST=gitlab.bstock.io glab api projects/:id | jq -r '.merge_requests_template'` — this is the default template configured in GitLab settings (not stored as a repo file).
 3. If both are empty or unavailable, use the fallback structure below.
 
 ### Template handling rules
@@ -171,8 +181,12 @@ When an MR description cites screenshots or videos as evidence, **upload the fil
 
 How:
 
-1. Upload each file: `mcp__gitlab__upload_markdown` with `project_id` + `file_path` (or `glab api "projects/<id>/uploads" -F "file=@<path>"`).
-2. Paste the returned `![name](/uploads/<hash>/<file>)` markdown into the MR description. Uploaded `.mp4` files render as an inline video player.
+1. Upload each file with `glab`:
+   ```bash
+   GITLAB_HOST=gitlab.bstock.io glab api --method POST "projects/<id>/uploads" --form "file=@<path>"
+   ```
+   The JSON response carries a ready-to-paste `.markdown` field — `![name](/uploads/<hash>/<file>)` for images and videos (a plain `[name](/uploads/<hash>/<file>)` link for other file types).
+2. Paste the returned `.markdown` value into the MR description. Uploaded `.mp4` files render as an inline video player.
 3. Before finalizing any MR description, scan it for `Desktop`, `/Users/`, or other local paths and replace them with uploads.
 
 Uploads are project-scoped: re-upload per project rather than cross-linking another project's `/uploads/` URL.
@@ -226,7 +240,7 @@ Be clear about how the branch differs from the target branch. Prefer concise, hi
 
 ### Draft/prep mode
 
-Use this mode when GitLab MCP tools are unavailable or when the user only wants help preparing the MR.
+Use this mode when `glab` is unavailable or unauthenticated, or when the user only wants help preparing the MR.
 
 1. Gather the required context.
 2. Infer or confirm the Jira ticket and semver prefix.
@@ -238,7 +252,7 @@ Use this mode when GitLab MCP tools are unavailable or when the user only wants 
 
 ### Creation/update mode
 
-Use this mode when the user wants the MR created or updated in GitLab and MCP tools are available.
+Use this mode when the user wants the MR created or updated in GitLab and `glab` is authenticated.
 
 1. Validate prerequisites: branch ready, branch pushed, work complete enough for review.
 2. Gather the required information.
@@ -250,16 +264,16 @@ Use this mode when the user wants the MR created or updated in GitLab and MCP to
 8. Create or update the MR with the proper configuration.
 9. Open the MR URL in the browser by default unless the user says not to.
 10. Confirm the result and call out any uncertainties or follow-up actions.
-11. Cross-reference `bstock-engineering/references/mr-approval-rules.md` for the project and report the required approvers (any-member count, named rules like SMEs/Code Review/Lead, and any file/directory code-owners if the MR touches owned paths). If the project isn't in the cache, fetch its rules via `mcp__gitlab__get_merge_request_approval_state` on the new MR and offer to add it to the cache.
+11. Cross-reference `bstock-engineering/references/mr-approval-rules.md` for the project and report the required approvers (any-member count, named rules like SMEs/Code Review/Lead, and any file/directory code-owners if the MR touches owned paths). If the project isn't in the cache, fetch its rules via `GITLAB_HOST=gitlab.bstock.io glab api "projects/:id/merge_requests/:iid/approval_state"` on the new MR and offer to add it to the cache.
 
 ## Error handling and fallbacks
 
-- **401/403 errors** → Tell the user GitLab authentication may be missing or expired and prompt them to configure `BSTOCK_GITLAB_TOKEN` or refresh MCP access.
+- **401/403 errors** → Tell the user GitLab authentication may be missing or expired and prompt them to run `glab auth status`, then re-authenticate with `glab auth login --hostname gitlab.bstock.io` if needed.
 - **Missing Jira ticket** → Try to infer it from the branch name, commits, or context. If still unclear, ask the user. Only proceed without a Jira ID if the user explicitly confirms that is acceptable.
 - **Missing semver prefix** → Infer it if possible and say when confidence is low.
 - **Template retrieval failure** → Use the fallback structure and say that a repository template could not be loaded.
 - **Unknown creator user ID** → Create the MR first, then retrieve it and assign the creator as the assignee.
-- **Coverage parsing errors or similar GitLab/MCP quirks** → Acknowledge the issue, continue where safe, and avoid making unsupported claims.
+- **Coverage parsing errors or similar GitLab quirks** → Acknowledge the issue, continue where safe, and avoid making unsupported claims.
 
 ## Quality checks
 

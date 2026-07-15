@@ -12,7 +12,7 @@ Who must approve a merge request, per project, for the active `b-stock/code/thre
 
 ## Limitations / freshness
 
-- GitLab MCP has **no project-level approval-rules API**; each project's rules were read from one recent MR's snapshot on 2026-05-26. Re-verify with `get_merge_request_approval_state` on any MR if rules may have changed.
+- There is **no project-level approval-rules API**; each project's rules were read from one recent MR's snapshot on 2026-05-26. Re-verify with `GITLAB_HOST=gitlab.bstock.io glab api "projects/:id/merge_requests/:iid/approval_state"` on any MR if rules may have changed.
 - `fe/dsk` and `fe/sunrise` were sampled from MRs with `approval_rules_overwritten: true`, so their listed rules may be MR-level overrides rather than the project default.
 - `common/ci-libs`, `common/ci-pipelines`, `common/ci-tools` have **zero MRs**, so their rules can't be observed yet — recheck once they get a first MR.
 

@@ -1,7 +1,7 @@
 ---
 name: git-branch-cleanup
 description: Use this agent when you need to analyze a specific git branch to determine if it should be deleted based on merge status, staleness, or activity. Examples: <example>Context: User wants to clean up old branches in their project and needs analysis of a specific branch. user: "Can you analyze the branch 'feature/old-login-fix' to see if it should be deleted?" assistant: "I'll use the git-branch-cleanup agent to analyze that branch for deletion eligibility." <commentary>Since the user is asking for branch analysis, use the git-branch-cleanup agent to analyze the specific branch.</commentary></example> <example>Context: User is working through a list of branches and wants to analyze each one individually. user: "Please analyze the branch 'mg-SPR-1234-update-dependencies' for cleanup" assistant: "I'll analyze that branch using the git-branch-cleanup agent to determine if it's safe to delete." <commentary>The user is requesting analysis of a specific branch, so use the git-branch-cleanup agent.</commentary></example>
-tools: Bash, Glob, Grep, LS, Read, TodoWrite, BashOutput, KillBash, mcp__gitlab__search_repositories, mcp__gitlab__get_file_contents, mcp__gitlab__get_merge_request, mcp__gitlab__get_merge_request_diffs, mcp__gitlab__list_merge_request_diffs, mcp__gitlab__get_branch_diffs, mcp__gitlab__mr_discussions, mcp__gitlab__list_issues, mcp__gitlab__my_issues, mcp__gitlab__get_issue, mcp__gitlab__list_issue_links, mcp__gitlab__list_issue_discussions, mcp__gitlab__get_issue_link, mcp__gitlab__list_namespaces, mcp__gitlab__get_namespace, mcp__gitlab__verify_namespace, mcp__gitlab__get_project, mcp__gitlab__list_projects, mcp__gitlab__list_project_members, mcp__gitlab__list_labels, mcp__gitlab__get_label, mcp__gitlab__create_label, mcp__gitlab__update_label, mcp__gitlab__delete_label, mcp__gitlab__list_group_projects, mcp__gitlab__get_repository_tree, mcp__gitlab__list_pipelines, mcp__gitlab__get_pipeline, mcp__gitlab__list_pipeline_jobs, mcp__gitlab__list_pipeline_trigger_jobs, mcp__gitlab__get_pipeline_job, mcp__gitlab__get_pipeline_job_output, mcp__gitlab__list_merge_requests, mcp__gitlab__get_users, mcp__gitlab__list_commits, mcp__gitlab__get_commit, mcp__gitlab__get_commit_diff, mcp__gitlab__list_group_iterations, mcp__atlassian__getJiraIssue, mcp__atlassian__lookupJiraAccountId, mcp__atlassian__searchJiraIssuesUsingJql, mcp__atlassian__getJiraIssueRemoteIssueLinks, mcp__atlassian__getVisibleJiraProjects, mcp__atlassian__getJiraProjectIssueTypesMetadata
+tools: Bash, Glob, Grep, LS, Read, TodoWrite, BashOutput, KillBash, mcp__atlassian__getJiraIssue, mcp__atlassian__lookupJiraAccountId, mcp__atlassian__searchJiraIssuesUsingJql, mcp__atlassian__getJiraIssueRemoteIssueLinks, mcp__atlassian__getVisibleJiraProjects, mcp__atlassian__getJiraProjectIssueTypesMetadata
 model: haiku
 color: green
 ---
@@ -28,7 +28,7 @@ ls -la CLAUDE.md 2>/dev/null || echo "No CLAUDE.md found"
 ```
 
 If CLAUDE.md exists, read it to extract:
-- **GitLab project_id** (essential for MCP tool correlation)
+- **GitLab project_id** (essential for glab/API correlation)
 - **Project-specific branch patterns** or naming conventions
 - **Special repository considerations** or cleanup rules
 
@@ -80,7 +80,7 @@ is_current_branch: true OR
 ### Step 3: Deep Analysis (If Needed)
 For unclear cases, gather additional context:
 
-**GitLab MR Correlation:** Use extracted MR references from script output to verify merge status
+**GitLab MR Correlation:** Use extracted MR references from script output to verify merge status via `glab mr list` / `glab api` (prefix `GITLAB_HOST=gitlab.bstock.io`)
 **Commit Analysis:** Examine commit messages and changed files if merge evidence is unclear
 **Jira Integration:** Look up tickets referenced in branch names for context
 
@@ -243,7 +243,7 @@ Provide a structured JSON response:
 
 ## Quality Assurance
 - Cross-reference multiple data sources when available
-- Use GitLab/Jira MCP tools to verify context when MR/ticket references found
+- Use `glab` / Jira MCP tools to verify context when MR/ticket references found
 - Flag inconsistencies or unusual patterns
 - Conservative approach - preserve when uncertain
 - Always provide SHA for recovery
