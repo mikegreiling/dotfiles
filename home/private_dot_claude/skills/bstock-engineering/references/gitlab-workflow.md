@@ -25,6 +25,8 @@ For long waits, use the background poller in `references/pipeline-polling.md` ra
 
 **Policy:** merge only on Mike's explicit instruction for that MR — do not merge proactively. Once he says to merge, run the `glab` merge (or open the MR in the browser if he prefers to click through), then handle cleanup: verify the merge, pull latest `main`, and delete the local branch.
 
+**Always verify a merge via the API — `glab mr merge` lies.** `glab mr merge <iid> --repo <path> --yes` can print `✓ Merged!` and exit 0 while GitLab silently refuses the merge server-side (observed 2026-07-16 with unmet approval rules: `detailed_merge_status: "not_approved"` — genuine conflicts DO error honestly, approval-gate refusals do NOT). After every merge command, confirm it actually merged: `GITLAB_HOST=gitlab.bstock.io glab api projects/<id>/merge_requests/<iid> | jq -r '.state'` must print `merged`. Before attempting a merge, check readiness with `... | jq '{detailed_merge_status, has_conflicts}'` — and remember that pushing new commits to an MR branch can reset its existing approvals to zero.
+
 ## MR Creation — Load the Skill First
 
 **Always load the `bstock-merge-requests` skill before running `glab mr create`.** The skill provides B-Stock-specific guidance on title formatting, Jira integration, template retrieval, checklist validation, and assignee configuration.
