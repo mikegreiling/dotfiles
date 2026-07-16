@@ -150,9 +150,9 @@ Always use **Story** (id `10010`), never **Task** (id `10006`). This applies to 
 
 ### Parent Epic Assignment
 
-Most tickets (outside `BUGS` project) should have a parent epic. Always ask what parent epic a new ticket belongs to before creating.
+Most tickets (outside `BUGS` project) should have a parent epic.
 
-**Common catch-all epic**: `GLOB-1987` "Optimization Cabal" — use for technical debt, performance improvements, or developer experience work.
+**Catch-all epic — `GLOB-1987` "Optimization Cabal Work"** (also called the "Optimization Cabal board"): the standing home for **technical debt, performance improvements, developer-experience, tooling/CI, and small cross-cutting fixes** (e.g. CSP tweaks, dependency bumps, lint/format migrations). When a new ticket is clearly one of these tech-debt-class items, **default its parent to `GLOB-1987` without asking** — Mike does not need to restate it each time. Only ask about the parent epic when the work is feature/product work that plausibly belongs to a *specific* epic, or when the classification is genuinely ambiguous.
 
 **Default project**: When creating tickets not immediately assigned to Mike, use `GLOB` project unless specified otherwise.
 
@@ -259,6 +259,10 @@ For `createIssueLink`, `inwardIssue` takes the subject of the OUTWARD verb (e.g.
 - Fails: Bug (returns "Bad Request")
 
 For Bug tickets, tell user to set story points manually in Jira UI.
+
+### addCommentToJiraIssue — Omit `contentFormat`
+
+Passing `contentFormat: "markdown"` to `addCommentToJiraIssue` double-escapes newlines — the posted comment renders literal `\n` instead of line breaks (observed 2026-07-16 on multi-paragraph bodies). Omit the parameter entirely; comments then post with correct formatting. `editJiraIssue` description edits do NOT have this bug — the quirk is specific to the comment endpoint. If a broken comment lands, fix it by re-posting/updating without the parameter.
 
 ### getJiraIssue — Always Use Field Limiting
 
