@@ -78,9 +78,18 @@ usually just works.
     networkidle. UI baseline: for SELLER + BINDING the Carrier & Tracking block is
     ALREADY read-only pre-parcel-guard and the manual "Status: …" button is hidden
     (`showUpdateShipment` needs type !== BINDING) — the guard's only *visible* SP
-    delta is on non-BINDING shipments (e.g. BUYER_PICKUP status button). A dev
-    SERVICE login can view any seller's SP pages (`isService` is supported) — handy
-    when a specific seller's password isn't on file. Old (2023) order shipments may
+    delta is on non-BINDING shipments (e.g. BUYER_PICKUP status button). Not every
+    dev SERVICE login can view arbitrary sellers' SP pages — `isService` is
+    supported, but the login also needs a service grant on that specific account.
+    `mike.greiling+seller` (the seller demo default) failed on another seller's
+    order (stuck LOADING then "Unexpected error"; it lacks a service grant on that
+    account), while the broadly-granted evizi service account
+    `qa.bstock+auto-dev-service-0312@gmail.com` rendered it fine. Rule: for
+    cross-account SP/CSP viewing, use a broadly-granted service account (the evizi
+    one), not just any service-flagged login. Buyer portal is buyer-scoped instead
+    — capturing another buyer's order requires that buyer's own login (e.g.
+    `thanh.nguyen+buyer.…` / `Pass!123` auto-consents through the `?code=`
+    callback). Old (2023) order shipments may
     be embedded only in the ORDER service payload (`order.shipments`) and not
     findable via shipment-service `orderReferencePrettyId`/`orderId` params — grep
     the SSR HTML for the `_id` instead.
