@@ -104,6 +104,10 @@ Semantic prefixes belong only on **MR titles**, where they trigger automated ver
 
 Check if an MR already exists (the `git push` response will indicate this). If not, load the `bstock-merge-requests` skill first, then run `glab mr create` with the B-Stock conventions the skill provides.
 
+## AI Code Reviewer — Trigger Semantics
+
+The `ai-code-reviewer` bot reviews an MR only on the **draft→ready transition** — it does NOT re-review on ordinary pushes to an open, ready MR (verified 2026-07-16: three MRs got 4–6 fix pushes over 6+ days with zero bot activity; toggling draft→ready produced full fresh reviews within ~5 minutes on all three). To force a re-review after addressing its findings: `glab mr update <iid> --repo <path> --draft`, wait ~15s, then `--ready`. Its approval counts toward required-approval rules (typically 1 of 2), and it may reject with "Changes Requested" — read the findings; they're often legitimate (e.g. it caught a rebase-artifact `package.json` version regression). A rejected review does not block re-triggering after fixes. Approvals on these portal repos are NOT reset by pushes.
+
 ## Sub-Agent Preflight Verification
 
 Before running parallel Task tool operations that use GitLab or Atlassian:
