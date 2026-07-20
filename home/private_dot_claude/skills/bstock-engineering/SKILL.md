@@ -66,7 +66,7 @@ Full service project ID mapping (19 services) → see `references/project-ids.md
 
 - B-Stock uses **Jira** (not GitLab Issues) for ticket tracking. Never use `glab` for issue/ticket/story operations.
 - **Epics are created in the `GLOB` project, never in `FP`.** GLOB epics carry the Pod field (Mike's pod: "Payment and Foundations"); FP issues have no Pod field. Child stories/tasks/bugs live in `FP`, parented to the GLOB epic. See `references/jira-workflow.md`.
-- **NEVER move a Jira issue between projects by cloning/recreating it and re-parenting children.** The API/MCP cannot perform a true cross-project move; recreating loses history and leaves a zombie ticket. If an issue is in the wrong project, STOP and ask Mike to run the Jira UI Move wizard — only clone-and-reparent with his explicit permission.
+- **NEVER move a Jira issue between projects by cloning/recreating it and re-parenting children.** The API/MCP cannot perform a true cross-project move; recreating loses history and leaves a zombie ticket. Compounding this: Mike **does not have delete permission** on these projects (verified 2026-07-20 — `acli jira workitem delete` returns "You do not have permission to delete issues in this project"), so a mistaken recreation cannot be cleaned up and becomes a **permanent tombstone**, which hurts auditability and adds noise. If an issue is in the wrong project, STOP and ask Mike to run the Jira UI Move wizard — only clone-and-reparent with his explicit permission.
 - Every feature branch pushed to GitLab should have a corresponding MR.
 - Every MR should be associated with at least one Jira ticket.
 - Use `"ticket"`, `"issue"`, and `"story"` interchangeably — they all mean Jira tickets.
