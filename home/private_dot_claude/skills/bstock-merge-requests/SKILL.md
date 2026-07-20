@@ -77,7 +77,7 @@ The semantic versioning prefix determines the release impact once the branch is 
 
 - `MAJOR` and `MINOR` should be used for breaking API changes, major user interface changes, or feature additions.
 - `PATCH` should be used when there are no breaking changes.
-- `NO-RELEASE` should be used when there are no visible changes to the user in a `*-portal` project or to the package consumer in a library project like `fe-core` or `bstock-eslint-config`.
+- `NO-RELEASE` should be used when there are no visible changes to the user in a `*-portal` project or to the package consumer in a library project like `fe-core` or `code-quality` (formerly `bstock-eslint-config`).
 
 If the user does not specify the semver prefix, infer it from the code changes, branch context, Jira context, and the user-facing impact. If you are not confident, say so clearly instead of guessing silently.
 

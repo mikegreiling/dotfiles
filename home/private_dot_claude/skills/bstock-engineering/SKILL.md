@@ -31,7 +31,7 @@ Dev/QA environments require VPN access. The GitLab instance is at `https://gitla
 | `cops-portal` | Next.js portal | `/cops/*` URLs (Client Operations) |
 | `fe-core` | npm package | Shared component + utility library |
 
-Supporting libraries: `fe-scripts`, `bstock-eslint-config`
+Supporting libraries: `fe-scripts`, `code-quality` (formerly `bstock-eslint-config` — renamed; exports the org's primary **oxlint/oxfmt** presets, with eslint/prettier configs kept only as legacy compatibility exports)
 
 ## Key Stable IDs (Quick Reference)
 
@@ -40,7 +40,7 @@ Supporting libraries: `fe-scripts`, `bstock-eslint-config`
 | Project | ID |
 |---------|-----|
 | `fe-core` | `506` |
-| `bstock-eslint-config` | `525` |
+| `code-quality` (was `bstock-eslint-config`) | `525` |
 
 Full service project ID mapping (19 services) → see `references/project-ids.md`
 
@@ -55,7 +55,7 @@ Full service project ID mapping (19 services) → see `references/project-ids.md
 
 | Project | Key | ID | Board |
 |---------|-----|----|-------|
-| Foundations Pod (primary team) | `FP` | `10200` | `316` |
+| Foundations Pod (primary team) | `FP` | `10200` | `678` (kanban; epic membership = component `kanban` + status In Development — see `references/jira-workflow.md`) |
 | Team Sprinters (former) | `SPR` | `10059` | `59` |
 
 **Jira custom fields**: Story Points: `customfield_10049` · Sprint: `customfield_10018` · Epic Link: `customfield_10013`
@@ -127,6 +127,19 @@ mcp__atlassian__getJiraIssue({
 ## Project Memory Files (AGENTS.md / CLAUDE.md)
 
 The convention for B-Stock repos: agent guidance lives in a single `AGENTS.md` at the repo root (readable by any agent — Claude Code, Codex, Cursor, opencode). `CLAUDE.md` is a shell whose first line is `@AGENTS.md` (Claude Code inlines the import at session start — no extra turn), followed only by Claude-Code-specific guidance that cannot live in AGENTS.md (high bar; usually nothing). `fe-core/AGENTS.md` is the reference example.
+
+The canonical CLAUDE.md shell (use verbatim for new repos):
+
+```markdown
+@AGENTS.md
+
+The agent guidance for this repo lives in [AGENTS.md](./AGENTS.md) (imported above). Add Claude-Code-specific guidance below only if it cannot live in AGENTS.md.
+
+<!--
+The @AGENTS.md import above is the official Claude Code pattern for repos that keep agent guidance in AGENTS.md — see https://code.claude.com/docs/en/memory#agents-md (Claude Code does not read AGENTS.md natively; imports are inlined at session start with no extra turn).
+This HTML comment is stripped when Claude Code ingests CLAUDE.md, so it adds no model context. If that assumption ever changes, trim this comment.
+-->
+```
 
 When creating or editing an AGENTS.md:
 

@@ -109,6 +109,16 @@ Per **Jira Epic Workflow**:
 - An epic typically only appears on the team **kanban board columns once it reaches In Development**; earlier
   planning statuses live in the board's **Backlog**.
 
+### FP kanban board (board 678) — membership criteria & transition IDs
+
+The team kanban board is `https://bstock.atlassian.net/jira/software/c/projects/FP/boards/678`. Validated empirically 2026-07-20 (full-field inspection of board-resident epics):
+
+- Board-resident epics carry **`Components: kanban`** (component id `11322` in project FP) and reach the columns at **status In Development** (id `10295`). Set the component at creation via `additional_fields: {"components": [{"name": "kanban"}]}`.
+- **There is no "Pod" field on FP issues** — a remembered "Pod: Payment and Foundations" criterion does not correspond to any actual field (the Atlassian `Team` field `customfield_10001` is null even on board epics). Project FP + component `kanban` is the membership signal.
+- The board's exact filter JQL has not been read directly — the Atlassian MCP cannot fetch board configs. To read it: `acli jira auth login`, then `acli jira board get --id 678` (gets the filter id) and `acli jira filter get` for the JQL; alternatively Board settings → General in the UI. Update this section once captured.
+- **Epic transition path** (workflow ids, validated): Open → `211` "Ready for Sizing" → `201` "Sized" (→ T-shirt Sized) → `161` "Dev Started" (→ In Development). "In Shaping"/"Shaped" are optional intermediate stops, not required hops.
+- **Story transition path** (validated): To Do → `11` "Start Work" (→ In Progress) → `21` "Merge Request" (→ TECHNICAL REVIEW). T-Shirt Size option ids: XS `11033`, S `10839`, M `10840`, L `10841`, XL `10842`.
+
 ### T-shirt size field
 
 - Field: `customfield_10394` ("T-Shirt Size"), options **XS / S / M / L / XL**.

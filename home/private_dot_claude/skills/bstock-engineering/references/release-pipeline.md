@@ -57,7 +57,7 @@ GITLAB_HOST=gitlab.bstock.io glab api "projects/PROJECT_ID/pipelines/PUBLISH_PIP
 
 **Common projects to monitor:**
 - `fe-core` — project_id: `506`
-- `bstock-eslint-config` — project_id: `525`
+- `code-quality` — project_id: `525` (formerly `bstock-eslint-config`)
 
 ## Changelog Requirements
 
@@ -72,7 +72,7 @@ How the entry is supplied depends on the repo's style — check for `ENABLE_CHAN
 
 ### New style — MR-description extraction (`ENABLE_CHANGELOG_EXTRACTION: '1'`)
 
-Used by `fe-core`, `bstock-eslint-config`, and most actively maintained repos. The changelog entry lives in the **MR description**, inside a `<details open>…</details>` block (blank line before and after the content, which starts with `### Breaking` or `### Nonbreaking`). CI extracts it at release time and injects it into `CHANGELOG.md` — the MR diff must NOT touch `CHANGELOG.md` at all. Use the repo's MR templates in `.gitlab/merge_request_templates/`; the `bstock-merge-requests` skill covers the block format in detail.
+Used by `fe-core`, `code-quality`, and most actively maintained repos. The changelog entry lives in the **MR description**, inside a `<details open>…</details>` block (blank line before and after the content, which starts with `### Breaking` or `### Nonbreaking`). CI extracts it at release time and injects it into `CHANGELOG.md` — the MR diff must NOT touch `CHANGELOG.md` at all. Use the repo's MR templates in `.gitlab/merge_request_templates/`; the `bstock-merge-requests` skill covers the block format in detail.
 
 ### Old style — in-file entry (variable absent)
 
