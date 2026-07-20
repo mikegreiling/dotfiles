@@ -113,11 +113,12 @@ Per **Jira Epic Workflow**:
 
 The team kanban board is `https://bstock.atlassian.net/jira/software/c/projects/FP/boards/678`. Validated empirically 2026-07-20 (full-field inspection of board-resident epics):
 
-- Board-resident epics carry **`Components: kanban`** (component id `11322` in project FP) and reach the columns at **status In Development** (id `10295`). Set the component at creation via `additional_fields: {"components": [{"name": "kanban"}]}`.
-- **There is no "Pod" field on FP issues** — a remembered "Pod: Payment and Foundations" criterion does not correspond to any actual field (the Atlassian `Team` field `customfield_10001` is null even on board epics). Project FP + component `kanban` is the membership signal.
-- The board's exact filter JQL has not been read directly — the Atlassian MCP cannot fetch board configs. To read it: `acli jira auth login`, then `acli jira board get --id 678` (gets the filter id) and `acli jira filter get` for the JQL; alternatively Board settings → General in the UI. Update this section once captured.
-- **Epic transition path** (workflow ids, validated): Open → `211` "Ready for Sizing" → `201` "Sized" (→ T-shirt Sized) → `161` "Dev Started" (→ In Development). "In Shaping"/"Shaped" are optional intermediate stops, not required hops.
-- **Story transition path** (validated): To Do → `11` "Start Work" (→ In Progress) → `21` "Merge Request" (→ TECHNICAL REVIEW). T-Shirt Size option ids: XS `11033`, S `10839`, M `10840`, L `10841`, XL `10842`.
+- **Epics are created in the `GLOB` project, never in `FP`** (per Mike, 2026-07-20). GLOB epics carry the **Pod** select field `customfield_11053` — Mike's pod is **"Payment and Foundations"** (option `11398`). FP issues have no Pod field at all (that's how you know an epic landed in the wrong project). Child stories/tasks/bugs live in `FP` and are parented to the GLOB epic (cross-project parenting works via the `parent` field).
+- Board-resident epics also carry **`Components: kanban`** (component ids: `11289` in GLOB, `11322` in FP) and reach the board columns at **status In Development** (id `10295`). Set fields at creation via `additional_fields`, e.g. `{"components": [{"name": "kanban"}], "customfield_11053": {"id": "11398"}}`.
+- **NEVER "move" an issue across projects by recreating it and re-parenting children** — the API/MCP has no true move; recreation loses history and leaves a zombie. STOP and ask Mike to run the Jira UI Move wizard instead. (Clone-and-reparent only with his explicit permission.)
+- The board's exact filter JQL has not been read directly — the Atlassian MCP cannot fetch board configs and `acli jira board get --id 678` doesn't expose the filter id. Capture it from Board settings → General in the UI and update this section.
+- **Epic transition path** (workflow ids, validated on both GLOB and FP epics): Open → `211` "Ready for Sizing" → `201` "Sized" (→ T-shirt Sized) → `161` "Dev Started" (→ In Development). "In Shaping"/"Shaped" are optional intermediate stops, not required hops.
+- **Story transition path** (validated, FP): To Do → `11` "Start Work" (→ In Progress) → `21` "Merge Request" (→ TECHNICAL REVIEW). T-Shirt Size option ids: XS `11033`, S `10839`, M `10840`, L `10841`, XL `10842`.
 
 ### T-shirt size field
 

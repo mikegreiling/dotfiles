@@ -33,6 +33,8 @@ Dev/QA environments require VPN access. The GitLab instance is at `https://gitla
 
 Supporting libraries: `fe-scripts`, `code-quality` (formerly `bstock-eslint-config` — renamed; exports the org's primary **oxlint/oxfmt** presets, with eslint/prettier configs kept only as legacy compatibility exports)
 
+Note: **`crosslister` is also a frontend Next.js portal** (`/crosslister/*` URLs, App Router, project id `888`) even though it doesn't follow the `*-portal` naming convention — treat it as a portal in any frontend-wide sweep. It is not one of Mike's six primary projects.
+
 ## Key Stable IDs (Quick Reference)
 
 ### GitLab
@@ -55,7 +57,7 @@ Full service project ID mapping (19 services) → see `references/project-ids.md
 
 | Project | Key | ID | Board |
 |---------|-----|----|-------|
-| Foundations Pod (primary team) | `FP` | `10200` | `678` (kanban; epic membership = component `kanban` + status In Development — see `references/jira-workflow.md`) |
+| Foundations Pod (primary team) | `FP` | `10200` | `678` (kanban; board epics live in `GLOB` with Pod "Payment and Foundations" — see `references/jira-workflow.md`) |
 | Team Sprinters (former) | `SPR` | `10059` | `59` |
 
 **Jira custom fields**: Story Points: `customfield_10049` · Sprint: `customfield_10018` · Epic Link: `customfield_10013`
@@ -63,6 +65,8 @@ Full service project ID mapping (19 services) → see `references/project-ids.md
 ## Important Cross-Workflow Rules
 
 - B-Stock uses **Jira** (not GitLab Issues) for ticket tracking. Never use `glab` for issue/ticket/story operations.
+- **Epics are created in the `GLOB` project, never in `FP`.** GLOB epics carry the Pod field (Mike's pod: "Payment and Foundations"); FP issues have no Pod field. Child stories/tasks/bugs live in `FP`, parented to the GLOB epic. See `references/jira-workflow.md`.
+- **NEVER move a Jira issue between projects by cloning/recreating it and re-parenting children.** The API/MCP cannot perform a true cross-project move; recreating loses history and leaves a zombie ticket. If an issue is in the wrong project, STOP and ask Mike to run the Jira UI Move wizard — only clone-and-reparent with his explicit permission.
 - Every feature branch pushed to GitLab should have a corresponding MR.
 - Every MR should be associated with at least one Jira ticket.
 - Use `"ticket"`, `"issue"`, and `"story"` interchangeably — they all mean Jira tickets.
