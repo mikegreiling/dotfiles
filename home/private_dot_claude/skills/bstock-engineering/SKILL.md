@@ -26,7 +26,7 @@ Dev/QA environments require VPN access. The GitLab instance is at `https://gitla
 |---------|------|-------|
 | `accounts-portal` | Vite portal | `/acct/*` URLs |
 | `cs-portal` | Next.js portal | `/csportal/*` URLs |
-| `seller-portal` | Next.js portal | `/seller/*` URLs |
+| `seller-portal` | Next.js portal | `/sell/*` URLs |
 | `home-portal` | Next.js portal | `/`, `/all-auctions/*`, `/buy/*` |
 | `cops-portal` | Next.js portal | `/cops/*` URLs (Client Operations) |
 | `fe-core` | npm package | Shared component + utility library |

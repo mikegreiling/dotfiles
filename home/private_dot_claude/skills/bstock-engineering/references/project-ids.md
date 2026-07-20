@@ -28,7 +28,7 @@ All IDs in this file are stable cached values. Do not look these up via MCP tool
 | `cs-portal` | `721` |
 | `seller-portal` | `508` |
 | `home-portal` | `768` |
-| `cops-portal` | _(look up if needed)_ |
+| `cops-portal` | `848` |
 | `cms-portal` | `891` |
 | `crosslister` | `888` |
 | `dsk` | `41` |
