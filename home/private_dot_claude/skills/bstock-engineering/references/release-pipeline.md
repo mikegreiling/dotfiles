@@ -19,7 +19,7 @@ When a feature branch with a semantic version prefix (`MAJOR:`, `MINOR:`, `PATCH
 The `bump_version` job runs in the "version" stage after lint, test, and build jobs pass. It uses `semantic-release` to:
 
 1. Update `package.json` and `package-lock.json` version numbers
-2. Replace `{VERSION_DATE}` tokens in `CHANGELOG.md` with actual version and date
+2. Update `CHANGELOG.md` — in new-style repos it injects the entry extracted from the MR description; in old-style repos it replaces `{VERSION_DATE}` tokens with the actual version and date
 3. Create a commit with message: `chore(release): X.Y.Z`
 4. Create and push a new git tag for the release
 5. Push changes back to `main` branch
@@ -61,25 +61,29 @@ GITLAB_HOST=gitlab.bstock.io glab api "projects/PROJECT_ID/pipelines/PUBLISH_PIP
 
 ## Changelog Requirements
 
-Most B-Stock projects have a `CHANGELOG.md` at the repo root.
+`CHANGELOG.md` is owned by semantic-release — **never edit it manually**, and never edit the package.json `version` field.
 
 | MR Prefix | Changelog Entry Required? |
 |-----------|--------------------------|
-| `MAJOR:` | **Required** — CI will fail without it |
-| `MINOR:` | **Required** — CI will fail without it |
-| `PATCH:` | Optional |
-| `NO-RELEASE:` | Optional |
+| `MAJOR:` / `MINOR:` | **Required** — the `check-release-level` CI job fails without it |
+| `PATCH:` / `NO-RELEASE:` | Optional |
 
-### CHANGELOG.md Entry Format
+How the entry is supplied depends on the repo's style — check for `ENABLE_CHANGELOG_EXTRACTION: '1'` in the repo's `.gitlab-ci.yml`:
+
+### New style — MR-description extraction (`ENABLE_CHANGELOG_EXTRACTION: '1'`)
+
+Used by `fe-core`, `bstock-eslint-config`, and most actively maintained repos. The changelog entry lives in the **MR description**, inside a `<details open>…</details>` block (blank line before and after the content, which starts with `### Breaking` or `### Nonbreaking`). CI extracts it at release time and injects it into `CHANGELOG.md` — the MR diff must NOT touch `CHANGELOG.md` at all. Use the repo's MR templates in `.gitlab/merge_request_templates/`; the `bstock-merge-requests` skill covers the block format in detail.
+
+### Old style — in-file entry (variable absent)
+
+The MR itself adds an entry to `CHANGELOG.md` under a `## {VERSION_DATE}` heading:
 
 ```markdown
 ## {VERSION_DATE}
 ### [Breaking|Nonbreaking]
 - [TICKET-ID](https://bstock.atlassian.net/browse/TICKET-ID) Brief description of changes
-  - Detailed bullet point 1
-  - Detailed bullet point 2 (if needed)
 ```
 
-The `{VERSION_DATE}` token is replaced with the actual version number and date by the CI pipeline after merge.
+The `{VERSION_DATE}` token is replaced by semantic-release after merge; CI rejects entries containing hard-coded version numbers.
 
-When creating a `MAJOR` or `MINOR` MR, verify that a `CHANGELOG.md` entry exists. If not, warn the user — the CI pipeline will fail.
+When creating a `MAJOR` or `MINOR` MR, verify the entry exists in the right place for the repo's style. If not, warn the user — the CI pipeline will fail.

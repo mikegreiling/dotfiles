@@ -124,6 +124,19 @@ mcp__atlassian__getJiraIssue({
 - Run `npm ci` after creating new branches or when encountering unexplained failures that could be caused by outdated or missing dependencies
 - **NEVER run build commands** (`npm run build`, `npm run build:prod`) — CI/CD handles builds
 
+## Project Memory Files (AGENTS.md / CLAUDE.md)
+
+The convention for B-Stock repos: agent guidance lives in a single `AGENTS.md` at the repo root (readable by any agent — Claude Code, Codex, Cursor, opencode). `CLAUDE.md` is a shell whose first line is `@AGENTS.md` (Claude Code inlines the import at session start — no extra turn), followed only by Claude-Code-specific guidance that cannot live in AGENTS.md (high bar; usually nothing). `fe-core/AGENTS.md` is the reference example.
+
+When creating or editing an AGENTS.md:
+
+- **Keep it lean** — target well under 100 lines. Frontier models introspect repos well; anything derivable from `README.md`, `package.json`, or the file tree should be omitted entirely, not summarized.
+- **Include only**: a 2–3 sentence orientation (what the repo is, how it's consumed/deployed), high-stakes automation rules (e.g. semantic-release owns `CHANGELOG.md` and the `version` field), CI-enforced policies (e.g. exact-pinned `@b-stock/*-api-client` deps), genuinely non-obvious conventions (e.g. fe-core's i18n message-ID resolution), and pointers into the README for workflow detail.
+- **Exclude**: tech-stack inventories, dependency version numbers, script listings, directory trees, generic best practices (accessibility/performance boilerplate), code samples of standard patterns, and prescriptive step-by-step workflows. This content bloats context, rots quickly, and stale guidance actively misleads agents.
+- **Verify before keeping**: every factual claim retained from an old CLAUDE.md must be checked against `package.json` / CI config / the actual file tree. Old CLAUDE.md files (written for 2024–25 models) are presumed rotted until verified.
+- **Don't duplicate skills**: MR/Jira/release/pipeline ceremony lives in this skill, `bstock-merge-requests`, and the `bstock-common` plugin skills that engineers pre-install. Repo memory files hold repo facts, not workflow instructions.
+- If the repo's README references CLAUDE.md sections, update it to point at AGENTS.md.
+
 
 ## Additional Resources
 
