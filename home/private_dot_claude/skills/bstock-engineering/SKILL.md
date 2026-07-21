@@ -145,14 +145,23 @@ This HTML comment is stripped when Claude Code ingests CLAUDE.md, so it adds no 
 -->
 ```
 
-When creating or editing an AGENTS.md:
+When migrating a repo's CLAUDE.md to this convention, use a **two-commit structure** so the change is reviewable: commit 1 moves the CLAUDE.md content to AGENTS.md **verbatim** (`git mv`, zero content changes) and writes the CLAUDE.md shell; commit 2 makes all functional edits **in place**. Reviewers then see the real changes in one diff instead of comparing across files.
 
-- **Keep it lean** — target well under 100 lines. Frontier models introspect repos well; anything derivable from `README.md`, `package.json`, or the file tree should be omitted entirely, not summarized.
-- **Include only**: a 2–3 sentence orientation (what the repo is, how it's consumed/deployed), high-stakes automation rules (e.g. semantic-release owns `CHANGELOG.md` and the `version` field), CI-enforced policies (e.g. exact-pinned `@b-stock/*-api-client` deps), genuinely non-obvious conventions (e.g. fe-core's i18n message-ID resolution), and pointers into the README for workflow detail.
-- **Exclude**: tech-stack inventories, dependency version numbers, script listings, directory trees, generic best practices (accessibility/performance boilerplate), code samples of standard patterns, and prescriptive step-by-step workflows. This content bloats context, rots quickly, and stale guidance actively misleads agents.
-- **Verify before keeping**: every factual claim retained from an old CLAUDE.md must be checked against `package.json` / CI config / the actual file tree. Old CLAUDE.md files (written for 2024–25 models) are presumed rotted until verified.
+When editing an AGENTS.md (commit 2, or any later edit):
+
+- **Priorities, in order**: (1) remove or correct **falsehoods** — verify each against `package.json` / CI config / the actual tree; (2) remove **fluff** only with a stated justification (a removal ledger in the commit body and MR description: each removed line/section → why it won't be missed); (3) **when in doubt, keep it**. Old CLAUDE.md files (written for 2024–25 models) are presumed rotted until verified.
+- **Accuracy beats brevity.** Leanness is desirable but never a target that justifies deleting repo-specific tribal knowledge (enforced architecture patterns, contract surfaces, i18n message-ID systems, dual-router schemes, sandbox/guardrail rules that name repo specifics). Generic content that any frontier model already knows — tech-stack inventories, script listings restating package.json, directory trees, accessibility/performance boilerplate, standard-pattern code samples — is fair game to prune, with a ledger entry.
+- **Pointers over caches**: prefer "Node version comes from `.nvmrc`" over embedding the value; restate a value only when it's load-bearing for orientation. Anything restated is a cache the file's maintenance note makes agents responsible for invalidating.
+- **Preserve structure**: edit in place, keep headings/ordering, don't rewrite from scratch — the diff should be reviewable.
 - **Don't duplicate skills**: MR/Jira/release/pipeline ceremony lives in this skill, `bstock-merge-requests`, and the `bstock-common` plugin skills that engineers pre-install. Repo memory files hold repo facts, not workflow instructions.
 - If the repo's README references CLAUDE.md sections, update it to point at AGENTS.md.
+- Every AGENTS.md **ends with this exact section** (add it if missing):
+
+```markdown
+## Maintaining this file
+
+This is a living document — every claim in it should match the repo as it exists today. If you notice guidance here that contradicts the actual code or config, verify against the source of truth and correct this file in a small separate commit on your current branch (mention it in your MR); a known-stale claim is worse than none. Prefer pointing at sources (`.nvmrc`, `package.json`, CI config) over restating their values — anything restated here is a cache you are responsible for invalidating.
+```
 
 
 ## Additional Resources
