@@ -34,12 +34,20 @@ When transitioning to Quality Review (step 4 above):
 **If no "nontestable" label:**
 → Check for "Acceptance Criteria" section in the ticket description
   - If missing: prompt to add QA testing instructions to the description
-  - If present: leave in Quality Review for a QA engineer to use "QA PASS"
+  - If present: **review it for accuracy against the work actually done** (see *Acceptance Criteria — the QA contract* below), then leave in Quality Review for a QA engineer to use "QA PASS"
 
 **Rules:**
 - "QA PASS" (id: 51) is for QA engineers only — developers MUST NOT use this
 - ALWAYS ask for confirmation before using "QA BYPASS"
 - ALWAYS ask to apply "nontestable" label when using "QA BYPASS"
+
+### Acceptance Criteria — the QA contract
+
+The **Acceptance Criteria** section of a ticket is the checklist QA works off of to confirm the work was done correctly. Whenever a ticket is moved to Quality Review ("Ready for QA"), the AC must be **accurate and up to date** — review it at transition time, not just at ticket creation.
+
+- **Every criterion must be verifiable.** No claims QA cannot actually check from the environment they test in. State *where* the change is deployed (dev auto-deploys from `main`; QA/staging/prod are manual) and any test-data setup needed — and verify setup instructions actually work (e.g. confirm an API accepts the field) before writing them down. It should be straightforward for a QA engineer to run through the list start to finish.
+- **PRD-derived work: AC scope = PRD scope.** Do not retroactively add things to the AC that were not part of the PRD — conveniences, refactors, or nice-to-haves made in the course of the MR do not become new QA-verifiable requirements. (This has bitten us before: tickets accreted criteria beyond the PRD and QA was left validating claims nobody had signed up for.) Mention such extras in the MR description, not the AC.
+- **Bug tickets: AC = the bug is gone.** Structure the criteria around *past behavior* (what was broken), *current behavior* (what QA should now observe), and *what changed*. Include a criterion that the originally-intended behavior adjacent to the fix still holds when the fix touches it (e.g. a filter regression fix also confirms the filter's original purpose), but do not expand into unrelated verification.
 
 ### Alternative Transitions
 
