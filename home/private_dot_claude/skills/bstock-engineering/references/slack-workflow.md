@@ -12,8 +12,10 @@ How the team uses Slack, and how to act there on Mike's behalf via the official 
 ### Draft gotchas — verify after write (verified 2026-07-22)
 
 - Slack allows only **one attached draft per channel**. Creating a draft where one already exists **silently no-ops**: the API returns success anyway, the old draft's content survives, and the new content is lost.
-- The reliable signal is the **`draft_id` field in the response**: present = draft created; absent = nothing was written. **Check it after every `slack_send_message_draft` call.** On a missing `draft_id`, tell Mike the draft did NOT land, show him the composed text inline so nothing is lost, and either let him paste it manually or have him clear/send the existing draft before retrying.
-- There is **no tool to list, read, update, or delete drafts** — the create call is the entire draft surface. Never claim a draft exists or was updated based on a success message alone.
+- The reliable signal is the **`draft_id` field in the response**: present = draft created; absent = nothing was written. Confirmed 3/3 across public channels (#fe-guild, #foundation-pod) and a self-DM. **Check it after every `slack_send_message_draft` call.** On a missing `draft_id`, tell Mike the draft did NOT land, show him the composed text inline so nothing is lost, and either let him paste it manually or have him clear/send the existing draft before retrying.
+- There is **no tool to list, read, update, or delete drafts** — the create call is the entire draft surface, and no tool consumes `draft_id`; its only use is the write-confirmation sentinel above. Never claim a draft exists or was updated based on a success message alone.
+- **Hand-off flow**: after a verified draft, run `open "<channel_link from the response>"` (macOS) — it opens the channel in Mike's Slack app with the attached draft waiting in the composer for him to review and send.
+- Drafts are Slack's **internal client API** (`drafts.*`), not the public OAuth Web API — richer draft operations can't be added via any official-token tool, only via browser-session-token tools.
 
 ## Key Channels
 
