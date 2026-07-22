@@ -13,7 +13,7 @@ How the team uses Slack, and how to act there on Mike's behalf via the official 
 
 - Slack allows only **one attached draft per channel**. Creating a draft where one already exists **silently no-ops**: the API returns success anyway, the old draft's content survives, and the new content is lost.
 - The reliable signal is the **`draft_id` field in the response**: present = draft created; absent = nothing was written. Confirmed 3/3 across public channels (#fe-guild, #foundation-pod) and a self-DM. **Check it after every `slack_send_message_draft` call.** On a missing `draft_id`, tell Mike the draft did NOT land, show him the composed text inline so nothing is lost, and either let him paste it manually or have him clear/send the existing draft before retrying.
-- There is **no tool to list, read, update, or delete drafts** — the create call is the entire draft surface, and no tool consumes `draft_id`; its only use is the write-confirmation sentinel above. Never claim a draft exists or was updated based on a success message alone.
+- There is **no tool to list, read, update, or delete drafts** as standalone operations. The one consumer of `draft_id` is `slack_send_message`'s optional `draft_id` param, which deletes that draft after sending — use it when Mike approves a drafted message in chat, so the stale draft doesn't linger. Never claim a draft exists or was updated based on a success message alone.
 - **Hand-off flow**: after a verified draft, run `open "<channel_link from the response>"` (macOS) — it opens the channel in Mike's Slack app with the attached draft waiting in the composer for him to review and send.
 - Drafts are Slack's **internal client API** (`drafts.*`), not the public OAuth Web API — richer draft operations can't be added via any official-token tool, only via browser-session-token tools.
 
@@ -30,12 +30,14 @@ Slack has exactly three special mentions (there is no `@all`): `@here` notifies 
 - **`@here`: allowed** when it appears in message text Mike has approved.
 - To **refer** to a keyword or user group without pinging (e.g. discussing `@here` or `@bstock`), wrap it in backticks — verified: backtick-wrapped keywords render as literal code, no ping.
 
+**Producing LIVE mentions** (verified 2026-07-22): bare `@name`/`@here` text never tokenizes through the MCP — real mentions require Slack's token syntax in the message: `<@U065SDTU138>`-style for users (server enriches to `<@U…|Name>`), `<!here>` for @here. Works in both direct sends and drafts. So a guild-meeting-style reminder with a live `@here` CAN be sent programmatically (confirmation rule applies as always). `<!channel>`/`<!everyone>` presumably work the same — they remain forbidden per the policy above.
+
 ### Message formatting via MCP (verified 2026-07-22)
 
 Standard markdown converts correctly: bold/italic/strikethrough, inline code, fenced code blocks, blockquotes (nested styling works), `[text](url)` links (they unfurl), numbered and bulleted lists. Two caveats:
 
 - **No language hints on fenced code blocks** — ` ```js ` leaks a literal "js" as the block's first line. Use bare ` ``` `.
-- Bare mention keywords sent via MCP rendered as plain text (not live mention tokens) in a DM test — but treat that as unconfirmed for real channels; keep bare keywords out of messages unless Mike approved them.
+- Bare mention keywords and `@names` are always sent as plain text — they never become live mentions (confirmed via raw read-back). Use the token syntax from the mention-keywords section when a real ping is intended and approved.
 
 ## Key Channels
 
