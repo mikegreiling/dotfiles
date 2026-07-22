@@ -19,10 +19,12 @@ export XDG_CONFIG_HOME="$HOME/.config"
 HOMEBREW_NO_ENV_HINTS=1 HOMEBREW_AUTO_UPDATE_SECS=3600 \
 brew bundle install \
 	--quiet \
+	--no-upgrade \
 	--file=/dev/stdin <<BREWS
 tap "homebrew/bundle"
 tap "datadog/pack" # pup CLI
 tap "atlassian/homebrew-acli" # acli
+tap "openai/tools", trusted: true # tart & softnet (macOS/Linux VMs on Apple Silicon) — successor to the retired cirruslabs/cli tap
 
 # Install essentials
 brew "coreutils"
@@ -43,14 +45,16 @@ brew "zsh-fast-syntax-highlighting"
 brew "zsh-history-substring-search"
 
 # Install some useful command-line utilities
-brew "atlassian/homebrew-acli/acli"
+brew "atlassian/homebrew-acli/acli", trusted: true # non-official tap; trust so brew bundle loads it (Homebrew 6.0+ tap trust)
 brew "ack"
 brew "age"
 brew "asdf"
 brew "atomicparsley"
 brew "bat"
 brew "chezmoi"
+cask "codex" # OpenAI Codex CLI — binary cask; installs /opt/homebrew/bin/codex (this cask IS the CLI, there is no GUI app or formula)
 brew "colima"
+brew "openai/tools/tart" # macOS/Linux VMs on Apple Silicon for things-api regression testing (softnet comes as a dependency)
 brew "dnsmasq"
 brew "docker"
 brew "docker-buildx"
@@ -78,7 +82,7 @@ brew "nano"
 brew "p7zip"
 brew "pigz"
 brew "pnpm"
-brew "datadog/pack/pup"
+brew "datadog/pack/pup", trusted: true # non-official tap; trust so brew bundle loads it (Homebrew 6.0+ tap trust)
 brew "pv"
 brew "ripgrep"
 brew "sd"

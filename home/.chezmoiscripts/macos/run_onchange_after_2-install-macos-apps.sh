@@ -52,6 +52,7 @@ RUBY
 HOMEBREW_NO_ENV_HINTS=1 HOMEBREW_AUTO_UPDATE_SECS=3600 \
 brew bundle install \
 	--quiet \
+	--no-upgrade \
 	--file=/dev/stdin <<'BREWS'
 tap "homebrew/bundle"
 
@@ -69,6 +70,7 @@ cask "font-sf-mono"
 cask "1password"
 cask "1password-cli"
 cask "betterdisplay"
+cask "claudebar" # menu bar app for monitoring AI coding assistant usage quotas
 cask "firefox"
 cask "google-chrome"
 cask "kaleidoscope"
@@ -89,7 +91,7 @@ brew "pinentry-mac"
 cask "gcloud-cli" # Google Cloud SDK (gcloud/gsutil/bq); formerly the "google-cloud-sdk" cask. Used by the gws Workspace CLI's `auth setup`.
 
 # Pin CleanShot X to a license-compatible version (staged in the mike/pinned tap above)
-cask "mike/pinned/cleanshot"
+cask "mike/pinned/cleanshot", trusted: true # local tap; trust so brew bundle loads it (Homebrew 6.0+ tap trust)
 BREWS
 
 # Save the list of installed packages to a Brewfile for inspection
@@ -99,13 +101,13 @@ echo ""
 echo "Setting some apps to launch automatically at login..."
 osascript >/dev/null <<EOD
 tell application "System Events"
-	make login item at end with properties {path:"/Applications/1Password.app"}
-	make login item at end with properties {path:"/Applications/CleanShot X.app"}
-	make login item at end with properties {path:"/Applications/KeepingYouAwake.app"}
-	make login item at end with properties {path:"/Applications/Little Snitch.app"}
-	make login item at end with properties {path:"/Applications/MeetingBar.app"}
-	make login item at end with properties {path:"/Applications/Multitouch.app"}
-	make login item at end with properties {path:"/Applications/xbar.app"}
+	set desiredPaths to {"/Applications/1Password.app", "/Applications/CleanShot X.app", "/Applications/KeepingYouAwake.app", "/Applications/Little Snitch.app", "/Applications/MeetingBar.app", "/Applications/Multitouch.app", "/Applications/xbar.app"}
+	set existingPaths to path of every login item
+	repeat with desiredPath in desiredPaths
+		if existingPaths does not contain (desiredPath as text) then
+			make login item at end with properties {path:(desiredPath as text)}
+		end if
+	end repeat
 end tell
 EOD
 
