@@ -5,8 +5,15 @@ How the team uses Slack, and how to act there on Mike's behalf via the official 
 ## Posting on Mike's behalf — ground rules
 
 - The MCP connection uses Mike's **user OAuth token**: messages and reactions appear **as Mike**, with no "via app" or AI attribution visible to others. Treat every send/react as Mike speaking.
-- **Never send a message or add a reaction without confirming with Mike first.** Even when a task implies a post (e.g. an MR just went ready-for-review), compose it and get his explicit go-ahead — or better, leave it as a draft. No exceptions.
+- **Never send a message without confirming with Mike first.** Even when a task implies a post (e.g. an MR just went ready-for-review), compose it and get his explicit go-ahead — or better, leave it as a draft. No exceptions.
+- **Reactions are lighter-weight**: when they follow from a task Mike instructed (e.g. he asks for work on an MR solicited in Slack → adding `:eyes:`/`:white_check_mark:` per the conventions below), no pre-confirmation needed — but **always tell Mike about every reaction added**, in the report for that task. Don't add reactions unrelated to what he asked for.
 - **Drafts are exempt from confirmation**: creating a draft via `slack_send_message_draft` is always fine — Mike reviews and sends drafts himself in the Slack client. Default to drafts whenever composing anything on his behalf.
+
+### Draft gotchas — verify after write (verified 2026-07-22)
+
+- Slack allows only **one attached draft per channel**. Creating a draft where one already exists **silently no-ops**: the API returns success anyway, the old draft's content survives, and the new content is lost.
+- The reliable signal is the **`draft_id` field in the response**: present = draft created; absent = nothing was written. **Check it after every `slack_send_message_draft` call.** On a missing `draft_id`, tell Mike the draft did NOT land, show him the composed text inline so nothing is lost, and either let him paste it manually or have him clear/send the existing draft before retrying.
+- There is **no tool to list, read, update, or delete drafts** — the create call is the entire draft surface. Never claim a draft exists or was updated based on a success message alone.
 
 ## Key Channels
 
