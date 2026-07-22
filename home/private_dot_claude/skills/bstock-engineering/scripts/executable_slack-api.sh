@@ -18,13 +18,19 @@
 #   slack-api.sh scheduled-list <channel_id>
 #   slack-api.sh scheduled-delete <channel_id> <scheduled_message_id>
 #   slack-api.sh scheduled-reschedule <channel_id> <scheduled_message_id> <new_unix_ts>
-#   slack-api.sh msg-delete <channel_id> <message_ts>
+#   slack-api.sh msg-delete [--force] <channel_id> <message_ts>
 #   slack-api.sh react-add <channel_id> <message_ts> <emoji_name>
 #   slack-api.sh react-remove <channel_id> <message_ts> <emoji_name>
 #
 # Notes:
 #   - <channel_id> may be a user_id (e.g. U065SDTU138) for a DM.
 #   - <emoji_name> has NO colons (e.g. white_check_mark, eyes, thankyou).
+#   - msg-delete has an AUTHORSHIP GUARD: it refuses to delete a message unless
+#     that message was sent via Claude (Slack app_id A08SF47R6P4). A message typed
+#     by Mike in the Slack client has no app_id and is REFUSED. Pass --force to
+#     override deliberately. This is a guard-rail, not a security boundary — a
+#     determined agent could call chat.delete directly; the point is to make the
+#     frictionless, skill-blessed path the safe one.
 #   - scheduled-reschedule is delete+recreate (Slack has no in-place update);
 #     it preserves the original text and prints the new id. Safe & verifiable
 #     because scheduled messages have stable server IDs and a real list endpoint.
@@ -84,8 +90,33 @@ case "$cmd" in
     rm -f /tmp/.slack_resched.json ;;
 
   msg-delete)
-    [ $# -eq 2 ] || die "usage: msg-delete <channel_id|user_id> <message_ts>"
+    force=0
+    if [ "${1:-}" = "--force" ]; then force=1; shift; fi
+    [ $# -eq 2 ] || die "usage: msg-delete [--force] <channel_id|user_id> <message_ts>"
     ch=$(_resolve "$1")
+    # AUTHORSHIP GUARD: only delete messages sent via Claude (app_id CLAUDE_APP_ID)
+    # unless --force. A client-typed message has no app_id; a Claude/MCP send carries it.
+    verdict=$(_api conversations.history "{\"channel\":\"$ch\",\"oldest\":\"$2\",\"inclusive\":true,\"limit\":1}" | python3 -c "
+import sys,json
+CLAUDE_APP='A08SF47R6P4'  # the Claude Slack app id (stable); see slack-workflow.md
+d=json.load(sys.stdin)
+if not d.get('ok'): print('ERR '+str(d.get('error'))); sys.exit()
+ms=d.get('messages',[])
+if not ms or ms[0].get('ts')!='$2': print('NOTFOUND'); sys.exit()
+m=ms[0]
+print('CLAUDE' if m.get('app_id')==CLAUDE_APP else 'OTHER app_id=%r user=%r'%(m.get('app_id'),m.get('user')))
+")
+    case "$verdict" in
+      CLAUDE) : ;;
+      NOTFOUND) die "message $2 not found in $ch (already deleted, or wrong ts)" ;;
+      ERR*) die "could not verify authorship: ${verdict#ERR }" ;;
+      OTHER*)
+        if [ $force -eq 1 ]; then
+          echo "  (--force: overriding authorship guard — $verdict)" >&2
+        else
+          die "REFUSED: message $2 was NOT sent via Claude ($verdict). This guard only deletes Claude-authored messages. Re-run with --force to override."
+        fi ;;
+    esac
     _api chat.delete "{\"channel\":\"$ch\",\"ts\":\"$2\"}" | python3 -c "import sys,json;d=json.load(sys.stdin);print('ok' if d.get('ok') else 'ERR '+str(d.get('error')))" ;;
 
   react-add)

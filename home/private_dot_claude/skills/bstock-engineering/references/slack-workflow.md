@@ -74,10 +74,12 @@ The Slack MCP tools don't cover everything. The plugin's user OAuth token can dr
 | `slack-api.sh scheduled-list <ch>` | **read** pending scheduled messages |
 | `slack-api.sh scheduled-delete <ch> <smid>` | **deschedule** |
 | `slack-api.sh scheduled-reschedule <ch> <smid> <unix_ts>` | **reschedule** (delete+recreate, preserves text — Slack has no in-place update; safe/verifiable because scheduled msgs have stable ids + a list endpoint) |
-| `slack-api.sh msg-delete <ch> <ts>` | **delete Mike's own message** |
+| `slack-api.sh msg-delete [--force] <ch> <ts>` | **delete a message** — AUTHORSHIP-GUARDED (see below) |
 | `slack-api.sh react-add / react-remove <ch> <ts> <emoji>` | **remove** a reaction (MCP only adds); enables the eyes→check→remove-eyes review flow |
 
 No `drafts-*` or `status-*` subcommands exist and none can be added — drafts are the internal client API, status needs an ungranted scope. Reaction emoji names take NO colons (`white_check_mark`, `eyes`, `thankyou`). Every write is real and visible → confirmation rules apply (reactions may follow an instructed task; deletes/deschedules/sends need explicit go-ahead).
+
+**msg-delete authorship guard**: `msg-delete` fetches the target message first and **refuses unless it was sent via Claude** — the discriminator is the message's Slack `app_id == A08SF47R6P4` (the Claude app; a Mike-typed client message has NO `app_id`). Also readable as the `Sent using <@U0AJR340H60>` context block. `--force` overrides for a deliberate delete of a non-Claude message. This is a **guard-rail, not a security boundary**: the token can call `chat.delete` on anything Mike authored, so a determined/rogue agent could bypass it — the value is making the frictionless, skill-blessed path (this script) the safe-by-default one, so an agent following the documented pattern won't blanket-delete Mike's real messages. Always prefer this script over hand-rolled `chat.delete`.
 
 ## Key Channels
 
