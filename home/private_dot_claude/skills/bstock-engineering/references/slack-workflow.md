@@ -4,7 +4,7 @@ How the team uses Slack, and how to act there on Mike's behalf via the official 
 
 ## Posting on Mike's behalf — ground rules
 
-- The MCP connection uses Mike's **user OAuth token**: messages and reactions appear **as Mike**, with no "via app" or AI attribution visible to others. Treat every send/react as Mike speaking.
+- The MCP connection uses Mike's **user OAuth token**: messages and reactions appear **as Mike**. Messages sent via MCP carry a visible **"Sent using @Claude"** footer (verified 2026-07-22 on a scheduled send; assume all sends). Reactions show no attribution. Treat every send/react as Mike speaking, with the send footer as a transparency marker — not a substitute for confirmation.
 - **Never send a message without confirming with Mike first.** Even when a task implies a post (e.g. an MR just went ready-for-review), compose it and get his explicit go-ahead — or better, leave it as a draft. No exceptions.
 - **Reactions are lighter-weight**: when they follow from a task Mike instructed (e.g. he asks for work on an MR solicited in Slack → adding `:eyes:`/`:white_check_mark:` per the conventions below), no pre-confirmation needed — but **always tell Mike about every reaction added**, in the report for that task. Don't add reactions unrelated to what he asked for.
 - **Drafts are exempt from confirmation**: creating a draft via `slack_send_message_draft` is always fine — Mike reviews and sends drafts himself in the Slack client. Default to drafts whenever composing anything on his behalf.
@@ -20,6 +20,22 @@ How the team uses Slack, and how to act there on Mike's behalf via the official 
 ### Scheduled messages
 
 `slack_schedule_message` schedules a real send (Unix timestamp ≥2 min out, ≤120 days; thread replies supported via `thread_ts`; unavailable in Slack Connect channels). **Scheduling is sending, not drafting — Mike's confirmation rule applies in full** (exact text, channel, and time). There is no tool to list, edit, or cancel a scheduled message; after scheduling, changes happen only in Mike's client under "Drafts & Sent".
+
+### Mention keywords (@here / @channel / @everyone)
+
+Slack has exactly three special mentions (there is no `@all`): `@here` notifies only currently-active channel members; `@channel` notifies every channel member including offline; `@everyone` notifies the whole workspace and only works in #general. Policy:
+
+- **`@everyone`: never use. No exceptions.**
+- **`@channel`: never use** unless Mike dictates it verbatim in the message text — and restate its offline-ping blast radius when confirming.
+- **`@here`: allowed** when it appears in message text Mike has approved.
+- To **refer** to a keyword or user group without pinging (e.g. discussing `@here` or `@bstock`), wrap it in backticks — verified: backtick-wrapped keywords render as literal code, no ping.
+
+### Message formatting via MCP (verified 2026-07-22)
+
+Standard markdown converts correctly: bold/italic/strikethrough, inline code, fenced code blocks, blockquotes (nested styling works), `[text](url)` links (they unfurl), numbered and bulleted lists. Two caveats:
+
+- **No language hints on fenced code blocks** — ` ```js ` leaks a literal "js" as the block's first line. Use bare ` ``` `.
+- Bare mention keywords sent via MCP rendered as plain text (not live mention tokens) in a DM test — but treat that as unconfirmed for real channels; keep bare keywords out of messages unless Mike approved them.
 
 ## Key Channels
 
