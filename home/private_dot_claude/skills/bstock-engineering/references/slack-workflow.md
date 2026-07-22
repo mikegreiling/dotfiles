@@ -5,8 +5,8 @@ How the team uses Slack, and how to act there on Mike's behalf via the official 
 ## Posting on Mike's behalf — ground rules
 
 - The MCP connection uses Mike's **user OAuth token**: messages and reactions appear **as Mike**, with no "via app" or AI attribution visible to others. Treat every send/react as Mike speaking.
-- Only send messages or add reactions when Mike **explicitly asks** — never as a side effect of another task.
-- For anything substantive (announcements, review requests with commentary), prefer `slack_send_message_draft` so Mike reviews and sends it himself; direct `slack_send_message` is fine for simple, explicitly dictated posts.
+- **Never send a message or add a reaction without confirming with Mike first.** Even when a task implies a post (e.g. an MR just went ready-for-review), compose it and get his explicit go-ahead — or better, leave it as a draft. No exceptions.
+- **Drafts are exempt from confirmation**: creating a draft via `slack_send_message_draft` is always fine — Mike reviews and sends drafts himself in the Slack client. Default to drafts whenever composing anything on his behalf.
 
 ## Key Channels
 
