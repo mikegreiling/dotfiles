@@ -47,6 +47,25 @@ Standard markdown converts correctly: bold/italic/strikethrough, inline code, fe
 - **No language hints on fenced code blocks** — ` ```js ` leaks a literal "js" as the block's first line. Use bare ` ``` `.
 - Bare mention keywords and `@names` are always sent as plain text — they never become live mentions (confirmed via raw read-back). Use the token syntax from the mention-keywords section when a real ping is intended and approved.
 
+## Raw Web API fallback (for capabilities the MCP omits)
+
+The Slack MCP tools don't cover everything. The plugin's user OAuth token can drive the **public Slack Web API directly** for gaps like listing/deleting scheduled messages and deleting Mike's own messages. Verified working 2026-07-22.
+
+- **Token location**: macOS Keychain, service `Claude Code-credentials`, account `mike` — a JSON blob; the Slack entry is `mcpOAuth["plugin:slack:slack|<hash>"].accessToken` (an `xoxe.` rotating user token). Extract in-process; **never echo the token to output or logs**:
+  ```bash
+  CRED=$(security find-generic-password -s "Claude Code-credentials" -a "mike" -w)
+  TOKEN=$(echo "$CRED" | python3 -c "import sys,json;d=json.load(sys.stdin);[print(v['accessToken']) for k,v in d['mcpOAuth'].items() if k.startswith('plugin:slack')]")
+  curl -s -H "Authorization: Bearer $TOKEN" "https://slack.com/api/auth.test"
+  ```
+  The token rotates — always re-read it from the keychain; never cache it. Reading it triggers a one-time macOS keychain prompt Mike must allow.
+- **Granted scopes** (define what's callable): `chat:write` (send/delete own messages + manage scheduled), `channels/groups/im/mpim:history`, `*:read`, `search:read.*`, `reactions:write`, `canvases:write`, `users:read.email`. **Not granted**: `users.profile:write` (so status-setting is impossible even here) and no mark-read scope.
+- **Verified raw-API wins over the MCP**:
+  - `chat.scheduledMessages.list` — **read pending scheduled messages** (MCP can't).
+  - `chat.deleteScheduledMessage` — **deschedule** before send (MCP can't). Full schedule→list→delete loop confirmed.
+  - `chat.delete` — **delete Mike's own messages** (MCP can't). (Available per scope; use only on explicit instruction — it's a real send/delete action, confirmation required.)
+- **Still impossible** even via raw API with this token: setting Slack status/presence (scope not granted); reading/updating/deleting **drafts** (Slack internal client API, not public Web API — no token reaches it).
+- **This is a fallback, not the default.** Prefer the MCP tools for anything they cover (they keep responses lean and need no token handling). Drop to raw `curl` only for a verified gap, and treat every write (delete/deschedule) under the same confirmation rules as MCP sends.
+
 ## Key Channels
 
 | Channel | ID | Type | Purpose |
