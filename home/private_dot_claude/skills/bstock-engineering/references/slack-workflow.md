@@ -131,8 +131,10 @@ Common collaborators, mapped across systems (Slack/Jira verified via live lookup
 | Joe Spandrusyszyn ("Joe S.") | `U049J4ALL69` | joseph.spandrusyszyn@bstock.com | `joseph.spandrusyszyn` (332) | `63659c17b7b39379d722512a` |
 | Paul Robertson | `U065LP1M6UX` | paul@bstock.com | `paul` (419) | `712020:b9d94b10-920e-4d35-915b-9994724c9934` |
 | Alvaro Ferreira | `UPMJC0VFH` | alvaro@bstock.com | `alvarobstock` (15) | `5acbb67101a2012a6c31de20` |
+| Shuai (Sarah) Xu — PM, 3MP buyer/parcel (authored the Parcel Phase 1 PRD) | `U04QHRG8Q8G` | sarah@bstock.com | `sarah` (361) | `63ed4f0f07df05aa82766c7e` |
+| Frederick (Fred) Leung — UX Designer | `U0A0Y5MRHSL` | frederick.leung@bstock.com | `frederick.leung` (626) | `712020:0accc665-be14-4f4c-9914-796fffa4d0ca` |
 
-Name disambiguation: "Paul" alone is ambiguous in Slack (Paul Angeles `U075W4W0VDX` also exists) — Mike's "Paul R." is Paul Robertson. "Joe" is ambiguous too (Joe Ellis, Joe Dube) — Mike's "Joe S." is Spandrusyszyn. When adding new people to this table, verify with `slack_search_users`, `glab api "users?search=<name>"`, and `lookupJiraAccountId` rather than guessing; email is the reliable join key.
+Name disambiguation: "Paul" alone is ambiguous in Slack (Paul Angeles `U075W4W0VDX` also exists) — Mike's "Paul R." is Paul Robertson. "Joe" is ambiguous too (Joe Ellis, Joe Dube) — Mike's "Joe S." is Spandrusyszyn. "Sarah" is ambiguous in Jira (Sarah Robinson `712020:281ecc4f-…` also exists) — the parcel-PRD PM is Sarah Xu. When adding new people to this table, verify with `slack_search_users`, `glab api "users?search=<name>"`, and `lookupJiraAccountId` rather than guessing; email is the reliable join key.
 
 ## Slack Status (PTO / meetings)
 
