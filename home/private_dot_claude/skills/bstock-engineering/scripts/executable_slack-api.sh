@@ -22,6 +22,8 @@
 #   slack-api.sh msg-edit [--force] <channel_id> <message_ts> <new_text>
 #   slack-api.sh open-conversation <user_id[,user_id,...]>   (create-if-not-exists; prints channel id)
 #   slack-api.sh mark-read <channel_id> [<message_ts>]   (omit ts = mark all read)
+#   slack-api.sh permalink <channel_id> <message_ts>   (canonical share link, same as GUI "Copy link")
+#   slack-api.sh preview-strip [--force] <channel_id> <message_ts>   (remove a link-preview card)
 #   slack-api.sh react-add <channel_id> <message_ts> <emoji_name>
 #   slack-api.sh react-remove <channel_id> <message_ts> <emoji_name>
 #
@@ -193,6 +195,41 @@ else:
     print('  ERR '+str(d.get('error'))+' (e.g. not_in_channel = Claude is not a member)')
 " ;;
 
+  permalink)
+    # Canonical permalink for a message — byte-identical to the GUI "Copy link".
+    # Top-level: https://<ws>.slack.com/archives/<CH>/p<ts-without-dot>
+    # Thread replies automatically gain ?thread_ts=<parent>&cid=<ch>.
+    [ $# -eq 2 ] || die "usage: permalink <channel_id|user_id> <message_ts>"
+    ch=$(_resolve "$1")
+    curl -s -H "Authorization: Bearer $(_token)" "https://slack.com/api/chat.getPermalink?channel=$ch&message_ts=$2" \
+      | python3 -c "import sys,json;d=json.load(sys.stdin);print(d['permalink']) if d.get('ok') else sys.exit('ERR '+str(d.get('error')))" ;;
+
+  preview-strip)
+    # Remove a link-preview (unfurl) card from a sent message — the API equivalent of
+    # the GUI's "x" on a preview. chat.update with the message's own text + empty
+    # attachments strips the card and leaves the text untouched (verified 2026-07-23).
+    # AUTHORSHIP-GUARDED like msg-edit: for Mike's own hand-typed messages the GUI "x"
+    # is the right tool; --force overrides deliberately.
+    force=0
+    if [ "${1:-}" = "--force" ]; then force=1; shift; fi
+    [ $# -eq 2 ] || die "usage: preview-strip [--force] <channel_id|user_id> <message_ts>"
+    ch=$(_resolve "$1")
+    _api conversations.history "{\"channel\":\"$ch\",\"oldest\":\"$2\",\"inclusive\":true,\"limit\":1}" | python3 -c "
+import sys,json
+CLAUDE_APP='A08SF47R6P4'
+d=json.load(sys.stdin)
+if not d.get('ok'): sys.exit('ERR '+str(d.get('error')))
+ms=d.get('messages',[])
+if not ms or ms[0].get('ts')!='$2': sys.exit('NOTFOUND: message $2 not in $ch (already deleted, or wrong ts)')
+m=ms[0]
+if not m.get('attachments'): sys.exit('NOPREVIEW: message has no preview/attachments to strip')
+if m.get('app_id')!=CLAUDE_APP and $force==0:
+    sys.exit('REFUSED: message was NOT sent via Claude (app_id=%r). Use the GUI x on the preview, or re-run with --force.'%m.get('app_id'))
+json.dump({'channel':'$ch','ts':'$2','text':m.get('text',''),'attachments':[]},open('/tmp/.slack_strip.json','w'))
+" || die "preview-strip aborted"
+    _api chat.update "$(cat /tmp/.slack_strip.json)" | python3 -c "import sys,json;d=json.load(sys.stdin);print('ok — preview removed' if d.get('ok') else 'ERR '+str(d.get('error')))"
+    rm -f /tmp/.slack_strip.json ;;
+
   react-add)
     [ $# -eq 3 ] || die "usage: react-add <channel_id|user_id> <message_ts> <emoji_name>"
     ch=$(_resolve "$1")
@@ -203,5 +240,5 @@ else:
     ch=$(_resolve "$1")
     _api reactions.remove "{\"channel\":\"$ch\",\"timestamp\":\"$2\",\"name\":\"$3\"}" | python3 -c "import sys,json;d=json.load(sys.stdin);print('ok' if d.get('ok') else 'ERR '+str(d.get('error')))" ;;
 
-  *) die "unknown command '$cmd'. run with no args to see usage in the header, or: whoami | scheduled-list | scheduled-delete | scheduled-reschedule | msg-delete | react-add | react-remove" ;;
+  *) die "unknown command '$cmd'. run with no args to see usage in the header, or: whoami | scheduled-list | scheduled-delete | scheduled-reschedule | msg-delete | msg-edit | open-conversation | mark-read | permalink | preview-strip | react-add | react-remove" ;;
 esac

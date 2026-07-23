@@ -42,7 +42,7 @@ Slack has exactly three special mentions (there is no `@all`): `@here` notifies 
 
 ### Message formatting via MCP (verified 2026-07-22)
 
-Standard markdown converts correctly: bold/italic/strikethrough, inline code, fenced code blocks, blockquotes (nested styling works), `[text](url)` links (they unfurl), numbered and bulleted lists. Two caveats:
+Standard markdown converts correctly: bold/italic/strikethrough, inline code, fenced code blocks, blockquotes (nested styling works), `[text](url)` links (render as clickable links but produce NO preview card — see the permalinks/previews section), numbered and bulleted lists. Two caveats:
 
 - **No language hints on fenced code blocks** — ` ```js ` leaks a literal "js" as the block's first line. Use bare ` ``` `.
 - Bare mention keywords and `@names` are always sent as plain text — they never become live mentions (confirmed via raw read-back). Use the token syntax from the mention-keywords section when a real ping is intended and approved.
@@ -59,13 +59,15 @@ The Slack MCP tools don't cover everything. The plugin's user OAuth token can dr
   curl -s -H "Authorization: Bearer $TOKEN" "https://slack.com/api/auth.test"
   ```
   The token rotates — always re-read it from the keychain; never cache it. Reading it triggers a one-time macOS keychain prompt Mike must allow.
-- **Granted scopes** (define what's callable): `chat:write` (send/delete own messages + manage scheduled), `channels/groups/im/mpim:history`, `groups/im/mpim:write` (private-surface writes incl. mark-read), `*:read`, `search:read.*`, `reactions:write`, `canvases:write`, `users:read.email`. **Not granted**: `users.profile:write` (status-setting impossible) and `channels:write` (so no mark-read on PUBLIC channels).
+- **Granted scopes** (define what's callable): `chat:write` (send/delete own messages + manage scheduled), `channels/groups/im/mpim:history`, `groups/im/mpim:write` (private-surface writes incl. mark-read), `*:read`, `search:read.*`, `reactions:write`, `canvases:write`, `users:read.email`. **Not granted**: `users.profile:write` (status-setting impossible), `channels:write` (so no mark-read on PUBLIC channels), `files:write` (no file/image uploads — `files:read` only), and `links:write` (no custom `chat.unfurl` content).
 - **Verified raw-API wins over the MCP**:
   - `chat.scheduledMessages.list` — **read pending scheduled messages** (MCP can't).
   - `chat.deleteScheduledMessage` — **deschedule** before send (MCP can't). Full schedule→list→delete loop confirmed.
   - `chat.delete` — **delete Mike's own messages** (MCP can't). (Available per scope; use only on explicit instruction — it's a real send/delete action, confirmation required.)
   - `chat.update` — **edit an already-sent message in place** (MCP can't) — preserves the message's `app_id` (guard still recognizes it) and reactions/thread replies, and Slack shows an "edited" marker. Better than delete+repost for fixing/updating a posted reminder. Verified 2026-07-22.
   - `conversations.mark` — **mark READ**, but only on DMs/group-DMs/private channels (`im/mpim/groups:write`); PUBLIC channels fail `missing_scope`. Verified 2026-07-22.
+  - `chat.getPermalink` — **generate the canonical permalink** for any visible message, byte-identical to the GUI "Copy link" (MCP has no permalink tool, though `slack_send_message` does return a `message_link` for its own sends). Read-only. Verified 2026-07-23.
+  - `chat.postMessage` with `"unfurl_links":true` — **force a link-preview card** on a send (API sends never unfurl by default), and `chat.update` with `"attachments":[]` — **strip a preview** after the fact. Verified 2026-07-23; details in the permalinks/previews section below.
 - **Still impossible** even via raw API with this token: setting Slack status/presence (scope not granted); **mark-UNREAD** (`conversations.markUnread` → `not_allowed_token_type`, a client-only op); mark-READ on public channels (`channels:write` not granted); reading/updating/deleting **drafts** (Slack internal client API, not public Web API — no token reaches it).
 - **This is a fallback, not the default.** Prefer the MCP tools for anything they cover (they keep responses lean and need no token handling). Drop to raw `curl` only for a verified gap, and treat every write (delete/deschedule) under the same confirmation rules as MCP sends.
 
@@ -83,7 +85,7 @@ When Mike asks to summarize unread posts/channels (to clear seldom-read channels
 
 Claude can always *read* the `last_read` cursor on channels, so it can report exactly what's unread in a public channel even where it can't clear it.
 
-**Possible future unblock (`channels:write`):** the public-channel mark-read gap (and public-channel `setTopic`/`rename`) exists only because the Claude Slack app wasn't granted `channels:write`. Mike could petition the workspace Slack admin to add that scope to the app if this becomes a recurring pain point — parked as a "maybe someday", not worth pursuing preemptively. Revisit if summarize-then-mark-read on public channels becomes a frequent ask.
+**Possible future unblock (`channels:write`):** the public-channel mark-read gap (and public-channel `setTopic`/`rename`) exists only because the Claude Slack app wasn't granted `channels:write`. Mike could petition the workspace Slack admin to add that scope to the app if this becomes a recurring pain point — parked as a "maybe someday", not worth pursuing preemptively; if petitioning, bundle `files:write` (image/file uploads) into the same ask. Revisit if summarize-then-mark-read on public channels becomes a frequent ask.
 
 **Helper script — `scripts/slack-api.sh`** (bundled with this skill) wraps the verified gaps so you don't hand-roll curl. Reads the keychain token per call (never prints it); accepts a `U…` user id OR a `D…`/`C…` channel id anywhere (auto-resolves user→DM via `conversations.open`, matching MCP ergonomics). Subcommands:
 
@@ -96,6 +98,8 @@ Claude can always *read* the `last_read` cursor on channels, so it can report ex
 | `slack-api.sh msg-delete [--force] <ch> <ts>` | **delete a message** — AUTHORSHIP-GUARDED (see below) |
 | `slack-api.sh msg-edit [--force] <ch> <ts> <new_text>` | **edit a sent message in place** — same AUTHORSHIP GUARD as msg-delete |
 | `slack-api.sh mark-read <ch> [<ts>]` | **mark read** (omit ts = all); works on private/DM/group only — prints a "do it yourself" message on public channels |
+| `slack-api.sh permalink <ch> <ts>` | **canonical share link** for a message (= GUI "Copy link"; thread-aware) — for decision audit trails |
+| `slack-api.sh preview-strip [--force] <ch> <ts>` | **remove a link-preview card** from a sent message — AUTHORSHIP-GUARDED like msg-edit |
 | `slack-api.sh react-add / react-remove <ch> <ts> <emoji>` | **remove** a reaction (MCP only adds); enables the eyes→check→remove-eyes review flow |
 | `slack-api.sh open-conversation <uid[,uid,...]>` | **create-if-not-exists** a DM/group DM (prints channel id); step 1 of drafting to a never-messaged combo |
 
@@ -117,6 +121,19 @@ To draft to a set of people who may or may not already have a group chat, treat 
 - **Group DMs (MPIMs) are `C`-prefixed** (tell them apart via `is_mpim`), auto-named `mpdm-<members>-1`, and **persist forever** — every combo ever opened stays as an empty channel (Mike already has 100+). They **cannot be deleted** via API (same wall as drafts) — only **closed** (`conversations.close` = hide from *your* sidebar, a per-viewer state; you remain a member, the channel survives). So this workflow litters a permanent empty MPIM each time a genuinely new combo is used — acceptable, but note it.
 - **`is_open` is a per-viewer sidebar state**, not universal. It flips when *you* open/close a conversation AND when your client *views* it. There is **no API sequence that reproduces the GUI's "recipient-based draft with no visible channel"**: `open→draft→close` clobbers the draft (close deletes it); `open→close→draft` attaches the draft but the channel re-opens the moment you view the draft to act on it. That deferred-creation ergonomic lives only in the GUI's internal drafts API, which the token can't reach — so **via this workflow the group WILL appear in Mike's own sidebar.**
 - **Visibility to OTHER members — HEDGED, not proven.** We are *reasonably confident* (documented Slack behavior: MPIMs surface to other members on the first *delivered message*, and the `is_open` we can toggle is only Mike's own) that opening/drafting to a new group does **not** make it appear in Fred/Sarah/Joe's sidebars, and **no message or notification is sent by opening or drafting**. But this is **NOT API-verifiable** — `conversations.info` only ever reports the caller's own view. Do not state it as a guarantee. **⏳ Open question to confirm later:** ask a participant (e.g. Joe Ellis) whether a never-messaged group appears for them before the first send. Until then, hedge the claim in anything user-facing, and if zero-visibility-to-others is ever a hard requirement, use the GUI's native group draft instead (it truly defers channel creation).
+
+### Permalinks, link previews & images (verified 2026-07-23)
+
+**Permalinks — the decision-audit-trail tool.** `slack-api.sh permalink <ch> <ts>` (wraps `chat.getPermalink`) returns the canonical share link, byte-identical to the GUI's "Copy link": top-level messages are `https://bstocksolutions.slack.com/archives/<CH>/p<ts-without-the-dot>` (so the URL is mechanically derivable from channel+ts, but use the API — it's authoritative); thread replies automatically gain `?thread_ts=<parent>&cid=<ch>`. Works on any message the token can see, including group DMs. The MCP's `slack_send_message` also returns a `message_link` permalink for each send — capture it when the send is part of a paper trail. **Primary use-case: recording where a decision came from** — e.g. Fred confirms a product decision in a group chat → `permalink` → paste into the Jira ticket. Caveat for that flow: a permalink into a **DM/group DM/private channel only resolves for its members** — most Jira readers will get "channel not found" — so when citing a private-surface decision in a ticket, quote the relevant text alongside the link rather than letting the link carry the meaning alone.
+
+**Link previews (unfurls):**
+
+- **API sends produce NO preview card by default** — verified for raw `chat.postMessage` AND MCP `slack_send_message` (the MCP exposes no unfurl knob at all). This is the opposite of the GUI composer, which eagerly attaches previews. So the usual worry is inverted: programmatic sends are clean by default, and no "dismiss the preview" step exists or is needed.
+- **To force a preview on**, send via raw API with `"unfurl_links":true,"unfurl_media":true` — verified (Wikipedia link grew its card). The card lands **asynchronously** (~2–20 s after send) as `attachments` on the message, so verify by reading the message back, not from the send response. Domain caveat: some domains never unfurl generically — github.com produced no card even when forced (GitHub-link previews belong to the GitHub Slack integration, which isn't in play here); GitLab-internal links are untested.
+- **To remove a preview from a sent message** (the GUI "x" equivalent): `slack-api.sh preview-strip <ch> <ts>` — `chat.update` with the message's own text and `"attachments":[]`, verified to strip the card and leave text/reactions intact. Authorship-guarded like `msg-edit` (Claude-authored only; `--force` to override) — for Mike's own hand-typed messages the GUI "x" is the natural tool.
+- **Drafts**: preview generation happens in Mike's composer when he reviews the draft in the GUI, and he can dismiss it there before sending — preview control on drafts stays with him; nothing to manage via API.
+
+**Images / file attachments: not possible with the current token.** The MCP has no upload tool (`slack_read_file` is read-only) and the raw API path (`files.getUploadURLExternal` → `files.completeUploadExternal`) needs `files:write`, which is not granted. Drafts can't carry attachments via API either (that's the internal client API again). Workflow: Claude drafts the text, Mike attaches the image in the composer before sending. Untested alternative: a message linking an externally-hosted image with `unfurl_media:true` *may* render it inline — probe before relying on it. If uploads become a real need, `files:write` belongs in the same admin scope petition as `channels:write` (see below).
 
 ## Key Channels
 
