@@ -20,6 +20,7 @@
 #   slack-api.sh scheduled-reschedule <channel_id> <scheduled_message_id> <new_unix_ts>
 #   slack-api.sh msg-delete [--force] <channel_id> <message_ts>
 #   slack-api.sh msg-edit [--force] <channel_id> <message_ts> <new_text>
+#   slack-api.sh open-conversation <user_id[,user_id,...]>   (create-if-not-exists; prints channel id)
 #   slack-api.sh mark-read <channel_id> [<message_ts>]   (omit ts = mark all read)
 #   slack-api.sh react-add <channel_id> <message_ts> <emoji_name>
 #   slack-api.sh react-remove <channel_id> <message_ts> <emoji_name>
@@ -151,6 +152,26 @@ print('CLAUDE' if m.get('app_id')==CLAUDE_APP else 'OTHER app_id=%r user=%r'%(m.
     printf '%s' "$3" | python3 -c "import sys,json;print(json.dumps({'channel':'$ch','ts':'$2','text':sys.stdin.read()}))" > /tmp/.slack_edit.json
     _api chat.update "$(cat /tmp/.slack_edit.json)" | python3 -c "import sys,json;d=json.load(sys.stdin);print('ok' if d.get('ok') else 'ERR '+str(d.get('error')))"
     rm -f /tmp/.slack_edit.json ;;
+
+  open-conversation)
+    # "mkdir -p" for a conversation: open (creating if it doesn't exist) a DM (1 user)
+    # or group DM / MPIM (2+ users), and print the channel id on stdout. Idempotent —
+    # the same member set always resolves to the same channel id.
+    # NOTE: this MATERIALIZES the conversation server-side and opens it in Mike's own
+    # sidebar. Other members very likely do NOT see it until the first message is sent
+    # (documented Slack behavior — NOT API-verified; see slack-workflow.md). Drafts
+    # themselves can't be created here (internal client API) — after this, Claude calls
+    # the slack_send_message_draft MCP tool with the printed channel id.
+    [ $# -eq 1 ] || die "usage: open-conversation <user_id[,user_id,...]>   (comma-separated, NO spaces)"
+    _api conversations.open "{\"users\":\"$1\"}" | python3 -c "
+import sys,json
+d=json.load(sys.stdin)
+if not d.get('ok'): sys.exit('open failed: '+str(d.get('error')))
+c=d['channel']
+print(c['id'])
+sys.stderr.write('  opened '+c['id']+' (name='+repr(c.get('name'))+', already_open='+str(d.get('already_open'))+', no_op='+str(d.get('no_op'))+')\n')
+sys.stderr.write('  materialized in Mike\'s sidebar; likely hidden to other members until first message (UNVERIFIED)\n')
+" ;;
 
   mark-read)
     [ $# -ge 1 ] && [ $# -le 2 ] || die "usage: mark-read <channel_id|user_id> [<message_ts>]"

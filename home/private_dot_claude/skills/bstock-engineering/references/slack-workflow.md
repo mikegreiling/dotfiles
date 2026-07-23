@@ -102,6 +102,21 @@ No `drafts-*` or `status-*` subcommands exist and none can be added — drafts a
 
 **msg-delete authorship guard**: `msg-delete` fetches the target message first and **refuses unless it was sent via Claude** — the discriminator is the message's Slack `app_id == A08SF47R6P4` (the Claude app; a Mike-typed client message has NO `app_id`). Also readable as the `Sent using <@U0AJR340H60>` context block. `--force` overrides for a deliberate delete of a non-Claude message. This is a **guard-rail, not a security boundary**: the token can call `chat.delete` on anything Mike authored, so a determined/rogue agent could bypass it — the value is making the frictionless, skill-blessed path (this script) the safe-by-default one, so an agent following the documented pattern won't blanket-delete Mike's real messages. Always prefer this script over hand-rolled `chat.delete`.
 
+### Drafting to a user or group not messaged before (verified 2026-07-23, with caveats)
+
+Message identity note: a message is addressed by **`channel` + `ts`** (its timestamp, `sec.microsec`) — there is no separate message UUID for targeting (the `client_msg_id` on client-typed messages is dedup-only and absent on API sends). Every message op takes that pair.
+
+To draft to a set of people who may or may not already have a group chat, treat it as **`mkdir -p` then draft** — two steps, because drafts can't be created by the raw API (internal client API), only by the `slack_send_message_draft` MCP tool:
+
+1. `slack-api.sh open-conversation <uid[,uid,...]>` → creates-or-resolves the DM (1 user) / **MPIM group DM** (2+ users) and prints its channel id. Idempotent: the same member set always resolves to the same channel (`conversations.open` is keyed on membership), so this is safe to run whether or not the combo has been used before.
+2. `slack_send_message_draft` (MCP tool) with that channel id → attach the draft. Then hand off (`open` the channel link) for Mike to review and send.
+
+**What we know vs. what we're hedging:**
+
+- **Group DMs (MPIMs) are `C`-prefixed** (tell them apart via `is_mpim`), auto-named `mpdm-<members>-1`, and **persist forever** — every combo ever opened stays as an empty channel (Mike already has 100+). They **cannot be deleted** via API (same wall as drafts) — only **closed** (`conversations.close` = hide from *your* sidebar, a per-viewer state; you remain a member, the channel survives). So this workflow litters a permanent empty MPIM each time a genuinely new combo is used — acceptable, but note it.
+- **`is_open` is a per-viewer sidebar state**, not universal. It flips when *you* open/close a conversation AND when your client *views* it. There is **no API sequence that reproduces the GUI's "recipient-based draft with no visible channel"**: `open→draft→close` clobbers the draft (close deletes it); `open→close→draft` attaches the draft but the channel re-opens the moment you view the draft to act on it. That deferred-creation ergonomic lives only in the GUI's internal drafts API, which the token can't reach — so **via this workflow the group WILL appear in Mike's own sidebar.**
+- **Visibility to OTHER members — HEDGED, not proven.** We are *reasonably confident* (documented Slack behavior: MPIMs surface to other members on the first *delivered message*, and the `is_open` we can toggle is only Mike's own) that opening/drafting to a new group does **not** make it appear in Fred/Sarah/Joe's sidebars, and **no message or notification is sent by opening or drafting**. But this is **NOT API-verifiable** — `conversations.info` only ever reports the caller's own view. Do not state it as a guarantee. **⏳ Open question to confirm later:** ask a participant (e.g. Joe Ellis) whether a never-messaged group appears for them before the first send. Until then, hedge the claim in anything user-facing, and if zero-visibility-to-others is ever a hard requirement, use the GUI's native group draft instead (it truly defers channel creation).
+
 ## Key Channels
 
 | Channel | ID | Type | Purpose |
