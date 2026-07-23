@@ -73,7 +73,16 @@ The Slack MCP tools don't cover everything. The plugin's user OAuth token can dr
 - **Content + shared metadata** (messages, reactions, membership, topic, purpose, channel type, read cursor `last_read`) — standard OAuth scopes. Readable broadly for channels (not DM info — `im:read` not granted). Writable only where the *type's* write scope was granted: **`conversations.mark` (mark-read), `setTopic`, `setPurpose`, `rename` work on private channels/DMs/group DMs (`groups/im/mpim:write`) but FAIL on public channels (`channels:write` not granted)**. This is exactly why mark-read succeeds on `#bstock-campfire` but returns `missing_scope` on `#fe-guild` — it's the channel *type's* scope, not a public/private concept. Converting public↔private needs `admin.conversations.*` (Enterprise admin) — not granted.
 - **Personal UI/preference state** (drafts, saved/starred, muted, sidebar sections, "VIP") — Slack **internal client API**, the same wall drafts hit. Unreachable by ANY OAuth token, **read OR write**: `stars.list`→`missing_scope`, `saved.list`→`not_allowed_token_type`, `users.prefs.get` (mute)→`missing_scope`, `users.channelSections.list`→`not_allowed_token_type`; no public "VIP" API exists. Do not attempt to automate these — direct Mike to his Slack client.
 
-Practical note for **summarize-then-mark-read** workflows: works on private channels, DMs, and group DMs, but NOT public channels (can't clear their bold/unread state). The read cursor is still *readable* on channels, so Claude can report what's unread even where it can't mark it.
+### Summarize-then-mark-read workflow
+
+When Mike asks to summarize unread posts/channels (to clear seldom-read channels from bold/unread), after delivering the summary:
+
+1. **Offer to mark-read the channels Claude CAN** — private channels, DMs, and group DMs (`conversations.mark`, via `slack-api.sh` once such a subcommand exists, or raw `chat`-scoped call). Marking read is Mike's own read-cursor on his own client; still offer rather than doing it silently, since it clears unread state.
+2. **List the channels Mike must mark read HIMSELF** — every **public** channel in the batch, because `channels:write` is not granted so `conversations.mark` fails there. Give him the explicit list so there's no guesswork about which ones still need a manual click.
+
+Claude can always *read* the `last_read` cursor on channels, so it can report exactly what's unread in a public channel even where it can't clear it.
+
+**Possible future unblock (`channels:write`):** the public-channel mark-read gap (and public-channel `setTopic`/`rename`) exists only because the Claude Slack app wasn't granted `channels:write`. Mike could petition the workspace Slack admin to add that scope to the app if this becomes a recurring pain point — parked as a "maybe someday", not worth pursuing preemptively. Revisit if summarize-then-mark-read on public channels becomes a frequent ask.
 
 **Helper script — `scripts/slack-api.sh`** (bundled with this skill) wraps the verified gaps so you don't hand-roll curl. Reads the keychain token per call (never prints it); accepts a `U…` user id OR a `D…`/`C…` channel id anywhere (auto-resolves user→DM via `conversations.open`, matching MCP ergonomics). Subcommands:
 
