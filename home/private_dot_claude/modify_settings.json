@@ -124,6 +124,7 @@ printf '%s' "$input" | jq --argjson baseline "$BASELINE_ALLOW" '
   .permissions.ask = ["Bash(chezmoi apply:*)"] |
   .skipDangerousModePermissionPrompt = true |
   .skipAutoPermissionPrompt = true |
+  .cleanupPeriodDays = 99999 |
 
   # Additive allow list: union baseline with whatever is currently on disk,
   # deduped and sorted. Claude Code appends to this list on "always allow";
