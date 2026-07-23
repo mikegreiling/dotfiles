@@ -58,12 +58,13 @@ The Slack MCP tools don't cover everything. The plugin's user OAuth token can dr
   curl -s -H "Authorization: Bearer $TOKEN" "https://slack.com/api/auth.test"
   ```
   The token rotates — always re-read it from the keychain; never cache it. Reading it triggers a one-time macOS keychain prompt Mike must allow.
-- **Granted scopes** (define what's callable): `chat:write` (send/delete own messages + manage scheduled), `channels/groups/im/mpim:history`, `*:read`, `search:read.*`, `reactions:write`, `canvases:write`, `users:read.email`. **Not granted**: `users.profile:write` (so status-setting is impossible even here) and no mark-read scope.
+- **Granted scopes** (define what's callable): `chat:write` (send/delete own messages + manage scheduled), `channels/groups/im/mpim:history`, `groups/im/mpim:write` (private-surface writes incl. mark-read), `*:read`, `search:read.*`, `reactions:write`, `canvases:write`, `users:read.email`. **Not granted**: `users.profile:write` (status-setting impossible) and `channels:write` (so no mark-read on PUBLIC channels).
 - **Verified raw-API wins over the MCP**:
   - `chat.scheduledMessages.list` — **read pending scheduled messages** (MCP can't).
   - `chat.deleteScheduledMessage` — **deschedule** before send (MCP can't). Full schedule→list→delete loop confirmed.
   - `chat.delete` — **delete Mike's own messages** (MCP can't). (Available per scope; use only on explicit instruction — it's a real send/delete action, confirmation required.)
-- **Still impossible** even via raw API with this token: setting Slack status/presence (scope not granted); reading/updating/deleting **drafts** (Slack internal client API, not public Web API — no token reaches it).
+  - `conversations.mark` — **mark READ**, but only on DMs/group-DMs/private channels (`im/mpim/groups:write`); PUBLIC channels fail `missing_scope`. Verified 2026-07-22.
+- **Still impossible** even via raw API with this token: setting Slack status/presence (scope not granted); **mark-UNREAD** (`conversations.markUnread` → `not_allowed_token_type`, a client-only op); mark-READ on public channels (`channels:write` not granted); reading/updating/deleting **drafts** (Slack internal client API, not public Web API — no token reaches it).
 - **This is a fallback, not the default.** Prefer the MCP tools for anything they cover (they keep responses lean and need no token handling). Drop to raw `curl` only for a verified gap, and treat every write (delete/deschedule) under the same confirmation rules as MCP sends.
 
 **Helper script — `scripts/slack-api.sh`** (bundled with this skill) wraps the verified gaps so you don't hand-roll curl. Reads the keychain token per call (never prints it); accepts a `U…` user id OR a `D…`/`C…` channel id anywhere (auto-resolves user→DM via `conversations.open`, matching MCP ergonomics). Subcommands:
