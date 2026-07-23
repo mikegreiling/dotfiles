@@ -20,10 +20,14 @@
 #   slack-api.sh scheduled-reschedule <channel_id> <scheduled_message_id> <new_unix_ts>
 #   slack-api.sh msg-delete [--force] <channel_id> <message_ts>
 #   slack-api.sh msg-edit [--force] <channel_id> <message_ts> <new_text>
+#   slack-api.sh mark-read <channel_id> [<message_ts>]   (omit ts = mark all read)
 #   slack-api.sh react-add <channel_id> <message_ts> <emoji_name>
 #   slack-api.sh react-remove <channel_id> <message_ts> <emoji_name>
 #
 # Notes:
+#   - mark-read works on DMs/group-DMs/private channels only. On PUBLIC channels
+#     it fails (channels:write not granted) and prints a message telling Mike to
+#     mark that one read himself.
 #   - <channel_id> may be a user_id (e.g. U065SDTU138) for a DM.
 #   - <emoji_name> has NO colons (e.g. white_check_mark, eyes, thankyou).
 #   - msg-delete has an AUTHORSHIP GUARD: it refuses to delete a message unless
@@ -147,6 +151,26 @@ print('CLAUDE' if m.get('app_id')==CLAUDE_APP else 'OTHER app_id=%r user=%r'%(m.
     printf '%s' "$3" | python3 -c "import sys,json;print(json.dumps({'channel':'$ch','ts':'$2','text':sys.stdin.read()}))" > /tmp/.slack_edit.json
     _api chat.update "$(cat /tmp/.slack_edit.json)" | python3 -c "import sys,json;d=json.load(sys.stdin);print('ok' if d.get('ok') else 'ERR '+str(d.get('error')))"
     rm -f /tmp/.slack_edit.json ;;
+
+  mark-read)
+    [ $# -ge 1 ] && [ $# -le 2 ] || die "usage: mark-read <channel_id|user_id> [<message_ts>]"
+    ch=$(_resolve "$1")
+    ts="${2:-}"
+    if [ -z "$ts" ]; then  # default: mark everything read (up to the latest message)
+      ts=$(_api conversations.history "{\"channel\":\"$ch\",\"limit\":1}" | python3 -c "import sys,json;d=json.load(sys.stdin);ms=d.get('messages',[]);print(ms[0]['ts'] if ms else '')")
+      [ -n "$ts" ] || die "could not read latest message in $ch (empty channel, or no history access)"
+    fi
+    _api conversations.mark "{\"channel\":\"$ch\",\"ts\":\"$ts\"}" | python3 -c "
+import sys,json
+d=json.load(sys.stdin)
+if d.get('ok'):
+    print('  ok — marked read up to $ts')
+elif d.get('error')=='missing_scope':
+    print('  CANNOT mark read — this is almost certainly a PUBLIC channel; the Claude app lacks channels:write.')
+    print('  Mark this one read yourself in the Slack client. (Private channels, DMs, and group DMs work; public channels do not.)')
+else:
+    print('  ERR '+str(d.get('error'))+' (e.g. not_in_channel = Claude is not a member)')
+" ;;
 
   react-add)
     [ $# -eq 3 ] || die "usage: react-add <channel_id|user_id> <message_ts> <emoji_name>"

@@ -77,7 +77,7 @@ The Slack MCP tools don't cover everything. The plugin's user OAuth token can dr
 
 When Mike asks to summarize unread posts/channels (to clear seldom-read channels from bold/unread), after delivering the summary:
 
-1. **Offer to mark-read the channels Claude CAN** — private channels, DMs, and group DMs (`conversations.mark`, via `slack-api.sh` once such a subcommand exists, or raw `chat`-scoped call). Marking read is Mike's own read-cursor on his own client; still offer rather than doing it silently, since it clears unread state.
+1. **Offer to mark-read the channels Claude CAN** — private channels, DMs, and group DMs, via `slack-api.sh mark-read <ch>` (omit ts to mark all read; it prints a clear "mark this one yourself" message on public channels). Marking read is Mike's own read-cursor on his own client; still offer rather than doing it silently, since it clears unread state.
 2. **List the channels Mike must mark read HIMSELF** — every **public** channel in the batch, because `channels:write` is not granted so `conversations.mark` fails there. Give him the explicit list so there's no guesswork about which ones still need a manual click.
 
 Claude can always *read* the `last_read` cursor on channels, so it can report exactly what's unread in a public channel even where it can't clear it.
@@ -94,6 +94,7 @@ Claude can always *read* the `last_read` cursor on channels, so it can report ex
 | `slack-api.sh scheduled-reschedule <ch> <smid> <unix_ts>` | **reschedule** (delete+recreate, preserves text — Slack has no in-place update; safe/verifiable because scheduled msgs have stable ids + a list endpoint) |
 | `slack-api.sh msg-delete [--force] <ch> <ts>` | **delete a message** — AUTHORSHIP-GUARDED (see below) |
 | `slack-api.sh msg-edit [--force] <ch> <ts> <new_text>` | **edit a sent message in place** — same AUTHORSHIP GUARD as msg-delete |
+| `slack-api.sh mark-read <ch> [<ts>]` | **mark read** (omit ts = all); works on private/DM/group only — prints a "do it yourself" message on public channels |
 | `slack-api.sh react-add / react-remove <ch> <ts> <emoji>` | **remove** a reaction (MCP only adds); enables the eyes→check→remove-eyes review flow |
 
 No `drafts-*` or `status-*` subcommands exist and none can be added — drafts are the internal client API, status needs an ungranted scope. Reaction emoji names take NO colons (`white_check_mark`, `eyes`, `thankyou`). Every write is real and visible → confirmation rules apply (reactions may follow an instructed task; deletes/deschedules/sends need explicit go-ahead).
