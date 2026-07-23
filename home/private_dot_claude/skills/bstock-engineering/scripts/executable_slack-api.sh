@@ -19,6 +19,7 @@
 #   slack-api.sh scheduled-delete <channel_id> <scheduled_message_id>
 #   slack-api.sh scheduled-reschedule <channel_id> <scheduled_message_id> <new_unix_ts>
 #   slack-api.sh msg-delete [--force] <channel_id> <message_ts>
+#   slack-api.sh msg-edit [--force] <channel_id> <message_ts> <new_text>
 #   slack-api.sh react-add <channel_id> <message_ts> <emoji_name>
 #   slack-api.sh react-remove <channel_id> <message_ts> <emoji_name>
 #
@@ -118,6 +119,34 @@ print('CLAUDE' if m.get('app_id')==CLAUDE_APP else 'OTHER app_id=%r user=%r'%(m.
         fi ;;
     esac
     _api chat.delete "{\"channel\":\"$ch\",\"ts\":\"$2\"}" | python3 -c "import sys,json;d=json.load(sys.stdin);print('ok' if d.get('ok') else 'ERR '+str(d.get('error')))" ;;
+
+  msg-edit)
+    force=0
+    if [ "${1:-}" = "--force" ]; then force=1; shift; fi
+    [ $# -eq 3 ] || die "usage: msg-edit [--force] <channel_id|user_id> <message_ts> <new_text>"
+    ch=$(_resolve "$1")
+    # Same AUTHORSHIP GUARD as msg-delete: only edit Claude-authored messages unless --force.
+    verdict=$(_api conversations.history "{\"channel\":\"$ch\",\"oldest\":\"$2\",\"inclusive\":true,\"limit\":1}" | python3 -c "
+import sys,json
+CLAUDE_APP='A08SF47R6P4'
+d=json.load(sys.stdin)
+if not d.get('ok'): print('ERR '+str(d.get('error'))); sys.exit()
+ms=d.get('messages',[])
+if not ms or ms[0].get('ts')!='$2': print('NOTFOUND'); sys.exit()
+m=ms[0]
+print('CLAUDE' if m.get('app_id')==CLAUDE_APP else 'OTHER app_id=%r user=%r'%(m.get('app_id'),m.get('user')))
+")
+    case "$verdict" in
+      CLAUDE) : ;;
+      NOTFOUND) die "message $2 not found in $ch (already deleted, or wrong ts)" ;;
+      ERR*) die "could not verify authorship: ${verdict#ERR }" ;;
+      OTHER*)
+        if [ $force -eq 1 ]; then echo "  (--force: overriding authorship guard — $verdict)" >&2
+        else die "REFUSED: message $2 was NOT sent via Claude ($verdict). This guard only edits Claude-authored messages. Re-run with --force to override."; fi ;;
+    esac
+    printf '%s' "$3" | python3 -c "import sys,json;print(json.dumps({'channel':'$ch','ts':'$2','text':sys.stdin.read()}))" > /tmp/.slack_edit.json
+    _api chat.update "$(cat /tmp/.slack_edit.json)" | python3 -c "import sys,json;d=json.load(sys.stdin);print('ok' if d.get('ok') else 'ERR '+str(d.get('error')))"
+    rm -f /tmp/.slack_edit.json ;;
 
   react-add)
     [ $# -eq 3 ] || die "usage: react-add <channel_id|user_id> <message_ts> <emoji_name>"

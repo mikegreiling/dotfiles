@@ -63,6 +63,7 @@ The Slack MCP tools don't cover everything. The plugin's user OAuth token can dr
   - `chat.scheduledMessages.list` — **read pending scheduled messages** (MCP can't).
   - `chat.deleteScheduledMessage` — **deschedule** before send (MCP can't). Full schedule→list→delete loop confirmed.
   - `chat.delete` — **delete Mike's own messages** (MCP can't). (Available per scope; use only on explicit instruction — it's a real send/delete action, confirmation required.)
+  - `chat.update` — **edit an already-sent message in place** (MCP can't) — preserves the message's `app_id` (guard still recognizes it) and reactions/thread replies, and Slack shows an "edited" marker. Better than delete+repost for fixing/updating a posted reminder. Verified 2026-07-22.
   - `conversations.mark` — **mark READ**, but only on DMs/group-DMs/private channels (`im/mpim/groups:write`); PUBLIC channels fail `missing_scope`. Verified 2026-07-22.
 - **Still impossible** even via raw API with this token: setting Slack status/presence (scope not granted); **mark-UNREAD** (`conversations.markUnread` → `not_allowed_token_type`, a client-only op); mark-READ on public channels (`channels:write` not granted); reading/updating/deleting **drafts** (Slack internal client API, not public Web API — no token reaches it).
 - **This is a fallback, not the default.** Prefer the MCP tools for anything they cover (they keep responses lean and need no token handling). Drop to raw `curl` only for a verified gap, and treat every write (delete/deschedule) under the same confirmation rules as MCP sends.
@@ -76,6 +77,7 @@ The Slack MCP tools don't cover everything. The plugin's user OAuth token can dr
 | `slack-api.sh scheduled-delete <ch> <smid>` | **deschedule** |
 | `slack-api.sh scheduled-reschedule <ch> <smid> <unix_ts>` | **reschedule** (delete+recreate, preserves text — Slack has no in-place update; safe/verifiable because scheduled msgs have stable ids + a list endpoint) |
 | `slack-api.sh msg-delete [--force] <ch> <ts>` | **delete a message** — AUTHORSHIP-GUARDED (see below) |
+| `slack-api.sh msg-edit [--force] <ch> <ts> <new_text>` | **edit a sent message in place** — same AUTHORSHIP GUARD as msg-delete |
 | `slack-api.sh react-add / react-remove <ch> <ts> <emoji>` | **remove** a reaction (MCP only adds); enables the eyes→check→remove-eyes review flow |
 
 No `drafts-*` or `status-*` subcommands exist and none can be added — drafts are the internal client API, status needs an ungranted scope. Reaction emoji names take NO colons (`white_check_mark`, `eyes`, `thankyou`). Every write is real and visible → confirmation rules apply (reactions may follow an instructed task; deletes/deschedules/sends need explicit go-ahead).
