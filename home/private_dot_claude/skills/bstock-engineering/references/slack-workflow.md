@@ -96,6 +96,7 @@ Claude can always *read* the `last_read` cursor on channels, so it can report ex
 | `slack-api.sh msg-edit [--force] <ch> <ts> <new_text>` | **edit a sent message in place** — same AUTHORSHIP GUARD as msg-delete |
 | `slack-api.sh mark-read <ch> [<ts>]` | **mark read** (omit ts = all); works on private/DM/group only — prints a "do it yourself" message on public channels |
 | `slack-api.sh react-add / react-remove <ch> <ts> <emoji>` | **remove** a reaction (MCP only adds); enables the eyes→check→remove-eyes review flow |
+| `slack-api.sh open-conversation <uid[,uid,...]>` | **create-if-not-exists** a DM/group DM (prints channel id); step 1 of drafting to a never-messaged combo |
 
 No `drafts-*` or `status-*` subcommands exist and none can be added — drafts are the internal client API, status needs an ungranted scope. Reaction emoji names take NO colons (`white_check_mark`, `eyes`, `thankyou`). Every write is real and visible → confirmation rules apply (reactions may follow an instructed task; deletes/deschedules/sends need explicit go-ahead).
 
@@ -145,6 +146,8 @@ Common collaborators, mapped across systems (Slack/Jira verified via live lookup
 | Frederick (Fred) Leung — UX Designer | `U0A0Y5MRHSL` | frederick.leung@bstock.com | `frederick.leung` (626) | `712020:0accc665-be14-4f4c-9914-796fffa4d0ca` |
 
 Name disambiguation: "Paul" alone is ambiguous in Slack (Paul Angeles `U075W4W0VDX` also exists) — Mike's "Paul R." is Paul Robertson. "Joe" is ambiguous too (Joe Ellis, Joe Dube) — Mike's "Joe S." is Spandrusyszyn. "Sarah" is ambiguous in Jira (Sarah Robinson `712020:281ecc4f-…` also exists) — the parcel-PRD PM is Sarah Xu. When adding new people to this table, verify with `slack_search_users`, `glab api "users?search=<name>"`, and `lookupJiraAccountId` rather than guessing; email is the reliable join key.
+
+Known group DMs: `C0BKD5JMJSJ` = Mike + Sarah Xu + Fred Leung (`mpdm-mike.greiling--frederick.leung--sarah-1`; product/UX sign-off thread, e.g. the parcel insurance disclosure copy).
 
 ## Slack Status (PTO / meetings)
 
