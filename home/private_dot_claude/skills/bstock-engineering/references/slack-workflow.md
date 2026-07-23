@@ -46,6 +46,7 @@ Standard markdown converts correctly: bold/italic/strikethrough, inline code, fe
 
 - **No language hints on fenced code blocks** — ` ```js ` leaks a literal "js" as the block's first line. Use bare ` ``` `.
 - Bare mention keywords and `@names` are always sent as plain text — they never become live mentions (confirmed via raw read-back). Use the token syntax from the mention-keywords section when a real ping is intended and approved.
+- **Never nest a blockquote inside a numbered/bulleted list** (observed 2026-07-23 in a draft): the converter absorbs everything after the quote — follow-up lines AND the remaining list items — into the quote block. Keep lists flat and place any `>` blockquote as its own top-level paragraph after the list (e.g. "placeholder quoted below" in the item, quote afterwards).
 
 ## Raw Web API fallback (for capabilities the MCP omits)
 
