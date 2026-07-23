@@ -162,8 +162,6 @@ Common collaborators, mapped across systems (Slack/Jira verified via live lookup
 
 Name disambiguation: "Paul" alone is ambiguous in Slack (Paul Angeles `U075W4W0VDX` also exists) — Mike's "Paul R." is Paul Robertson. "Joe" is ambiguous too (Joe Ellis, Joe Dube) — Mike's "Joe S." is Spandrusyszyn. "Sarah" is ambiguous in Jira (Sarah Robinson `712020:281ecc4f-…` also exists) — the parcel-PRD PM is Sarah Xu. When adding new people to this table, verify with `slack_search_users`, `glab api "users?search=<name>"`, and `lookupJiraAccountId` rather than guessing; email is the reliable join key.
 
-Known group DMs: `C0BKD5JMJSJ` = Mike + Sarah Xu + Fred Leung (`mpdm-mike.greiling--frederick.leung--sarah-1`; product/UX sign-off thread, e.g. the parcel insurance disclosure copy).
-
 ## Slack Status (PTO / meetings)
 
 Conventions: `:palm_tree:` emoji with a status like "PTO" when on vacation; similar statuses for meetings/appointments.
