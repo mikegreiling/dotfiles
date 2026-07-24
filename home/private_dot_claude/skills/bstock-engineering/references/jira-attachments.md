@@ -92,4 +92,17 @@ curl -s -H "Authorization: Bearer $TOKEN" "$BASE/3/issue/KEY?fields=description"
 jq -n --slurpfile d backup.adf.json '{fields: {description: $d[0]}}' | curl -s -X PUT -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d @- "$BASE/3/issue/KEY"
 ```
 
-- Deleting: comments via `DELETE /rest/api/2/issue/{KEY}/comment/{id}`; attachments via `acli jira workitem attachment delete --id ID`. Note Mike has **no issue-delete permission**, and deleting an attachment does not remove embeds pointing at it (they render as broken media).
+- Deleting: comments via `DELETE /rest/api/2/issue/{KEY}/comment/{id}`; attachments via `acli jira workitem attachment delete --id ID`. Note Mike has **no issue-delete permission**.
+
+### Orphaned embeds (attachment deleted, embed left behind)
+
+Verified: deleting an attachment does **not** scrub embeds pointing at it. The ADF `media` node survives verbatim (same media UUID) and rendering degrades to an inline error placeholder — *"Unable to render embedded object: File (name) not found."* So delete order matters: scrub embeds first (or accept the broken placeholder). Removing embeds from a body is a mechanical ADF edit — filter out the media nodes via v3 and PUT back:
+
+```bash
+# scrub ALL media embeds from a comment (analogous for description via /3/issue/{KEY})
+curl -s -H "Authorization: Bearer $TOKEN" "$BASE/3/issue/KEY/comment/ID" |
+  jq '{body: (.body | .content |= map(select(.type != "mediaSingle" and .type != "mediaGroup")))}' |
+  curl -s -X PUT -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d @- "$BASE/3/issue/KEY/comment/ID"
+```
+
+To remove only a *specific* file's embed, first find its media UUID by matching filenames: `GET /3/attachment/{attachmentId}` has the filename, but the UUID only lives in body ADF — in practice, select the `mediaSingle`/`mediaGroup` node whose position/context matches, or (for `mediaGroup` cards deleted last) match on the one UUID that stops resolving.
