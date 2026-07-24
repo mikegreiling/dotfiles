@@ -106,6 +106,7 @@ Load the appropriate reference file when performing these tasks:
 | GitLab MR required-approver lookup, SME/code-owner routing | `references/mr-approval-rules.md` |
 | Waiting for / polling CI pipelines & jobs (background task) | `references/pipeline-polling.md` |
 | Slack channels, review requests, reaction emojis, identity map | `references/slack-workflow.md` |
+| FE Guild meeting: agenda reminder, post-meeting Confluence notes processing | `references/fe-guild-meeting.md` |
 | Jira attachment upload, media embeds in comments/replies/descriptions, safe body editing | `references/jira-attachments.md` |
 
 ## Tool Preferences (GitLab & Atlassian)
@@ -184,4 +185,5 @@ For detailed workflow guidance, load:
 - **`references/project-ids.md`** — Complete stable ID cache: all GitLab project IDs, Atlassian IDs, Jira field IDs
 - **`references/pipeline-polling.md`** — Wait for CI pipelines/jobs via the bundled `gitlab-ci-poll.sh` background task (replaces the old `polling-agent`)
 - **`references/slack-workflow.md`** — Slack channels, review-request workflow, reaction-emoji conventions, cross-system people identity map, status/PTO conventions, posting-as-Mike ground rules
+- **`references/fe-guild-meeting.md`** — FE Guild meeting automation: pre-meeting agenda reminder to #fe-guild, post-meeting Confluence notes processing (agenda table, recording link, fresh Next Meeting slot)
 - **`references/jira-attachments.md`** — Upload attachments (`scripts/jira-attach`), embed media in comments/threaded replies/descriptions, ADF-laundering append recipe, acli keychain-token reuse, safe body-editing rules
