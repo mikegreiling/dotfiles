@@ -2,7 +2,15 @@
 # jira-attach — attach file(s) to a Jira issue, reusing the acli OAuth token
 # from the macOS login keychain (service "acli", go-keyring base64+gzip format).
 #
-# Usage: jira-attach ISSUE-KEY FILE [FILE...]
+# Usage: jira-attach [--comment TEXT] ISSUE-KEY FILE [FILE...]
+#
+# With --comment, also posts a comment embedding the uploaded files (images
+# render inline, other files as attachment cards). Jira has no comment-level
+# attachments — files always attach to the issue; the comment embeds them by
+# filename via v2 wiki markup (!name|thumbnail! / [^name]), which Jira
+# converts server-side into real ADF media nodes. Note: embeds resolve by
+# FILENAME, so a name that collides with an existing attachment on the issue
+# may embed the wrong one.
 #
 # The Atlassian MCP server has no attachment tool and acli can only
 # list/delete attachments, so this drives the REST API directly:
@@ -12,11 +20,19 @@
 set -euo pipefail
 
 CLOUD_ID="8fd1c100-2018-43ac-bdc1-ca69369799c3" # bstock.atlassian.net
+BASE="https://api.atlassian.com/ex/jira/$CLOUD_ID/rest/api"
 
 usage() {
-  echo "Usage: jira-attach ISSUE-KEY FILE [FILE...]" >&2
+  echo "Usage: jira-attach [--comment TEXT] ISSUE-KEY FILE [FILE...]" >&2
   exit 2
 }
+
+comment=""
+if [[ "${1:-}" == "--comment" ]]; then
+  [[ $# -ge 2 ]] || usage
+  comment="$2"
+  shift 2
+fi
 
 [[ $# -ge 2 ]] || usage
 issue="$1"
@@ -42,35 +58,56 @@ refresh_token() {
 token=$(read_token)
 [[ -n "$token" && "$token" != "null" ]] || { echo "error: could not read acli token from keychain (is acli authenticated? run: acli jira auth login)" >&2; exit 1; }
 
-upload() {
-  local file="$1"
-  curl -s -w '\n%{http_code}' \
-    -H "Authorization: Bearer $token" \
-    -H "X-Atlassian-Token: no-check" \
-    -H "Accept: application/json" \
-    -F "file=@$file" \
-    "https://api.atlassian.com/ex/jira/$CLOUD_ID/rest/api/3/issue/$issue/attachments"
-}
-
-fail=0
-for f in "$@"; do
-  out=$(upload "$f")
+# Runs a curl, splitting body and status; retries once through a token refresh
+# on 401. Sets globals: status, body.
+request() {
+  local out
+  out=$(curl -s -w '\n%{http_code}' -H "Authorization: Bearer $token" "$@")
   status="${out##*$'\n'}"
   body="${out%$'\n'*}"
-
   if [[ "$status" == "401" ]]; then
     token=$(refresh_token)
-    out=$(upload "$f")
+    out=$(curl -s -w '\n%{http_code}' -H "Authorization: Bearer $token" "$@")
     status="${out##*$'\n'}"
     body="${out%$'\n'*}"
   fi
+}
+
+fail=0
+embeds=""
+for f in "$@"; do
+  request -H "X-Atlassian-Token: no-check" -H "Accept: application/json" \
+    -F "file=@$f" "$BASE/3/issue/$issue/attachments"
 
   if [[ "$status" == "200" ]]; then
     echo "$body" | jq -r --arg f "$f" '.[] | "attached \($f) -> id \(.id) (\(.filename), \(.size) bytes)"'
+    name=$(echo "$body" | jq -r '.[0].filename')
+    mime=$(echo "$body" | jq -r '.[0].mimeType')
+    if [[ "$mime" == image/* ]]; then
+      embeds+="!${name}|thumbnail!"$'\n'
+    else
+      embeds+="[^${name}]"$'\n'
+    fi
   else
     echo "error: upload of $f failed with HTTP $status" >&2
     echo "$body" | jq . >&2 2>/dev/null || echo "$body" >&2
     fail=1
   fi
 done
+
+if [[ -n "$comment" && -n "$embeds" ]]; then
+  payload=$(jq -n --arg text "$comment"$'\n\n'"$embeds" '{body: $text}')
+  request -X POST -H "Content-Type: application/json" -d "$payload" \
+    "$BASE/2/issue/$issue/comment"
+  if [[ "$status" == "201" ]]; then
+    echo "commented -> id $(echo "$body" | jq -r .id) (https://bstock.atlassian.net/browse/$issue)"
+  else
+    echo "error: comment failed with HTTP $status (files are still attached)" >&2
+    echo "$body" | jq . >&2 2>/dev/null || echo "$body" >&2
+    fail=1
+  fi
+elif [[ -n "$comment" ]]; then
+  echo "error: no files uploaded; skipping comment" >&2
+fi
+
 exit $fail
