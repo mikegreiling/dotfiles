@@ -17,7 +17,7 @@
 #   slack-api.sh whoami
 #   slack-api.sh scheduled-list <channel_id>
 #   slack-api.sh scheduled-delete <channel_id> <scheduled_message_id>
-#   slack-api.sh scheduled-reschedule <channel_id> <scheduled_message_id> <new_unix_ts>
+#   slack-api.sh scheduled-reschedule <channel_id> <scheduled_message_id> <new_unix_ts> [<thread_ts>]
 #   slack-api.sh msg-delete [--force] <channel_id> <message_ts>
 #   slack-api.sh msg-edit [--force] <channel_id> <message_ts> <new_text>
 #   slack-api.sh open-conversation <user_id[,user_id,...]>   (create-if-not-exists; prints channel id)
@@ -42,6 +42,19 @@
 #   - scheduled-reschedule is delete+recreate (Slack has no in-place update);
 #     it preserves the original text and prints the new id. Safe & verifiable
 #     because scheduled messages have stable server IDs and a real list endpoint.
+#   - THREADED MESSAGES (full audit 2026-07-24): every subcommand taking a
+#     <message_ts> accepts a thread reply's ts. The API quirks this required are
+#     handled internally and documented at the point of handling:
+#       * conversations.history NEVER returns thread replies -> message lookups
+#         (msg-delete/msg-edit/preview-strip) fall back to conversations.replies,
+#         which accepts a reply's own ts but must be called via GET (rejects JSON
+#         POST bodies with invalid_arguments).
+#       * chat.scheduledMessages.list HIDES thread_ts -> scheduled-reschedule
+#         cannot auto-preserve threading; see its comment + optional 4th arg.
+#       * reactions.add/remove and chat.getPermalink take any ts directly —
+#         thread replies verified working, no special handling needed.
+#       * conversations.mark accepts a reply ts, but see mark-read's comment for
+#         why that's rarely what you want.
 
 set -euo pipefail
 
@@ -118,12 +131,26 @@ case "$cmd" in
     _api chat.deleteScheduledMessage "{\"channel\":\"$ch\",\"scheduled_message_id\":\"$2\"}" | python3 -c "import sys,json;d=json.load(sys.stdin);print('ok' if d.get('ok') else 'ERR '+str(d.get('error')))" ;;
 
   scheduled-reschedule)
-    [ $# -eq 3 ] || die "usage: scheduled-reschedule <channel_id|user_id> <scheduled_message_id> <new_unix_ts>"
+    # THREAD QUIRK (probed 2026-07-24): chat.scheduledMessages.list returns ONLY
+    # {id, channel_id, post_at, date_created, text} — thread_ts is hidden even when
+    # the scheduled message IS a thread reply (chat.scheduleMessage accepts
+    # thread_ts, so such messages exist). Since this command is delete+recreate, a
+    # scheduled thread reply rescheduled without threading info silently becomes a
+    # CHANNEL-LEVEL message — and nothing in the API lets us detect that case.
+    # Mitigation: optional 4th arg re-supplies the parent ts; without it we emit an
+    # unconditional warning because we cannot tell whether it was needed.
+    [ $# -eq 3 ] || [ $# -eq 4 ] || die "usage: scheduled-reschedule <channel_id|user_id> <scheduled_message_id> <new_unix_ts> [<thread_ts>]"
     ch=$(_resolve "$1")
     text=$(_api chat.scheduledMessages.list "{\"channel\":\"$ch\"}" | python3 -c "import sys,json;d=json.load(sys.stdin);print(next((m.get('text','') for m in d.get('scheduled_messages',[]) if m['id']=='$2'),''))")
     [ -n "$text" ] || die "scheduled message $2 not found in channel $ch (already sent or wrong id)"
+    thread="${4:-}"
+    [ -n "$thread" ] || echo "  warning: cannot detect whether $2 was a scheduled THREAD reply (the list API hides thread_ts). If it was, this reschedule flattens it to a channel-level message — re-run with the parent ts as a 4th arg to preserve threading." >&2
     _api chat.deleteScheduledMessage "{\"channel\":\"$ch\",\"scheduled_message_id\":\"$2\"}" >/dev/null
-    printf '%s' "$text" | python3 -c "import sys,json;t=sys.stdin.read();print(json.dumps({'channel':'$ch','post_at':int('$3'),'text':t}))" > /tmp/.slack_resched.json
+    printf '%s' "$text" | python3 -c "
+import sys,json
+d={'channel':'$ch','post_at':int('$3'),'text':sys.stdin.read()}
+if '$thread': d['thread_ts']='$thread'
+print(json.dumps(d))" > /tmp/.slack_resched.json
     _api chat.scheduleMessage "$(cat /tmp/.slack_resched.json)" | python3 -c "import sys,json;d=json.load(sys.stdin);print('rescheduled -> new id',d.get('scheduled_message_id')) if d.get('ok') else print('ERR',d.get('error'))"
     rm -f /tmp/.slack_resched.json ;;
 
@@ -188,6 +215,15 @@ sys.stderr.write('  materialized in Mike\'s sidebar; likely hidden to other memb
 " ;;
 
   mark-read)
+    # THREAD NOTES (verified 2026-07-24): conversations.mark accepts a thread
+    # reply's ts, but the read cursor it moves is CHANNEL-level — and it moves in
+    # BOTH directions: marking to an old ts (thread replies usually have older
+    # neighbors) REWINDS the cursor, flipping newer messages back to unread.
+    # Thread replies also don't create channel unreads in the first place; the
+    # Threads-view unread badge is separate internal-client-API state (same wall
+    # as drafts) that no OAuth token can read or clear. Net: pass a ts only for
+    # deliberate partial marking with channel-level message ts values; for thread
+    # activity there is nothing this command can usefully do.
     [ $# -ge 1 ] && [ $# -le 2 ] || die "usage: mark-read <channel_id|user_id> [<message_ts>]"
     ch=$(_resolve "$1")
     ts="${2:-}"
@@ -226,14 +262,29 @@ else:
     if [ "${1:-}" = "--force" ]; then force=1; shift; fi
     [ $# -eq 2 ] || die "usage: preview-strip [--force] <channel_id|user_id> <message_ts>"
     ch=$(_resolve "$1")
-    _api conversations.history "{\"channel\":\"$ch\",\"oldest\":\"$2\",\"inclusive\":true,\"limit\":1}" | python3 -c "
+    # THREAD QUIRK: conversations.history never returns thread replies, so a plain
+    # history lookup reports NOTFOUND for any reply ts. Same fallback as
+    # _lookup_verdict: retry via GET conversations.replies (a reply's own ts is a
+    # valid `ts` there; the method rejects JSON POST bodies). chat.update itself is
+    # thread-safe — editing a reply keeps it in its thread.
+    msg=$(_api conversations.history "{\"channel\":\"$ch\",\"oldest\":\"$2\",\"inclusive\":true,\"limit\":1}" | python3 -c "
+import sys,json
+d=json.load(sys.stdin); ms=d.get('messages',[])
+print(json.dumps(ms[0]) if d.get('ok') and ms and ms[0].get('ts')=='$2' else '')
+")
+    if [ -z "$msg" ]; then
+      msg=$(curl -s -H "Authorization: Bearer $(_token)" "https://slack.com/api/conversations.replies?channel=$ch&ts=$2&limit=50" | python3 -c "
+import sys,json
+d=json.load(sys.stdin)
+m=next((x for x in d.get('messages',[]) if x.get('ts')=='$2'),None) if d.get('ok') else None
+print(json.dumps(m) if m else '')
+")
+    fi
+    [ -n "$msg" ] || die "message $2 not found in $ch (already deleted, or wrong ts)"
+    printf '%s' "$msg" | python3 -c "
 import sys,json
 CLAUDE_APP='A08SF47R6P4'
-d=json.load(sys.stdin)
-if not d.get('ok'): sys.exit('ERR '+str(d.get('error')))
-ms=d.get('messages',[])
-if not ms or ms[0].get('ts')!='$2': sys.exit('NOTFOUND: message $2 not in $ch (already deleted, or wrong ts)')
-m=ms[0]
+m=json.load(sys.stdin)
 if not m.get('attachments'): sys.exit('NOPREVIEW: message has no preview/attachments to strip')
 if m.get('app_id')!=CLAUDE_APP and $force==0:
     sys.exit('REFUSED: message was NOT sent via Claude (app_id=%r). Use the GUI x on the preview, or re-run with --force.'%m.get('app_id'))

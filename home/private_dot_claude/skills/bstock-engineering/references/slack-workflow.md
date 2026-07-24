@@ -109,7 +109,7 @@ Claude can always *read* the `last_read` cursor on channels, so it can report ex
 | `slack-api.sh whoami` | sanity/auth check |
 | `slack-api.sh scheduled-list <ch>` | **read** pending scheduled messages |
 | `slack-api.sh scheduled-delete <ch> <smid>` | **deschedule** |
-| `slack-api.sh scheduled-reschedule <ch> <smid> <unix_ts>` | **reschedule** (delete+recreate, preserves text — Slack has no in-place update; safe/verifiable because scheduled msgs have stable ids + a list endpoint) |
+| `slack-api.sh scheduled-reschedule <ch> <smid> <unix_ts> [<thread_ts>]` | **reschedule** (delete+recreate, preserves text — Slack has no in-place update; safe/verifiable because scheduled msgs have stable ids + a list endpoint). If the scheduled message was a **thread reply**, pass the parent ts as the 4th arg — the script can't detect threading itself (see its comments) |
 | `slack-api.sh msg-delete [--force] <ch> <ts>` | **delete a message** — AUTHORSHIP-GUARDED (see below) |
 | `slack-api.sh msg-edit [--force] <ch> <ts> <new_text>` | **edit a sent message in place** — same AUTHORSHIP GUARD as msg-delete |
 | `slack-api.sh mark-read <ch> [<ts>]` | **mark read** (omit ts = all); works on private/DM/group only — prints a "do it yourself" message on public channels |
