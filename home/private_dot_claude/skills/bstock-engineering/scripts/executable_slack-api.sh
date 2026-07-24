@@ -26,6 +26,7 @@
 #   slack-api.sh preview-strip [--force] <channel_id> <message_ts>   (remove a link-preview card)
 #   slack-api.sh react-add <channel_id> <message_ts> <emoji_name>
 #   slack-api.sh react-remove <channel_id> <message_ts> <emoji_name>
+#   slack-api.sh status <user_id>   (presence + current status/PTO/meeting — read-only)
 #
 # Notes:
 #   - mark-read works on DMs/group-DMs/private channels only. On PUBLIC channels
@@ -293,6 +294,28 @@ json.dump({'channel':'$ch','ts':'$2','text':m.get('text',''),'attachments':[]},o
     _api chat.update "$(cat /tmp/.slack_strip.json)" | python3 -c "import sys,json;d=json.load(sys.stdin);print('ok — preview removed' if d.get('ok') else 'ERR '+str(d.get('error')))"
     rm -f /tmp/.slack_strip.json ;;
 
+  status)
+    # Read a user's presence + current status (verified 2026-07-24). Status SETTING
+    # remains impossible (users.profile:write not granted), but READING works:
+    # presence via users.getPresence (covered by users:read) and status text/emoji
+    # via the profile object on users.info — raw users.profile.get is missing_scope,
+    # but users.info carries the same status_* fields. Also surfaces huddle_state.
+    # Use before pinging someone: detects "In a meeting", :palm_tree: PTO, away, etc.
+    [ $# -eq 1 ] || die "usage: status <user_id>   (U... id; see the identity map in slack-workflow.md)"
+    pres=$(curl -s -H "Authorization: Bearer $(_token)" "https://slack.com/api/users.getPresence?user=$1" | python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('presence','?') if d.get('ok') else 'ERR '+str(d.get('error')))")
+    curl -s -H "Authorization: Bearer $(_token)" "https://slack.com/api/users.info?user=$1" | python3 -c "
+import sys,json,datetime
+d=json.load(sys.stdin)
+if not d.get('ok'): sys.exit('ERR '+str(d.get('error')))
+pr=d['user'].get('profile',{})
+print('presence:', '$pres')
+print('status:  ', (pr.get('status_emoji','')+' '+pr.get('status_text','')).strip() or '(none)')
+exp=pr.get('status_expiration') or 0
+if exp: print('expires: ', datetime.datetime.fromtimestamp(exp).isoformat())
+h=pr.get('huddle_state')
+if h and h!='default_unset': print('huddle:  ', h)
+" ;;
+
   react-add)
     [ $# -eq 3 ] || die "usage: react-add <channel_id|user_id> <message_ts> <emoji_name>"
     ch=$(_resolve "$1")
@@ -303,5 +326,5 @@ json.dump({'channel':'$ch','ts':'$2','text':m.get('text',''),'attachments':[]},o
     ch=$(_resolve "$1")
     _api reactions.remove "{\"channel\":\"$ch\",\"timestamp\":\"$2\",\"name\":\"$3\"}" | python3 -c "import sys,json;d=json.load(sys.stdin);print('ok' if d.get('ok') else 'ERR '+str(d.get('error')))" ;;
 
-  *) die "unknown command '$cmd'. run with no args to see usage in the header, or: whoami | scheduled-list | scheduled-delete | scheduled-reschedule | msg-delete | msg-edit | open-conversation | mark-read | permalink | preview-strip | react-add | react-remove" ;;
+  *) die "unknown command '$cmd'. run with no args to see usage in the header, or: whoami | scheduled-list | scheduled-delete | scheduled-reschedule | msg-delete | msg-edit | open-conversation | mark-read | permalink | preview-strip | react-add | react-remove | status" ;;
 esac
