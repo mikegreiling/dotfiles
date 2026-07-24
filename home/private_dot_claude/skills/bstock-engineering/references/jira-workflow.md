@@ -117,6 +117,16 @@ Per **Jira Epic Workflow**:
 - An epic typically only appears on the team **kanban board columns once it reaches In Development**; earlier
   planning statuses live in the board's **Backlog**.
 
+### Who moves an epic through which statuses — MIKE STOPS AT DEV COMPLETE
+
+Validated against the GLOB-4588/GLOB-4674 audit trails (2026-07-23):
+
+- **Mike (epic owner) advances an epic only as far as `Dev Complete`.** Parking there IS the signal to QA.
+- **QA engineers** (e.g. Lana Kukharchyk, Vinh Tran) own `Dev Complete → Quality Review → Release Candidate` — they move it after their verification passes.
+- **QA manager / release** (Susan Oakes) owns `Release Candidate → Released to Production` (the terminal status), typically in release-day batches.
+- **NEVER transition an epic (or story) through the QA statuses on Mike's own initiative.** Narrow exception, per Mike (2026-07-23): changes with exclusively developer-facing impact — documentation updates, build tooling, CI configuration — may bypass QA (stories: use the `211` QA-bypass transition).
+- Cautionary tale: Mike self-moved GLOB-4588 to Release Candidate on 2026-07-14; QA (Lam) flagged it; it took the awkward walk-back via Open (`RC → Open → re-walk to In Development`) to fix — there is no direct backward transition from Release Candidate.
+
 ### FP kanban board (board 678) — membership criteria & transition IDs
 
 The team kanban board is `https://bstock.atlassian.net/jira/software/c/projects/FP/boards/678`. Validated empirically 2026-07-20 (full-field inspection of board-resident epics):
@@ -149,8 +159,8 @@ The team kanban board is `https://bstock.atlassian.net/jira/software/c/projects/
   AI lets an engineer carry more in parallel and tackle bigger slices than was practical before adoption. The
   ShapeUp "5–8 points is the sweet spot" note (per **ShapeUp at B-Stock**) is now a historical reference
   point, not a hard cap.
-- **QA-handoff threshold** (per **QA Handoffs**): an epic/feature totaling **≥ 25 story points requires a QA
-  handoff**; **≤ 24 makes it optional**.
+- **QA-handoff threshold** (per **QA Handoffs**, Confluence page last revised Jan 2025): an epic/feature totaling **≥ 25 story points requires a QA
+  handoff** (a recorded Zoom with QA Manager, Release Manager, Product; epic gets a `QA-Handoff` label); **≤ 24 makes it optional**. **CURRENCY CAVEAT (Mike, 2026-07-23): team processes are in heavy flux and this threshold may no longer be a valid qualifier** — GLOB-4674 (30 pts) reached Released to Production with story-level QA verdicts and no handoff meeting. Don't assert the threshold as binding; verify with QA (Lana/Susan) before scheduling one.
 
 ### Reference docs (Confluence → Engineering space)
 
