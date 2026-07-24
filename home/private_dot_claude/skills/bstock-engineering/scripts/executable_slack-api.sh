@@ -71,6 +71,36 @@ _resolve() {
 
 _require_ok() { python3 -c "import sys,json;d=json.load(sys.stdin);sys.exit(0 if d.get('ok') else 1) or print(json.dumps(d,indent=2))" ; }
 
+# Authorship lookup for the msg-delete/msg-edit guard. conversations.history never
+# returns THREAD REPLIES, so on a miss we fall back to conversations.replies, which
+# accepts a reply's own ts. Prints: CLAUDE | OTHER … | NOTFOUND | ERR …
+_lookup_verdict() { # channel  ts
+  local ch=$1 ts=$2 out
+  out=$(_api conversations.history "{\"channel\":\"$ch\",\"oldest\":\"$ts\",\"inclusive\":true,\"limit\":1}" | python3 -c "
+import sys,json
+CLAUDE_APP='A08SF47R6P4'  # the Claude Slack app id (stable); see slack-workflow.md
+d=json.load(sys.stdin)
+if not d.get('ok'): print('ERR '+str(d.get('error'))); sys.exit()
+ms=d.get('messages',[])
+if not ms or ms[0].get('ts')!='$ts': print('MISS'); sys.exit()
+m=ms[0]
+print('CLAUDE' if m.get('app_id')==CLAUDE_APP else 'OTHER app_id=%r user=%r'%(m.get('app_id'),m.get('user')))
+")
+  if [ "$out" = "MISS" ]; then
+    # NB: conversations.replies rejects JSON POST bodies (invalid_arguments) — must be GET.
+    out=$(curl -s -H "Authorization: Bearer $(_token)" "https://slack.com/api/conversations.replies?channel=$ch&ts=$ts&limit=50" | python3 -c "
+import sys,json
+CLAUDE_APP='A08SF47R6P4'
+d=json.load(sys.stdin)
+if not d.get('ok'): print('NOTFOUND'); sys.exit()  # thread_not_found etc. = message doesn't exist
+m=next((x for x in d.get('messages',[]) if x.get('ts')=='$ts'),None)
+if m is None: print('NOTFOUND'); sys.exit()
+print('CLAUDE' if m.get('app_id')==CLAUDE_APP else 'OTHER app_id=%r user=%r'%(m.get('app_id'),m.get('user')))
+")
+  fi
+  printf '%s' "$out"
+}
+
 cmd=${1:-}; shift || true
 case "$cmd" in
   whoami)
@@ -104,16 +134,7 @@ case "$cmd" in
     ch=$(_resolve "$1")
     # AUTHORSHIP GUARD: only delete messages sent via Claude (app_id CLAUDE_APP_ID)
     # unless --force. A client-typed message has no app_id; a Claude/MCP send carries it.
-    verdict=$(_api conversations.history "{\"channel\":\"$ch\",\"oldest\":\"$2\",\"inclusive\":true,\"limit\":1}" | python3 -c "
-import sys,json
-CLAUDE_APP='A08SF47R6P4'  # the Claude Slack app id (stable); see slack-workflow.md
-d=json.load(sys.stdin)
-if not d.get('ok'): print('ERR '+str(d.get('error'))); sys.exit()
-ms=d.get('messages',[])
-if not ms or ms[0].get('ts')!='$2': print('NOTFOUND'); sys.exit()
-m=ms[0]
-print('CLAUDE' if m.get('app_id')==CLAUDE_APP else 'OTHER app_id=%r user=%r'%(m.get('app_id'),m.get('user')))
-")
+    verdict=$(_lookup_verdict "$ch" "$2")
     case "$verdict" in
       CLAUDE) : ;;
       NOTFOUND) die "message $2 not found in $ch (already deleted, or wrong ts)" ;;
@@ -133,16 +154,7 @@ print('CLAUDE' if m.get('app_id')==CLAUDE_APP else 'OTHER app_id=%r user=%r'%(m.
     [ $# -eq 3 ] || die "usage: msg-edit [--force] <channel_id|user_id> <message_ts> <new_text>"
     ch=$(_resolve "$1")
     # Same AUTHORSHIP GUARD as msg-delete: only edit Claude-authored messages unless --force.
-    verdict=$(_api conversations.history "{\"channel\":\"$ch\",\"oldest\":\"$2\",\"inclusive\":true,\"limit\":1}" | python3 -c "
-import sys,json
-CLAUDE_APP='A08SF47R6P4'
-d=json.load(sys.stdin)
-if not d.get('ok'): print('ERR '+str(d.get('error'))); sys.exit()
-ms=d.get('messages',[])
-if not ms or ms[0].get('ts')!='$2': print('NOTFOUND'); sys.exit()
-m=ms[0]
-print('CLAUDE' if m.get('app_id')==CLAUDE_APP else 'OTHER app_id=%r user=%r'%(m.get('app_id'),m.get('user')))
-")
+    verdict=$(_lookup_verdict "$ch" "$2")
     case "$verdict" in
       CLAUDE) : ;;
       NOTFOUND) die "message $2 not found in $ch (already deleted, or wrong ts)" ;;
