@@ -96,7 +96,12 @@ jq -n --slurpfile d backup.adf.json '{fields: {description: $d[0]}}' | curl -s -
 
 ### Orphaned embeds (attachment deleted, embed left behind)
 
-Verified: deleting an attachment does **not** scrub embeds pointing at it. The ADF `media` node survives verbatim (same media UUID) and rendering degrades to an inline error placeholder — *"Unable to render embedded object: File (name) not found."* So delete order matters: scrub embeds first (or accept the broken placeholder). Removing embeds from a body is a mechanical ADF edit — filter out the media nodes via v3 and PUT back:
+Verified: deleting an attachment does **not** scrub embeds pointing at it. The ADF `media` node survives verbatim (same media UUID) and renders as a broken placeholder. How it looks depends on the renderer:
+
+- **Modern Jira web UI** (see `images/broken-embed-rendering.png`): inline embeds (`mediaSingle`) become a gray **"Preview unavailable"** box still sized to the original embed dimensions; file cards (`mediaGroup`) show a **"Failed to load"** card with a warning icon. Neither names the missing file.
+- **v2 `renderedBody`** (legacy wiki renderer): inline error text *"Unable to render embedded object: File (name) not found."* — this **does** name the file, making it the better diagnostic for hunting down which attachment an orphaned embed pointed at.
+
+So delete order matters: scrub embeds first (or accept the broken placeholder). Removing embeds from a body is a mechanical ADF edit — filter out the media nodes via v3 and PUT back:
 
 ```bash
 # scrub ALL media embeds from a comment (analogous for description via /3/issue/{KEY})
