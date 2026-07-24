@@ -90,7 +90,11 @@ To get Mike's current assignments, read `~/.claude/caches/bstock-assignments-cac
 
 ## Slack
 
-The team's Slack workflows — key channels (`#fe-guild` for FE-wide MR review requests, `#foundation-pod` for pod business, `#bstock-campfire` for the Campfire Analytics contractor relationship, `#tech-availability` for stepping away), reaction-emoji conventions (`:white_check_mark:` = approved, `:merged:` = approved+merged, `:eyes:` = looking, `:thankyou:` = thanks), a cross-system identity map (Slack ↔ email ↔ GitLab ↔ Jira), and rules for posting as Mike — live in `references/slack-workflow.md`. Load it before reading, posting, or reacting in Slack. Messages sent via the Slack MCP appear as Mike with no AI attribution — only post or react on explicit instruction.
+The team's Slack workflows — key channels (`#fe-guild` for FE-wide MR review requests, `#foundation-pod` for pod business, `#bstock-campfire` for the Campfire Analytics contractor relationship, `#tech-availability` for stepping away), reaction-emoji conventions (`:white_check_mark:` = approved, `:merged:` = approved+merged, `:eyes:` = looking, `:thankyou:` = thanks), and rules for posting as Mike — live in `references/slack-workflow.md`. Load it before reading, posting, or reacting in Slack. Messages sent via the Slack MCP appear as Mike with no AI attribution — only post or react on explicit instruction.
+
+## People & Organization
+
+`references/people-org.md` is the who's-who: org structure (pods, EMs, PMs, leadership), cross-system identity map (Slack/email/GitLab/Jira IDs, timezones), per-person dossiers (domain expertise, when to reach out, DM channel IDs), service gatekeepers (who gates LaunchDarkly, Datadog, GA/GTM, releases, QA, IT, access grants), and recurring meetings. Load it whenever a task involves **any named colleague** ("catch me up on X and Mary", "draft a message to Sohil"), routing a question ("who should I ask about schema changes?"), access/permissions, or org/team/meeting context. It is a **living document** — when you learn a new stable ID, role, or ownership fact during any task, add or correct it there (and date snapshot-type facts).
 
 ## Workflow Reference Files
 
@@ -105,7 +109,8 @@ Load the appropriate reference file when performing these tasks:
 | All stable project IDs and cached values | `references/project-ids.md` |
 | GitLab MR required-approver lookup, SME/code-owner routing | `references/mr-approval-rules.md` |
 | Waiting for / polling CI pipelines & jobs (background task) | `references/pipeline-polling.md` |
-| Slack channels, review requests, reaction emojis, identity map | `references/slack-workflow.md` |
+| Slack channels, review requests, reaction emojis | `references/slack-workflow.md` |
+| People, pods, gatekeepers, meetings, cross-system IDs | `references/people-org.md` |
 | FE Guild meeting: agenda reminder, post-meeting Confluence notes processing | `references/fe-guild-meeting.md` |
 | Jira attachment upload, media embeds in comments/replies/descriptions, safe body editing | `references/jira-attachments.md` |
 
@@ -184,6 +189,7 @@ For detailed workflow guidance, load:
 - **`references/api-docs.md`** — Swagger documentation retrieval, service-to-project-ID mapping
 - **`references/project-ids.md`** — Complete stable ID cache: all GitLab project IDs, Atlassian IDs, Jira field IDs
 - **`references/pipeline-polling.md`** — Wait for CI pipelines/jobs via the bundled `gitlab-ci-poll.sh` background task (replaces the old `polling-agent`)
-- **`references/slack-workflow.md`** — Slack channels, review-request workflow, reaction-emoji conventions, cross-system people identity map, status/PTO conventions, posting-as-Mike ground rules
+- **`references/slack-workflow.md`** — Slack channels, review-request workflow, reaction-emoji conventions, status/PTO conventions, posting-as-Mike ground rules
+- **`references/people-org.md`** — who's who: org structure, pods/EMs/PMs, cross-system identity map, per-person dossiers, service gatekeepers, recurring meetings, access-request + IT-support processes (living document — amend freely)
 - **`references/fe-guild-meeting.md`** — FE Guild meeting automation: pre-meeting agenda reminder to #fe-guild, post-meeting Confluence notes processing (agenda table, recording link, fresh Next Meeting slot)
 - **`references/jira-attachments.md`** — Upload attachments (`scripts/jira-attach`), embed media in comments/threaded replies/descriptions, ADF-laundering append recipe, acli keychain-token reuse, safe body-editing rules
