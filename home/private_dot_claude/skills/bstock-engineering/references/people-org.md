@@ -2,6 +2,8 @@
 
 Who's who at B-Stock: the org structure, cross-system identities, domain experts, service gatekeepers, and recurring meetings. Use this to answer questions like "who should I ask about X", "which team is Y on", "who gates access to Z", and to seed cross-platform catch-ups ("summarize my recent collaboration with Mary" → grab her IDs here, then sweep Slack/Jira/GitLab with them).
 
+> **Access pattern**: this file is ~15k tokens. If you are a primary/orchestrating agent, don't read it whole — send an explorer sub-agent (or a targeted grep) to pull just the relevant slice. If you ARE that sub-agent: return only what was asked for, and if anything here contradicts what you observe live in Slack/Jira/GitLab, report the discrepancy so the file gets corrected (see SKILL.md's standing order).
+
 **This is a living document.** Amend it freely: when you learn a new stable ID, a person's role, who owns a service, or who the expert on a domain is — add it here. When reality contradicts this file, verify against the source system and correct the file. Two kinds of content coexist, treat them differently:
 
 - **Stable caches** (Slack/GitLab/Jira IDs, emails, DM channel IDs): safe to rely on; verify only on visible failure.
