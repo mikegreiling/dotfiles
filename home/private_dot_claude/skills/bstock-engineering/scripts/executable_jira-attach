@@ -1,0 +1,177 @@
+#!/usr/bin/env bash
+# jira-attach — attach file(s) to a Jira issue and optionally surface them in
+# rich-text bodies, reusing the acli OAuth token from the macOS login keychain
+# (service "acli", go-keyring base64+gzip format).
+#
+# Usage:
+#   jira-attach ISSUE-KEY FILE...                                  attach only
+#   jira-attach --comment TEXT [--reply-to ID] ISSUE-KEY FILE...   attach + new comment embedding the files
+#                                                                  (--reply-to makes it a threaded reply)
+#   jira-attach --append-description TEXT ISSUE-KEY FILE...        attach + append TEXT/embeds to description
+#   jira-attach --append-comment ID TEXT ISSUE-KEY FILE...         attach + append TEXT/embeds to existing comment
+#
+# Attachments always belong to the issue (Jira has no comment-level
+# attachments); the comment/description modes EMBED them. Embeds use v2-API
+# wiki markup (!name|thumbnail! for images, [^name] for other files), which
+# Jira converts server-side into real ADF media nodes. Embeds resolve by
+# FILENAME — avoid names that collide with existing attachments on the issue.
+#
+# Append modes are lossless: new content is "laundered" through an ephemeral
+# comment (posted, ADF read back, deleted) so Jira performs the wiki→ADF
+# conversion, then the harvested nodes are appended to the target's v3 ADF.
+# The target body is never round-tripped through lossy wiki markup. Caveats:
+# watchers may be notified of the ephemeral comment before it is deleted, and
+# a concurrent edit of the same body can be clobbered (no version check).
+#
+# Full mechanism notes: references/jira-attachments.md in the
+# bstock-engineering skill. Canonical copy of this script lives in the
+# skill's scripts/ dir; ~/.local/bin/jira-attach is a symlink to it.
+set -euo pipefail
+
+CLOUD_ID="8fd1c100-2018-43ac-bdc1-ca69369799c3" # bstock.atlassian.net
+BASE="https://api.atlassian.com/ex/jira/$CLOUD_ID/rest/api"
+
+usage() {
+  sed -n '/^# Usage:/,/^#$/p' "$0" | sed 's/^# \{0,1\}//' >&2
+  exit 2
+}
+
+comment="" reply_to="" append_desc="" append_comment_id="" append_comment_text=""
+while [[ $# -gt 0 && "${1:-}" == --* ]]; do
+  case "$1" in
+    --comment) comment="${2:?--comment needs TEXT}"; shift 2 ;;
+    --reply-to) reply_to="${2:?--reply-to needs COMMENT_ID}"; shift 2 ;;
+    --append-description) append_desc="${2:?--append-description needs TEXT}"; shift 2 ;;
+    --append-comment) append_comment_id="${2:?--append-comment needs ID}"; append_comment_text="${3:?--append-comment needs TEXT}"; shift 3 ;;
+    *) echo "error: unknown flag $1" >&2; usage ;;
+  esac
+done
+
+modes=0
+[[ -n "$comment" ]] && ((modes+=1))
+[[ -n "$append_desc" ]] && ((modes+=1))
+[[ -n "$append_comment_id" ]] && ((modes+=1))
+[[ $modes -le 1 ]] || { echo "error: --comment, --append-description, and --append-comment are mutually exclusive" >&2; usage; }
+[[ -z "$reply_to" || -n "$comment" ]] || { echo "error: --reply-to requires --comment" >&2; usage; }
+
+[[ $# -ge 2 ]] || usage
+issue="$1"
+shift
+[[ "$issue" =~ ^[A-Z][A-Z0-9]+-[0-9]+$ ]] || { echo "error: '$issue' does not look like a Jira issue key" >&2; usage; }
+
+for f in "$@"; do
+  [[ -f "$f" ]] || { echo "error: file not found: $f" >&2; exit 1; }
+done
+
+read_token() {
+  security find-generic-password -s acli -w 2>/dev/null |
+    sed 's/^go-keyring-base64://' | base64 -d | gunzip | jq -r .access_token
+}
+
+# acli refreshes and re-persists its token on any authenticated command; use a
+# cheap read-only call to force that when our stolen copy has expired.
+refresh_token() {
+  acli jira project list --limit 1 >/dev/null 2>&1 || true
+  read_token
+}
+
+token=$(read_token)
+[[ -n "$token" && "$token" != "null" ]] || { echo "error: could not read acli token from keychain (is acli authenticated? run: acli jira auth login)" >&2; exit 1; }
+
+# Runs a curl, splitting body and status; retries once through a token refresh
+# on 401. Sets globals: status, body.
+request() {
+  local out
+  out=$(curl -s -w '\n%{http_code}' -H "Authorization: Bearer $token" "$@")
+  status="${out##*$'\n'}"
+  body="${out%$'\n'*}"
+  if [[ "$status" == "401" ]]; then
+    token=$(refresh_token)
+    out=$(curl -s -w '\n%{http_code}' -H "Authorization: Bearer $token" "$@")
+    status="${out##*$'\n'}"
+    body="${out%$'\n'*}"
+  fi
+}
+
+die_http() { # context
+  echo "error: $1 failed with HTTP $status" >&2
+  echo "$body" | jq . >&2 2>/dev/null || echo "$body" >&2
+  exit 1
+}
+
+# --- 1. upload ---
+fail=0
+embeds=""
+for f in "$@"; do
+  request -H "X-Atlassian-Token: no-check" -H "Accept: application/json" \
+    -F "file=@$f" "$BASE/3/issue/$issue/attachments"
+
+  if [[ "$status" == "200" ]]; then
+    echo "$body" | jq -r --arg f "$f" '.[] | "attached \($f) -> id \(.id) (\(.filename), \(.size) bytes)"'
+    name=$(echo "$body" | jq -r '.[0].filename')
+    mime=$(echo "$body" | jq -r '.[0].mimeType')
+    if [[ "$mime" == image/* ]]; then
+      embeds+="!${name}|thumbnail!"$'\n'
+    else
+      embeds+="[^${name}]"$'\n'
+    fi
+  else
+    echo "error: upload of $f failed with HTTP $status" >&2
+    echo "$body" | jq . >&2 2>/dev/null || echo "$body" >&2
+    fail=1
+  fi
+done
+[[ -n "$embeds" || $modes -eq 0 ]] || { echo "error: no files uploaded; skipping body edits" >&2; exit 1; }
+
+# --- 2. surface the embeds, per mode ---
+
+# Post a v2 comment (wiki markup body, optional parentId); sets status/body.
+post_comment_v2() { # text [parent_id]
+  local payload
+  payload=$(jq -n --arg b "$1" --arg p "${2:-}" \
+    '{body: $b} + (if $p != "" then {parentId: $p} else {} end)')
+  request -X POST -H "Content-Type: application/json" -d "$payload" "$BASE/2/issue/$issue/comment"
+}
+
+# Convert wiki-markup text to ADF nodes via an ephemeral comment (post, read
+# back converted ADF, delete). Prints the JSON node array.
+launder_to_adf() { # text
+  local tmpid nodes
+  post_comment_v2 "$1"
+  [[ "$status" == "201" ]] || die_http "ephemeral comment (wiki->ADF conversion)"
+  tmpid=$(echo "$body" | jq -r .id)
+  request "$BASE/3/issue/$issue/comment/$tmpid"
+  [[ "$status" == "200" ]] || die_http "reading ephemeral comment ADF"
+  nodes=$(echo "$body" | jq '.body.content')
+  request -X DELETE "$BASE/2/issue/$issue/comment/$tmpid"
+  [[ "$status" == "204" ]] || echo "warning: could not delete ephemeral comment $tmpid (HTTP $status)" >&2
+  printf '%s' "$nodes"
+}
+
+if [[ -n "$comment" ]]; then
+  post_comment_v2 "$comment"$'\n\n'"$embeds" "$reply_to"
+  [[ "$status" == "201" ]] || die_http "comment"
+  label="commented"; [[ -n "$reply_to" ]] && label="replied to $reply_to"
+  echo "$label -> id $(echo "$body" | jq -r .id) (https://bstock.atlassian.net/browse/$issue)"
+
+elif [[ -n "$append_desc" ]]; then
+  nodes=$(launder_to_adf "$append_desc"$'\n\n'"$embeds")
+  request "$BASE/3/issue/$issue?fields=description"
+  [[ "$status" == "200" ]] || die_http "reading description"
+  payload=$(echo "$body" | jq --argjson n "$nodes" \
+    '{fields: {description: ((.fields.description // {type:"doc",version:1,content:[]}) | .content += $n)}}')
+  request -X PUT -H "Content-Type: application/json" -d "$payload" "$BASE/3/issue/$issue"
+  [[ "$status" == "204" ]] || die_http "description append"
+  echo "appended to description (https://bstock.atlassian.net/browse/$issue)"
+
+elif [[ -n "$append_comment_id" ]]; then
+  nodes=$(launder_to_adf "$append_comment_text"$'\n\n'"$embeds")
+  request "$BASE/3/issue/$issue/comment/$append_comment_id"
+  [[ "$status" == "200" ]] || die_http "reading comment $append_comment_id"
+  payload=$(echo "$body" | jq --argjson n "$nodes" '{body: (.body | .content += $n)}')
+  request -X PUT -H "Content-Type: application/json" -d "$payload" "$BASE/3/issue/$issue/comment/$append_comment_id"
+  [[ "$status" == "200" ]] || die_http "comment append"
+  echo "appended to comment $append_comment_id (https://bstock.atlassian.net/browse/$issue)"
+fi
+
+exit $fail
