@@ -66,23 +66,25 @@ Company-wide: **239 people**, everything stems from **Marcus Shen — CEO**. His
 
 † = see "chart anomalies" below.
 
-**Reporting lines vs. pods are cross-cutting — don't conflate them.** Examples: Joe Spandrusyszyn and Waldek report to Al (Seller Pod) yet operate org-wide FE / contracts (Foundations domain); James Han reports to Alvaro (Foundations) but he and his reports (Jorge, Patrick Fisher) do Buyer-pod work; QA (Sohil's team) reports through Alvaro but serves all pods; all PMs and designers report through Yang or Jeremy, not through the pod EMs. Use the chart for "who is someone's manager"; use the pod table below for "who works on what".
+**Reporting lines vs. pods are cross-cutting — don't conflate them.** Examples: Joe Spandrusyszyn and Waldek report to Al and are **Seller pod, NOT Foundations** (Mike confirmed 2026-07-24 — they never attend Foundations meetings), even though Joe S operates as the org-wide FE authority and Waldek is the contracts-service SME whom Foundations folks consult; James Han reports to Alvaro (Foundations) but he and his reports (Jorge, Patrick Fisher) do Buyer-pod work; QA (Sohil's team) reports through Alvaro but serves all pods; all PMs and designers report through Yang or Jeremy, not through the pod EMs. Use the chart for "who is someone's manager"; use the pod table below for "who works on what".
 
 **Aliases — printed/legal name vs. colloquial** (note new ones here whenever spotted):
 
 | Goes by | Printed in Pingboard | Notes |
 |---|---|---|
-| Paul Robertson | **Homer Robertson** | news to Mike (2026-07-24) — middle name or preferred name unknown; everywhere else he's Paul |
+| Paul Robertson | **Homer Robertson** | news to Mike (2026-07-24); per the card-vs-bio pattern below, Homer is presumably his legal first name — never call him Homer |
 | Al Veitas | Algirdas Veitas | |
 | Ken Shum | Kenneth Shum | |
 | Aziz Vahora | Azizahmed Vahora | |
 | Joe Ellis / Joe Spandrusyszyn | Joseph … | |
 | Jay Hormes | Jeroen Hormes | Slack `jay@bstock.com`, title "Analytics" — Director, Analytics under Aziz (high confidence, same surname) |
-| Lana Kukharchyk | Sviatlana Kukharchyk | goes by Lana/Svetlana |
-| Alex Garcia | Javier Garcia Godinez (probable) | chart's only Garcia, in Alvaro's team, "Software Engineering Lead" — matches; unconfirmed by Mike |
-| Patrick Spracklen | **Justin Spracklen** (?) | surname matches, given name differs — needs Mike to reconcile |
+| Lana Kukharchyk | Sviatlana Kukharchyk | goes by Lana/Svetlana; bio panel says "Lana" |
+| Alex Garcia | Javier Garcia Godinez | **confirmed by Mike 2026-07-24** |
+| Patrick Spracklen | **Justin Spracklen** | **confirmed same person** (Mike 2026-07-24): the card prints "Justin" but his profile bio says Patrick |
 | Tim Tate | Timothy Tate | |
 | Mike Talimonchuk | Mykhailo Talimonchuk | contractor; NOT in Pingboard |
+
+Pattern (verified on Patrick and Lana, 2026-07-24): **Pingboard org-chart cards print the legal name; clicking through to the profile bio shows the preferred/go-by name.** When a chart name looks unfamiliar, assume legal-vs-preferred before assuming a different person.
 
 **Chart anomalies / people missing from Pingboard:** the export appears to cover **employees only — contractors and vendor staff are absent**. Missing despite being active in Slack/GitLab: Anthony Lombardo (QA automation — either a contractor or the one blank/unrendered card under Justin James's "3MP - Orders Engineering"), Volodymyr Kelembet, Igor Shkulipa, Michael Ilchuk, Mykhailo Talimonchuk, Andrii Prasolov, Josh Mozley, Umesh Balasubramaniam, Shivam Bandral, Ashish Tulsankar, Amit Negi, Sachin Jagtap, Calvin La, Nihit Jain, Anmol Anand, all Evizi QA (below). The Jun-2025 Confluence roster explicitly tags several of these "Contractor" (Talimonchuk, Ilchuk, Andrii, Josh Mozley, Umesh, Shivam, Nihit, Anmol). Daehee Kim (Director Data Engineering on the 2025 roster) is also absent from the chart — possibly departed, with Aziz now holding that org (unconfirmed).
 
@@ -126,7 +128,7 @@ QA reports through **Sohil Sethi (Manager, QA Engineering — Asia/Kolkata, IST)
 |---|---|---|---|
 | Sohil Sethi | `U01M2C9DRS4` | Asia/Kolkata (IST) | QA manager; coordinates Evizi; relays their Vietnamese-holiday leave schedules |
 | Anthony Lombardo | `U05QBEQGE0N` | America/New_York | QA automation (not in Pingboard — possibly contractor) |
-| Lana (Sviatlana) Kukharchyk | `U080N3NKSFJ` | America/New_York | internal QA; loudest P0/P1 escalation voice in `#foundation-pod`; relays to Evizi |
+| Lana (Sviatlana) Kukharchyk | `U080N3NKSFJ` | America/New_York (NY) | internal QA; loudest P0/P1 escalation voice in `#foundation-pod`; relays to Evizi. Started 2024-11-12; birthday Dec 18 |
 | Olga Chmikhun | `U03LQFXEVGQ` | (unset/US-hours observed) | internal QA |
 | Gavin Grooms | — (resolve on demand) | — | QA Engineer (per Pingboard, under Sohil) |
 | Daria Kazhybay | — (resolve on demand) | — | SWE, QA (per Pingboard) |
@@ -170,10 +172,10 @@ Stable cross-system IDs. GitLab = `gitlab.bstock.io` usernames. "—" = verified
 | Paul Robertson ("Homer") | Staff Software Engineer (FE), AI tooling lead | `U065LP1M6UX` | paul@bstock.com | America/Chicago | `paul` (419) | `712020:b9d94b10-920e-4d35-915b-9994724c9934` |
 | Joe Ellis (Joseph) | Senior Software Engineer (BE), Foundations | `UDQ1PD1H6` | joe.ellis@bstock.com | America/New_York | `joe.ellis` (43) | `70121:46cb1856-1239-4833-b2b8-599729de54e8` |
 | Cy Kong (Cyrus) | React Engineer / epic lead, Foundations | `UJBMM6K4N` | cyrus@bstock.com | America/Chicago | `Cy-Kong` (48) | `5cb8e545b01aec0e591d6c55` |
-| Alex Garcia (Javier Garcia Godinez?) | Software Engineering Lead, Logistics & Finance | `U013Y1Y4G5C` | alex.garcia@bstock.com | America/Chicago | `alex.garcia` (100) | `5ec7f4036c50620c1cb0fc61` |
+| Alex Garcia (Pingboard: Javier Garcia Godinez) | Software Engineering Lead, Logistics & Finance | `U013Y1Y4G5C` | alex.garcia@bstock.com | America/Chicago | `alex.garcia` (100) | `5ec7f4036c50620c1cb0fc61` |
 | Helen Foutch | Software Engineer (FE/full-stack), Buyer pod | `U99JLJBDZ` | helen@bstock.com | America/Chicago | `helen` (16) | `5afb0999d1d9445cd3a60343` |
-| Waldemar "Waldek" Dziubek | Senior React Engineer — contracts-service expert | `U075L0TF7PS` | waldemar.dziubek@bstock.com | ? | ? | ? |
-| Patrick Spracklen ("Justin" in Pingboard?) | Senior Data Engineer — AI Code Reviewer owner | `U06LH6G34DS` | patrick.spracklen@bstock.com | ? | ? | ? |
+| Waldemar "Waldek" Dziubek | Senior React Engineer, Seller pod — contracts-service expert | `U075L0TF7PS` | waldemar.dziubek@bstock.com | ? | ? | ? |
+| Patrick Spracklen (legal "Justin") | Senior Data Engineer — AI Code Reviewer owner | `U06LH6G34DS` | patrick.spracklen@bstock.com | America/Los_Angeles (WA) | ? | ? |
 | Aziz Vahora (Azizahmed) | Senior Director, Data Engineering (Campfire GA4 program) | `U0B6WG6BK9A` | ? | ? | ? | ? |
 | Damien Jones (he/him) | Enterprise Architect | `U017YNCAP5G` | damien@bstock.com | America/New_York | `damien` (118) | `5f21dc81c9c094001c65cbd5` |
 | Parvinder Bhasin | Director, DevOps (& Cybersecurity per Slack) | `U02PYTURXEH` | parvinder@bstock.com | Asia/Kolkata | `parvinder` (248) | `61b13eeed2e64c0071d5f478` |
@@ -221,9 +223,9 @@ Format: what they do → when to reach out → surfaces (DM channel IDs are stab
 
 **James Han — Senior Engineering Manager** (reports to Alvaro; his own reports: Tim Tate, Jorge Castillo, Patrick Fisher — who do Buyer-pod work; ex-Sprinters sub-lead for ENT integrations/Sunrise/contracts). Release-blocking bug triage and incident comms (ran the 2026-05-04 outage war room); drove the React+Next upgrade merge decision. Makes "does this block the release" calls with Susan + Sohil. Reach out for: buyer-pod release risk, incident coordination. Surfaces: DM `D0773H3LTA5` (sparse), leads group DM `C0B6J1HQGHY`, `#3mp-bug-triage-team`.
 
-### Foundations pod — Mike's peers
+### Mike's day-to-day peers (Foundations pod + org-wide FE)
 
-**Joe Spandrusyszyn — Principal Software Engineer; senior-most FE; Mike's closest senior peer.** Officially reports to Al Veitas (Seller Pod) but operates org-wide. FE platform & tooling: Vitest migration, Node/React/Next upgrades, dependency hygiene, CI consolidation, Datadog log cleanup, CSP triage. Co-curates Optimization Cabal; one of two `common/ci` approvers (the other is Mike). Go-to for important FE-architectural decisions and DX changes. Surfaces: DM `D066H7SSFK9` (frequent, informal), group DM with Paul R `C066XPKEAEN` (FE tech-debt strategy), group DM with Parvinder + Orest `C0BERD4144D` (GitLab/CI governance). Snapshot 2026-07-15: asked Mike to take the Cylance remote session; on vacation until ~2026-07-27.
+**Joe Spandrusyszyn — Principal Software Engineer; senior-most FE; Mike's closest senior peer.** Reports to Al Veitas — **Seller pod, not Foundations** (never in Foundations meetings) — but operates org-wide on FE platform concerns. FE platform & tooling: Vitest migration, Node/React/Next upgrades, dependency hygiene, CI consolidation, Datadog log cleanup, CSP triage. Co-curates Optimization Cabal; one of two `common/ci` approvers (the other is Mike). Go-to for important FE-architectural decisions and DX changes. Surfaces: DM `D066H7SSFK9` (frequent, informal), group DM with Paul R `C066XPKEAEN` (FE tech-debt strategy), group DM with Parvinder + Orest `C0BERD4144D` (GitLab/CI governance). Snapshot 2026-07-15: asked Mike to take the Cylance remote session; on vacation until ~2026-07-27.
 
 **Paul Robertson (legal name Homer Robertson) — Staff Software Engineer; the org's AI-tooling thought leader.** Reports to Justin James (ex-Mula). Owns `common/agent-skills` repo structure; co-runs ai-guild (Mike is backup host); AI code-reviewer rollout; Jest-transform perf. Heavy in `#ai-engineering`, `#mr-ai-agent-tiger-team`. Also looped in by Parvinder/Ken for Cloudflare/Turnstile bypass validation. Surfaces: DM `D0692M1E77E` (light), group DMs `C066XPKEAEN` (Joe S), `C09LDUNP1EH` (Alex Garcia, agent-skills). Snapshot 2026-06-26: agent-skills MR !79 debate; handed ai-guild hosting to Mike.
 
@@ -233,7 +235,7 @@ Format: what they do → when to reach out → surfaces (DM channel IDs are stab
 
 **Alex Garcia — Software Engineering Lead, Logistics & Finance** (Pingboard prints "Javier Garcia Godinez" — probable same person). Ex-Sprinters BE. Disputes service, ERP/NetSuite billing reliability (GLOB-4942), stuck-loads autofix, risk service. Active AI-tooling contributor (agent-skills). Surfaces: group DMs `C09LDUNP1EH` (agent-skills, with Paul R), `C0BAVNNQ2GP` (parcel), `C09R0QDRMPU` (disputes). Snapshot 2026-06-26: conceded to Mike's blocking feedback on agent-skills MR !79.
 
-**Waldemar "Waldek" Dziubek — Senior React Engineer; contracts-service expert** ("he's the guy" — Justin). Officially under Al Veitas (Seller Pod) despite contracts being Foundations domain. Also in an AI/process group DM with Joe S + Paul + Mike. Reach out for anything touching the contracts service.
+**Waldemar "Waldek" Dziubek — Senior React Engineer; contracts-service expert** ("he's the guy" — Justin). **Seller pod** (under Al Veitas, not Foundations), even though the contracts service falls inside Foundations' documented domain boundary — cross-pod consultation is normal here. Also in an AI/process group DM with Joe S + Paul + Mike. Reach out for anything touching the contracts service.
 
 **Volodymyr "Vova" Kelembet — Sr SWE BE** (Europe/Helsinki — async). Order-process + ETL; CI validation for Orest. Ex-Sprinters; not in Pingboard (possible contractor).
 
@@ -261,7 +263,7 @@ Format: what they do → when to reach out → surfaces (DM channel IDs are stab
 
 **Anthony Lombardo — QA automation.** Warm, jokey rapport with Mike; happy to bounce ideas off. Owns `qa/quality-live-portal`, the confidence dashboard (`automation.bstock-qa.com/confidence`), the "Atlas" contract sweeps and Agentic Tester (QA-2054); first-line debugger of the AI Code Reviewer (found the MRs-titled-"drafts" trigger bug). NOT the person for manual QA-review audits — that's Sohil's org. Not present in the Pingboard export (possibly a contractor). Surfaces: DM `D06M3CZMB6W` (frequent, casual), `#mr-ai-agent-tiger-team`. Snapshot 2026-07-21: granted Mike access to quality-live-portal.
 
-**Patrick Spracklen — Senior Data Engineer** (under Aziz Vahora; Pingboard prints "Justin Spracklen" — reconcile with Mike). Owns the AI Code Reviewer bot and Claude MAX plan pooling. Ping when the AI reviewer stops firing (Anthony first-line, Patrick owner).
+**Patrick Spracklen — Senior Data Engineer** (under Aziz Vahora; legal first name "Justin" per Pingboard card — always use Patrick). Washington state (GMT-8); started 2024-02-26; birthday Aug 2. Owns the AI Code Reviewer bot and Claude MAX plan pooling. Ping when the AI reviewer stops firing (Anthony first-line, Patrick owner).
 
 **Aziz Vahora (Azizahmed) — Senior Director, Data Engineering.** Owns the data-engineering + analytics org (Patrick Spracklen; Jay Hormes's analytics team). Internal program owner for the Campfire GA4 offline-events work — coordinates external access, asks Mike to compile spec answers into stories.
 
@@ -287,7 +289,13 @@ Format: what they do → when to reach out → surfaces (DM channel IDs are stab
 
 ### Departed but still referenced
 
-**Ryan Jenkins** (`U01N2L2LS0Z`, Principal SWE FE on team Zero; left ~Jan 2026) — previous owner of GTM, Google Analytics, the SEO-agency relationship, and the Deck Shuffle seat Mike inherited. Made Mike GTM admin on the way out; the GA-admin gap was closed by Mary 2026-07-24. His name still appears on onboarding docs and old GTM/SEO group DMs. **Daehee Kim** (Director, Data Engineering on the Jun-2025 roster) — absent from the 2026-07 Pingboard chart; likely departed (Aziz now senior-most in Data Eng). **Elias Amador** (ex-Mula SWE) — on the 2025 roster, absent from the chart and from recent activity.
+Policy (per Mike, 2026-07-24): **keep lingering dossiers on departed employees** — their work keeps surfacing in audit trails, git blame, Confluence authorship, and past decisions. When someone leaves, move their entry here (with their old IDs) rather than deleting it.
+
+**Ryan Jenkins** (`U01N2L2LS0Z`, Principal SWE FE on team Zero; left ~Jan 2026) — previous owner of GTM, Google Analytics, the SEO-agency relationship, and the Deck Shuffle seat Mike inherited. Made Mike GTM admin on the way out; the GA-admin gap was closed by Mary 2026-07-24. His name still appears on onboarding docs and old GTM/SEO group DMs.
+
+**Daehee Kim** — **departed (confirmed: Slack account deactivated)**. Was Director, Data Engineering (led the Data Eng team on the Jun-2025 roster: Mark Ma, Harish Verlekar, Patrick Spracklen, Louies Tam, Gavin Lang). Aziz Vahora now heads Data Engineering & Analytics.
+
+**Elias Amador** (ex-Mula SWE) — on the 2025 roster, absent from the chart and from recent activity.
 
 ## Extended roster — FE guild & pod channels
 
@@ -308,11 +316,9 @@ Format: what they do → when to reach out → surfaces (DM channel IDs are stab
 ## Known unknowns / open questions
 
 - **Foundations pod PM**: unconfirmed — Sarah Xu vs Austin Jones (Senior PM, Payments); possibly split. Ask Mike.
-- **"Justin Spracklen"** (Pingboard) vs **Patrick Spracklen** (Slack/everywhere else) — same person? Needs Mike.
-- **"Javier Garcia Godinez"** (Pingboard) = Alex Garcia? Near-certain but unconfirmed by Mike.
 - **Anthony Lombardo's employment status** (absent from Pingboard; possibly the blank Orders-engineering card or a contractor).
-- **Paul "Homer" Robertson** — whether Homer is legal-first-name-goes-by-middle or something else; immaterial, but don't use "Homer" with him.
 - **Justin James email discrepancy**: `justinjames@` (Slack/GitLab) vs `justin.james@` (Jira) — same person, two formats on file.
 - **Zero→Buyer and TBD→Seller mappings** are inferred (only Sprinters/Mula→Foundation is explicitly documented via channel redirects).
-- **Daehee Kim** departure unconfirmed.
 - Missing IDs marked `?` in the identity table — fill opportunistically.
+
+Resolved 2026-07-24 (kept for audit): Spracklen "Justin"=legal/"Patrick"=preferred ✓; Javier Garcia Godinez=Alex Garcia ✓; Daehee Kim departed ✓ (Slack deactivated); Joe S + Waldek are Seller pod, not Foundations ✓.
