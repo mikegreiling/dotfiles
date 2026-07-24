@@ -43,7 +43,7 @@ Bulk research for this file was done 2026-07-24 (Slack + Jira + Confluence sweep
 | Figma access | **Vajira Nissanka** | |
 | IT: hardware, Cylance, SaaS provisioning, Zoom accounts | **Jon Paul Hutchins** via [IT service desk portal 15](https://bstock.atlassian.net/servicedesk/customer/portal/15) | he does NOT own app dependencies — those go to `#tech-general` |
 | Prod SSH (Teleport), CAS, DSK | `techsupport@bstock.com` or `devops@bstock.com` | |
-| Sentry | undocumented — only stale 2018/2021 pages exist; ask in `#tech-general` or DevOps | |
+| Error tracking / exception telemetry | **Datadog** (see Datadog row) | B-Stock does **not** use Sentry — Datadog covers it; any Sentry references (stale 2018/2021 Confluence pages) are historical |
 | GA4 offline events / Campfire program | **Aziz Vahora** (internal program owner), **Tim Foster** (Campfire, external) | |
 | Escalation on anything DevOps | Escalation Matrix: [TO space](https://bstock.atlassian.net/wiki/spaces/TO/pages/2729246813) | Parvinder (mgmt), David Chan + Orest (3MP/SRE), Anmol Anand/Nihit Jain (India hours) |
 
@@ -100,14 +100,16 @@ Product work is divided into three **pods** (the Jira `GLOB` Pod field has exact
 | **Seller** | **Al Veitas** (Senior Director) | **Yang Luan** | Client Ops Portal (COPS), Seller Portal, Listings, Ingestion |
 | **Payment and Foundations** (Mike's pod) | **Justin James** (Sr Director) + **Alvaro Ferreira** (Director — Mike's manager) | unconfirmed — **Sarah Xu** (top epic reporter) and **Austin Jones** (Senior PM, *Payments* — title fits the pod) are the candidates | shipment, payment, orders, disputes, bridge, CS Portal, contracts |
 
+**Jira project prefixes map to pods**: `FP` = Payment and Foundations stories/tasks/bugs · `BP` = Buyer pod · `SP` = Seller pod · `GLOB` = epics for all pods (Pod custom field distinguishes) · `SPR` = legacy Team Sprinters (historical). Non-pod projects: `BUGS` (cross-pod bug intake), `PS` (Platform Support), `DEVOPS`, `QA`, `DET` (Data Engineering), `UXD` (design), `XLTR` (CrossListr). A person's recent FP/BP/SP assignment history is the fastest way to place them in a pod.
+
 ### Legacy teams → pods (the pre-pod org)
 
 Old team names still appear in Slack history, Confluence, and muscle memory. Full rosters from the Confluence Engineering page (snapshot Jun 30 2025; roles as listed then):
 
 - **Sprinters** (lead **Alvaro Ferreira**) → **Foundation pod** (confirmed: `#team-sprinters` topic says "Relocated to #foundation-pod"). Members: James Han (Sr. EM), Alex Garcia (Sr SWE BE), Cy Kong (SWE FE), Joe Ellis (Sr SWE BE), Volodymyr Kelembet (Sr SWE BE), Mike Greiling (Staff SWE FE), Connor Finley (Lead Integration Engineer). SME: bridge, data migration, DSK, FusionAuth/SSO, Magento, shipment/logistics, ENT microservices, finance, registration, search/Algolia. **James Han's sub-team within Sprinters**: Connor Finley, Tim Tate (BE Lead), Mike Talimonchuk (contractor) — SME: ENT integrations, Sunrise, ENT Magento, 3MP contracts. The "Sprinters standup" name survives for Alvaro's directs' Tuesday standup.
 - **Mula** (aka "Moolah", lead **Justin James**) → **Foundation pod** (confirmed: `#team-mulax` topic redirect). Members: Josh Mozley (contractor), Elias Amador, Acker Apple, Paul Robertson (Staff SWE), Patrick Fisher, Kai DiRamio, Ary Baldioceda. SME: Accounts Portal, disputes, GitLab pipelines, Datadog, feature flags, payments-*, pdfgen, shared `@bstock/*` libs.
-- **Zero** (lead **Mary Gutierrez**) → **Buyer pod** (inferred — no explicit redirect; weaker evidence). Members: Alexandra Ash, Andrii Prasolov (FE contractor), Cole Allan, Helen Foutch, Michael Ilchuk (BE contractor), Mike Feldman, Eric Chu, **Ryan Jenkins (Principal SWE FE — departed)**, Yury Herlovich. SME: Account Portal, auth/logging libs, buyer migration, docserv, freight-forwarding UI, notification, onboarding, search, Strapi, shipment, tax exemption, TMS.
-- **TBD** (lead **Al Veitas**) → **Seller pod** (inferred). Members: Mike Ruth (BE Lead), Santosh (FE contractor), Umesh Balasubramaniam (BE contractor), Waldek Dziubek, Joe Spandrusyszyn (Sr Staff SWE FE), Shivam (FE contractor), Calvin La. SME: ingestion, inventory-lotting, listings, orders, seller migration.
+- **Zero** (lead **Mary Gutierrez**) → **Buyer pod** (confirmed 2026-07-24: last-90d `BP` assignees are almost exactly the ex-Zero roster — Cole, Ilchuk, Feldman, Andrii, Alexandra, Helen — plus James Han's crew). Members: Alexandra Ash, Andrii Prasolov (FE contractor), Cole Allan, Helen Foutch, Michael Ilchuk (BE contractor), Mike Feldman, Eric Chu, **Ryan Jenkins (Principal SWE FE — departed)**, Yury Herlovich. SME: Account Portal, auth/logging libs, buyer migration, docserv, freight-forwarding UI, notification, onboarding, search, Strapi, shipment, tax exemption, TMS.
+- **TBD** (lead **Al Veitas**) → **Seller pod** (confirmed 2026-07-24: last-90d `SP` assignees are the ex-TBD roster — Calvin La, Umesh, Connor, Mike Ruth, Shivam, Joe S). Members: Mike Ruth (BE Lead), Santosh (FE contractor), Umesh Balasubramaniam (BE contractor), Waldek Dziubek, Joe Spandrusyszyn (Sr Staff SWE FE), Shivam (FE contractor), Calvin La. SME: ingestion, inventory-lotting, listings, orders, seller migration.
 - Non-pod teams unchanged through the transition: **Architecture** (Damien), **Data Engineering** (then Daehee Kim), **DevOps** (Parvinder), **PjM** (Susan).
 
 Timeline markers: pod channels `#foundation-pod` created 2025-09-17 (by Yang Luan); Sprinters dissolved early Oct 2025; an org-wide channel-renaming wave hit 2026-06-03 (Orest archived all `#team-*-prod-errors` channels in one hour). Note `#team-buyer-pod`/`#team-seller-pod` date to 2022 and have near-org-wide membership — channel membership is NOT a reliable pod roster; use the tables above.
@@ -160,7 +162,7 @@ Stable cross-system IDs. GitLab = `gitlab.bstock.io` usernames. "—" = verified
 |---|---|---|---|---|---|---|
 | Mike Greiling | Staff Software Engineer (FE), Foundations | `U065SDTU138` | mike.greiling@bstock.com | America/Chicago | `mike.greiling` (421) | `712020:102e13ca-76c4-4a0c-89e1-c9fc45369c5d` |
 | Alvaro Ferreira | Director, Engineering — Mike's manager | `UPMJC0VFH` | alvaro@bstock.com | America/Los_Angeles | `alvarobstock` (15) | `5acbb67101a2012a6c31de20` |
-| Justin James | Sr Director of Engineering, Foundations | `U026ZL0E858` | justinjames@bstock.com (Slack) / justin.james@bstock.com (Jira) | America/Los_Angeles | `justinjames` (185) | `60df961fee648800689e976e` |
+| Justin James | Sr Director of Engineering, Foundations | `U026ZL0E858` | justinjames@bstock.com (Slack) / justin.james@bstock.com (Jira) — same inbox: Google ignores dots | America/Los_Angeles | `justinjames` (185) | `60df961fee648800689e976e` |
 | Al Veitas (Algirdas) | Senior Director, Engineering — Seller pod | `U026WKB3KCM` | al@bstock.com | America/New_York | `al` (184) | `60df961f70941d006928808c` |
 | Mary Gutierrez (she/her) | Director of Engineering, Buyer pod | `U0K2Y8D89` | mary@bstock.com | America/Chicago | `mary` (11) | `5acbf7ff780b8e2b9bc0a04b` |
 | James Han | Sr. EM (reports to Alvaro; leads Buyer-pod work) | `U06REB92S` | james@bstock.com | America/Los_Angeles | `james` (19) | `5ade1691bda65b2df516f220` |
@@ -174,9 +176,9 @@ Stable cross-system IDs. GitLab = `gitlab.bstock.io` usernames. "—" = verified
 | Cy Kong (Cyrus) | React Engineer / epic lead, Foundations | `UJBMM6K4N` | cyrus@bstock.com | America/Chicago | `Cy-Kong` (48) | `5cb8e545b01aec0e591d6c55` |
 | Alex Garcia (Pingboard: Javier Garcia Godinez) | Software Engineering Lead, Logistics & Finance | `U013Y1Y4G5C` | alex.garcia@bstock.com | America/Chicago | `alex.garcia` (100) | `5ec7f4036c50620c1cb0fc61` |
 | Helen Foutch | Software Engineer (FE/full-stack), Buyer pod | `U99JLJBDZ` | helen@bstock.com | America/Chicago | `helen` (16) | `5afb0999d1d9445cd3a60343` |
-| Waldemar "Waldek" Dziubek | Senior React Engineer, Seller pod — contracts-service expert | `U075L0TF7PS` | waldemar.dziubek@bstock.com | ? | ? | ? |
-| Patrick Spracklen (legal "Justin") | Senior Data Engineer — AI Code Reviewer owner | `U06LH6G34DS` | patrick.spracklen@bstock.com | America/Los_Angeles (WA) | ? | ? |
-| Aziz Vahora (Azizahmed) | Senior Director, Data Engineering (Campfire GA4 program) | `U0B6WG6BK9A` | ? | ? | ? | ? |
+| Waldemar "Waldek" Dziubek | Senior React Engineer, Seller pod — contracts-service expert | `U075L0TF7PS` | waldemar.dziubek@bstock.com | ? | `waldemar` (450) | `712020:c2e981c1-00fe-4b5d-ad4e-4c21d516c090` |
+| Patrick Spracklen (legal "Justin") | Senior Data Engineer — AI Code Reviewer owner | `U06LH6G34DS` | patrick.spracklen@bstock.com | America/Los_Angeles (WA) | `patrick.spracklen` (435) | `712020:781c68d8-e1cb-4a50-a257-0c23935ca765` |
+| Aziz Vahora (Azizahmed) | Senior Director, Data Engineering (Campfire GA4 program) | `U0B6WG6BK9A` | aziz.vahora@bstock.com | ? | `aziz.vahora` (679) | `712020:71e7cfdb-3368-4b88-9536-6e32d70576a8` |
 | Damien Jones (he/him) | Enterprise Architect | `U017YNCAP5G` | damien@bstock.com | America/New_York | `damien` (118) | `5f21dc81c9c094001c65cbd5` |
 | Parvinder Bhasin | Director, DevOps (& Cybersecurity per Slack) | `U02PYTURXEH` | parvinder@bstock.com | Asia/Kolkata | `parvinder` (248) | `61b13eeed2e64c0071d5f478` |
 | Orest Stetsiak | Senior DevOps Engineer | `U01DR3HGCF5` | orest@bstock.com | America/Los_Angeles | `orest` (123) | `5f9c7417c9b15a0078c56736` |
@@ -186,8 +188,8 @@ Stable cross-system IDs. GitLab = `gitlab.bstock.io` usernames. "—" = verified
 | Anthony Lombardo | QA automation engineer | `U05QBEQGE0N` | anthony.lombardo@bstock.com | America/New_York | `anthony.lombardo` (402) | `712020:aa4eb023-2612-4f9b-bfd5-37675c2f7dbf` |
 | Jon Paul Hutchins | Solutions Engineer \| Resident IT Admin | `U01SWFMS1JA` | jonpaul@bstock.com | America/Los_Angeles | — (no GitLab) | `606600c2aee24000688b510c` |
 | Fred Leung | Senior UX Designer (design system, parcel) | `U0A0Y5MRHSL` | frederick.leung@bstock.com | America/Los_Angeles | `frederick.leung` (626) | `712020:0accc665-be14-4f4c-9914-796fffa4d0ca` |
-| Lana Kukharchyk (Sviatlana) | QA Engineer — P0/P1 escalation voice | `U080N3NKSFJ` | lana.kukharchyk@bstock.com | America/New_York | ? | ? |
-| Volodymyr "Vova" Kelembet | Sr SWE (BE — order-process, ETL), Foundations | `U01P9BBHKBN` | volodymyr@bstock.com | Europe/Helsinki | ? | ? |
+| Lana Kukharchyk (Sviatlana) | QA Engineer — P0/P1 escalation voice | `U080N3NKSFJ` | lana.kukharchyk@bstock.com | America/New_York | `lana.kukharchyk` (514) | `712020:a5aede86-9eee-4e87-9644-d8990734258a` |
+| Volodymyr "Vova" Kelembet | Sr SWE (BE — order-process, ETL), Foundations | `U01P9BBHKBN` | volodymyr@bstock.com | Europe/Helsinki | `volodymyr` (158) | `603557b1f6ccc00070350171` |
 | Tim Foster | **EXTERNAL** — Campfire Analytics (GA4 spec) | `U4W4M341X` | tfoster@campfireanalytics.com | ? | — | — |
 
 **Name disambiguation** (verify before acting on a bare first name):
@@ -310,15 +312,14 @@ Policy (per Mike, 2026-07-24): **keep lingering dossiers on departed employees**
 - **LaunchDarkly**: ask in `#feature-flags-launchdarkly`; flag lifecycle docs: "Feature Flag Process (Buyer Pod)" + "Feature Flag How-To's" (Alexandra Ash).
 - **Figma**: Vajira Nissanka. **Qase**: email the QA team.
 - **App-level roles / Jira permissions / prod service accounts**: DM David Chan.
-- **GTM / GA / Sentry**: no documented process — GTM is Mike's own admin domain; GA goes through Mary; Sentry ask DevOps/`#tech-general`.
+- **GTM / GA**: no documented process — GTM is Mike's own admin domain; GA goes through Mary. (**No Sentry at B-Stock** — Datadog covers error tracking; ignore the stale 2018/2021 Sentry pages.)
 - Key Confluence anchors: [Engineering roster](https://bstock.atlassian.net/wiki/spaces/EN/overview) (stale Jun-2025, legacy team names — but the authoritative legacy-team rosters), [Buyer Pod Tech Support Procedures](https://bstock.atlassian.net/wiki/spaces/EN/pages/3908403201) (current pod boundaries), [FE Onboarding](https://bstock.atlassian.net/wiki/spaces/EN/pages/2663972959), [DevOps Escalation Matrix](https://bstock.atlassian.net/wiki/spaces/TO/pages/2729246813), [IT Help Desk space](https://bstock.atlassian.net/wiki/spaces/it/overview).
 
 ## Known unknowns / open questions
 
 - **Foundations pod PM**: unconfirmed — Sarah Xu vs Austin Jones (Senior PM, Payments); possibly split. Ask Mike.
 - **Anthony Lombardo's employment status** (absent from Pingboard; possibly the blank Orders-engineering card or a contractor).
-- **Justin James email discrepancy**: `justinjames@` (Slack/GitLab) vs `justin.james@` (Jira) — same person, two formats on file.
-- **Zero→Buyer and TBD→Seller mappings** are inferred (only Sprinters/Mula→Foundation is explicitly documented via channel redirects).
-- Missing IDs marked `?` in the identity table — fill opportunistically.
+- **Sohil-vs-Anthony QA hierarchy** and who performs day-to-day ticket QA audits — still fuzzy (Mike's own note).
+- Remaining `?` IDs in the identity table (Waldek/Aziz timezones, Tim Foster tz) — fill opportunistically.
 
-Resolved 2026-07-24 (kept for audit): Spracklen "Justin"=legal/"Patrick"=preferred ✓; Javier Garcia Godinez=Alex Garcia ✓; Daehee Kim departed ✓ (Slack deactivated); Joe S + Waldek are Seller pod, not Foundations ✓.
+Resolved 2026-07-24 (kept for audit): Spracklen "Justin"=legal/"Patrick"=preferred ✓; Javier Garcia Godinez=Alex Garcia ✓; Daehee Kim departed ✓ (Slack deactivated); Joe S + Waldek are Seller pod, not Foundations ✓; Justin James's two email spellings are the same Google inbox (dots ignored) ✓; Zero→Buyer + TBD→Seller confirmed via 90-day BP/SP assignee overlap ✓; no Sentry at B-Stock (Datadog covers it) ✓.
