@@ -147,7 +147,14 @@ To draft to a set of people who may or may not already have a group chat, treat 
 
 ### Review-request workflow
 
-When an MR reaches ready-for-review (pipeline green, AI review cleared), a short post to `#fe-guild` (FE-wide) or `#foundation-pod` (pod-scoped) with the MR link solicits a human reviewer. Typical format is minimal — e.g. "Bug fix MR for review: <MR link>". Offer to draft this when an MR reaches that state; don't post it unprompted.
+When an MR reaches ready-for-review (pipeline green, AI review cleared), a short post to `#fe-guild` (FE-wide) or `#foundation-pod` (pod-scoped) with the MR link solicits a human reviewer. Offer to draft this when an MR reaches that state; don't post it unprompted — but Mike HAS said (2026-07-23) that direct sends with the "Sent using @Claude" footer are fine for this message type once he gives the word for a given post.
+
+**House format** (from Mike's #fe-guild history — mirror it):
+- Casual lowercase opener naming the repo + one clause on what it does: `home-portal MR for review — adds X to Y:` / `quick MR for review:` / `fe-core MR for review: updating A and addressing B:`
+- The bare MR URL on its own line (no markdown label needed).
+- Multiple MRs: opener like `got a few MRs for review:` then a numbered/bulleted list, each entry `repo !iid — TICKET one-line summary <link>`.
+- Optional closing status line, e.g. `one human approval needed (AI reviewer already approved)`.
+- No @here/@channel, no greetings, no sign-off. Context that helps a reviewer say yes (copy already signed off, screenshots in the MR) earns one parenthetical, not a paragraph.
 
 ## Reaction Emoji Conventions
 
