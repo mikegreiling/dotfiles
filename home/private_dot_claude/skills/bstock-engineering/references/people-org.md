@@ -44,6 +44,7 @@ Bulk research for this file was done 2026-07-24 (Slack + Jira + Confluence sweep
 | UX / design-system sign-off | **Fred Leung** (design), impl. **Helen Foutch** | |
 | Figma access | **Vajira Nissanka** | |
 | IT: hardware, Cylance, SaaS provisioning, Zoom accounts | **Jon Paul Hutchins** via [IT service desk portal 15](https://bstock.atlassian.net/servicedesk/customer/portal/15) | he does NOT own app dependencies — those go to `#tech-general` |
+| Confluence **EN (Engineering) space admins** (page ownership transfers, space permissions) | Ken Shum, David Chan, Alex Cadalso, **Jon Paul Hutchins**, James Han, Parvinder Bhasin, Mary Gutierrez (+ `TechOps Integration` and `managedsercicesttn` service accounts) | snapshot 2026-07-24 from Space details; Mike is NOT one — page-owner changes need one of these (Jon Paul doubles as the IT-ticket route) |
 | Prod SSH (Teleport), CAS, DSK | `techsupport@bstock.com` or `devops@bstock.com` | |
 | Error tracking / exception telemetry | **Datadog** (see Datadog row) | B-Stock does **not** use Sentry — Datadog covers it; any Sentry references (stale 2018/2021 Confluence pages) are historical |
 | GA4 offline events / Campfire program | **Aziz Vahora** (internal program owner), **Tim Foster** (Campfire, external) | |
