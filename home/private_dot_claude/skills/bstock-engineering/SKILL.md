@@ -18,6 +18,8 @@ B-Stock uses microservices + frontend portals deployed to four environments:
 
 Dev/QA environments require VPN access. The GitLab instance is at `https://gitlab.bstock.io`.
 
+**Terminology: "Magento", "Legacy", and "Enterprise" are interchangeable** — all three refer to B-Stock's old PHP-based platform (hosted separately from 3MP), which the company has been migrating away from for several years. All new seller sign-ups land on 3MP (the microservices + Next.js platform), but legacy code still interacts with Magento services — e.g. the bridge service and the `ua_id` JWT claim ("token from enterprise" in account-service docs means a bridge/Magento-issued token). Mike does not have source access to the Magento codebase. Domain experts to consult: Alvaro, Justin James, Mary Gutierrez — and generally anyone at B-Stock 4–5+ years has worked on Magento to some degree.
+
 ## Mike's Projects
 
 "My projects" refers to these six:
