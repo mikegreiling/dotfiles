@@ -7,8 +7,8 @@ Mike runs the bi-weekly FE+BE guild meeting (colloquially still "FE Guild"). Thi
 - **Charter page**: **"FE+BE Guild Charter"** — pageId `2345959440`, space `EN`, URL `https://bstock.atlassian.net/wiki/spaces/EN/pages/2345959440` (renamed from "Front End Guild Charter" + preamble rewritten to reflect the FE+BE merger, v428, 2026-07-28). **Owner: Mike** (Mike also holds Confluence admin).
 - **Archive page**: "Historical Guild Meeting Notes" — pageId `3357933581`, also **owned by Mike**. Ryan's tradition: older meeting sections get moved here verbatim; continued via the quarterly sweep below.
 - **Cadence**: every other **Tuesday**, morning (shifted from alternate Wednesdays late June 2026). Compute next meeting = newest dated section + 14 days; sanity-check it's a Tuesday. No calendar access yet — **always confirm the computed date with Mike** (meetings get moved for conflicts/holidays; the calendar event "FE+BE Guild meeting (bi-weekly)" is the source of truth only he can see).
-- **Slack channel**: `#fe-guild` = `C04225G5QCS`.
-- Scope covers FE **and** BE topics (BE Guild merged in).
+- **Slack channels for reminders**: `#3mp_developers` = `C026MMX70H4` (primary — full reminder text, traditionally with `<!here>`; low-traffic channel, so vary the wording each cycle to avoid visible copy-paste) and `#fe-guild` = `C04225G5QCS` (traditionally gets a permalink share of the #3mp message, no `@here` — avoids double-pinging the shared membership). Mike's historical template: `<!here>` + greeting (`:wave:`) + "bi-weekly FE+BE guild meeting coming up …" + "if you have any topics to raise, please add them to the agenda here:" + charter URL with the `#Next-Meeting` anchor.
+- Scope covers FE **and** BE topics (BE Guild merged in). Meeting time: Tuesdays **11am CT** (as of Aug 2026).
 
 ## Page anatomy (do not deviate)
 
@@ -17,7 +17,9 @@ Under `# Meeting Topics / Notes` → `## Recording Policy`, sections run newest-
 1. **`## Next Meeting`** — the accumulation slot where people add agenda rows between meetings. Canonical empty state = table header (`**Topic (FE and BE topics)** | **Outcome** | **Owner**`) plus three empty rows.
 2. **`## YYYY-MM-DD`** dated sections, each: same table with filled rows, then the Zoom recording smartlink on its own line, then `Passcode: <passcode>`. Owners/people are **mention nodes**, not plain text.
 
-Storage format (XHTML) is the ONLY safe read/write representation — markdown is lossy on smartlinks/mentions. The body is ~180KB: always redirect to a file, extract regions by grep/offset, never dump into context.
+Storage format (XHTML) is the ONLY safe read/write representation — markdown is lossy on smartlinks/mentions. The body is ~80KB post-archival: always redirect to a file, extract regions by grep/offset, never dump into context.
+
+**`scripts/guild-charter.py` is the deterministic engine** for all structural edits (first live run 2026-07-28: rollover + 19-section archival, both pages verified). It operates on local storage-XML files only — fetch with acli, write with `confluence-api`. Commands: `lint` (validates the section model: one Next Meeting slot, dated sections newest-first, each with a table + ≤3 trailing blocks — headings count as dated if their text cleanly parses as a date, so richer formats like "February 21, 2027" also work), `rollover --date --section-file` (replaces the slot with an agent-composed dated section and inserts a fresh canonical slot), `archive-split --keep-after` (cuts the contiguous trailing run of old sections, groups them under `<h1>YEAR</h1>`), `archive-merge` (prepends year buckets into the archive page). Every command lints its output and **fails loudly on shape surprises**. The agent's job shrinks to: compose the dated section's table content (topics/outcomes/owners with mention nodes), run the pipeline, PUT both pages (archive FIRST, then charter — a mid-failure then means temporary duplication, never loss), and verify with `lint` against the re-fetched live bodies.
 
 ## Action 1 — pre-meeting agenda reminder
 
