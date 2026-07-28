@@ -24,8 +24,14 @@ Storage format (XHTML) is the ONLY safe read/write representation — markdown i
 ## Action 1 — pre-meeting agenda reminder
 
 1. Read the `## Next Meeting` slot (region-extract, not whole page) and note queued topics.
-2. Compose for `#fe-guild`, e.g.: "Reminder: guild meets this Tuesday (Aug 4). Add topics to the agenda: <page URL> — N topic(s) queued so far." Live `<!here>` only if Mike approves it verbatim (slack-workflow.md mention policy).
-3. **Scheduling is sending** — Mike approves exact text + time (convention as of Aug 2026: **the Monday before, mid-morning CT** — #3mp_developers with `<!here>` at :30, the #fe-guild no-ping variant at :35). State meeting times in **Eastern + Pacific** (noon EDT / 9am PDT; EST/PST in winter — a dated Things task covers the DST boundary check), not CT. **Vary the wording every cycle** — never reuse the previous message's phrasing. Prefer raw `chat.scheduleMessage` over the MCP tool so the script can list/cancel/reschedule (see slack-workflow.md "Two scheduling subsystems"); report the scheduled-message ids either way.
+2. Compose one message per channel. **Message-writing rules (Mike's feedback, 2026-07-28)**:
+   - The two messages are **independent** — belt-and-suspenders for people who miss one channel. Never cross-reference the other channel or message ("reminder for this channel as well" is exactly wrong).
+   - **Both get `<!here>`**, but on **different days** so the shared membership is never double-pinged at once: `#3mp_developers` on the **Monday before, mid-morning CT**; `#fe-guild` on the **meeting morning** (~9:30am CT for an 11am meeting).
+   - Don't qualify topics as "FE or BE" — the guilds consolidated long ago and everyone knows; it's just "the guild meeting".
+   - **Active voice for topic solicitation**: people who raise topics drive the conversation — "a topic you'd like to discuss" / "something to bring to the group", never the passive "anything you'd like discussed".
+   - State meeting times in **Eastern + Pacific** (noon EDT / 9am PDT; EST/PST in winter — a dated Things task covers the DST boundary check), not CT.
+   - **Vary the wording every cycle** — these land near the previous cycle's message in low-traffic channels; never reuse phrasing.
+3. **Scheduling is sending** — Mike approves exact text + time first. Use **raw `chat.scheduleMessage`** (keychain token), NOT the MCP tool, so `slack-api.sh scheduled-*` can list/cancel/reschedule (see slack-workflow.md "Two scheduling subsystems"); report the `Q…` scheduled-message ids.
 
 ## Action 2 — post-meeting workflow (interim, hands-on)
 
