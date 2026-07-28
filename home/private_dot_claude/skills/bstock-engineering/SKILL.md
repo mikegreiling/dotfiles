@@ -115,6 +115,7 @@ Load the appropriate reference file when performing these tasks:
 | All stable project IDs and cached values | `references/project-ids.md` |
 | GitLab MR required-approver lookup, SME/code-owner routing | `references/mr-approval-rules.md` |
 | Waiting for / polling CI pipelines & jobs (background task) | `references/pipeline-polling.md` |
+| Filing DEVOPS tickets (GCP/IAM/access requests) + owner ping pattern | `references/devops-tickets.md` |
 | Slack channels, review requests, reaction emojis | `references/slack-workflow.md` |
 | People, pods, gatekeepers, meetings, cross-system IDs | `references/people-org.md` |
 | FE Guild meeting: agenda reminder, post-meeting Confluence notes processing | `references/fe-guild-meeting.md` |
