@@ -4,7 +4,7 @@ Mike runs the bi-weekly FE+BE guild meeting (colloquially still "FE Guild"). Thi
 
 ## Stable facts
 
-- **Charter page**: pageId `2345959440`, space `EN`, URL `https://bstock.atlassian.net/wiki/spaces/EN/pages/2345959440` (title currently "Front End Guild Charter"; an approved rename to **"FE+BE Guild Charter"** plus a preamble rewrite is pending the first write — see One-time pending edits below). **Owner: Mike** (transferred from deactivated Ryan Jenkins, 2026-07-28; Mike now holds Confluence admin).
+- **Charter page**: **"FE+BE Guild Charter"** — pageId `2345959440`, space `EN`, URL `https://bstock.atlassian.net/wiki/spaces/EN/pages/2345959440` (renamed from "Front End Guild Charter" + preamble rewritten to reflect the FE+BE merger, v428, 2026-07-28). **Owner: Mike** (Mike also holds Confluence admin).
 - **Archive page**: "Historical Guild Meeting Notes" — pageId `3357933581`, also **owned by Mike**. Ryan's tradition: older meeting sections get moved here verbatim; continued via the quarterly sweep below.
 - **Cadence**: every other **Tuesday**, morning (shifted from alternate Wednesdays late June 2026). Compute next meeting = newest dated section + 14 days; sanity-check it's a Tuesday. No calendar access yet — **always confirm the computed date with Mike** (meetings get moved for conflicts/holidays; the calendar event "FE+BE Guild meeting (bi-weekly)" is the source of truth only he can see).
 - **Slack channel**: `#fe-guild` = `C04225G5QCS`.
@@ -59,13 +59,14 @@ jq -n --argjson v "$((v + 1))" --arg t "<current title>" --rawfile b /tmp/guild-
 
 Tradition inherited from Ryan Jenkins, continued on Mike's direction (2026-07-28). Policy: the charter retains the trailing **~9 months** of dated sections (12 months is the hard ceiling — Mike: "12 at the maximum, possibly as low as 9; that's plenty"); everything older moves **verbatim** (exact storage-format cut, order preserved) to "Historical Guild Meeting Notes" (`3357933581`), slotted under the year headings that page already uses. Sweep ~quarterly, folded into a post-meeting edit when due (one atomic write per page: cut from charter, prepend to archive), with Mike's confirmation on the exact sections moving. Before the FIRST sweep, inspect the archive page's storage structure and mirror its existing layout — do not invent a new one.
 
-## One-time pending edits (approved 2026-07-25, apply on first write)
+## Operational lessons (verified 2026-07-28, first live write cycle)
 
-- Title → **"FE+BE Guild Charter"** (mirrors the calendar event; avoids collision with the separate "ai Engineering Guild Charter").
-- Preamble rewrite: intro paragraph 2 states the FE+BE merger plainly; "FE guild" → guild-inclusive phrasing through Goals/Non-Goals where coherent; Resources — Ryan bullet re-pointed to Mike (mention node + calendar event name), duplicate GLOB-board-75 bullets merged, "Feature Flag 2.0" link dropped.
-- Bundle with the first post-meeting write or do standalone — either way show Mike the before/after of the preamble region and verify dated sections come back untouched.
+- **Read via acli, write via `confluence-api`.** The v2 GET with `body-format=storage` through `confluence-api` (basic auth) **hangs for minutes** on this 180KB page — while `acli confluence page view --body-format storage --json` returns in seconds, and `confluence-api PUT` works fine. The metadata-only GET (`/api/v2/pages/<id>`, no body param) is also fast — use it for the version number.
+- **Expect harmless normalization noise on write**: Confluence canonicalizes storage format, e.g. reordering `<ac:parameter>` children inside Jira-issue macros throughout the page. A byte-diff of sent-vs-read-back will show these; they are semantics-preserving. Verify with **targeted region checks** (preamble strings, section headings, tail text) rather than whole-body hashes.
+- **Edit recipe that worked**: exact-string replacements each asserted to occur exactly once, whole-`<li>` removals located by `local-id`, and a pre-write assert that everything from `Meeting Topics` onward is byte-identical to the fetched original. Preserve existing `local-id` attributes; omit them on new nodes.
+- **Draft-detection guard (partial)**: `GET /api/v2/pages/<id>?get-draft=true` (no body) is fast and returns a draft object — but the draft object **persists after publishing** with its own version counter, so existence ≠ pending changes. Body-compare is impractical (the body-format draft fetch hangs). Best available signal: compare the draft's version timestamp against the published version's; treat as heuristic, and keep relying on quiet-window timing + Mike confirming his editor is closed.
 
-> **Prerequisite — personal Atlassian API token.** All Confluence writes go through `confluence-api` (basic auth, keychain token). acli's OAuth can only read. If `confluence-api` exits with a missing-token error: Mike mints at <https://id.atlassian.com/manage-profile/security/api-tokens> and stores via `security add-generic-password -s atlassian-api-token -a mike.greiling@bstock.com -w '<token>'`. As of 2026-07-28 the token is **not yet minted** — writes are blocked on this one step.
+> **Auth**: personal Atlassian API token, minted 2026-07-28, keychain service `atlassian-api-token` (annual expiry — re-mint and re-store with `security add-generic-password -U …` when it lapses). `confluence-api` reads it in-process; never print it.
 
 ## Notes for future sessions
 
