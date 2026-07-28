@@ -25,7 +25,7 @@ Storage format (XHTML) is the ONLY safe read/write representation — markdown i
 
 1. Read the `## Next Meeting` slot (region-extract, not whole page) and note queued topics.
 2. Compose for `#fe-guild`, e.g.: "Reminder: guild meets this Tuesday (Aug 4). Add topics to the agenda: <page URL> — N topic(s) queued so far." Live `<!here>` only if Mike approves it verbatim (slack-workflow.md mention policy).
-3. **Scheduling is sending** — Mike approves exact text + time (default suggestion: morning before, ~9am CT), then `slack_schedule_message` to `C04225G5QCS`. Report the `scheduled_message_id`.
+3. **Scheduling is sending** — Mike approves exact text + time (convention as of Aug 2026: **the Monday before, mid-morning CT** — #3mp_developers with `<!here>` at :30, the #fe-guild no-ping variant at :35). State meeting times in **Eastern + Pacific** (noon EDT / 9am PDT; EST/PST in winter — a dated Things task covers the DST boundary check), not CT. **Vary the wording every cycle** — never reuse the previous message's phrasing. Prefer raw `chat.scheduleMessage` over the MCP tool so the script can list/cancel/reschedule (see slack-workflow.md "Two scheduling subsystems"); report the scheduled-message ids either way.
 
 ## Action 2 — post-meeting workflow (interim, hands-on)
 

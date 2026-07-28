@@ -50,6 +50,8 @@ Resolve real URLs (via glab/acli/known URL patterns); never guess a link. Bare I
 
 `slack_schedule_message` schedules a real send (Unix timestamp ≥2 min out, ≤120 days; thread replies supported via `thread_ts`; unavailable in Slack Connect channels). **Scheduling is sending, not drafting — Mike's confirmation rule applies in full** (exact text, channel, and time). There is no tool to list, edit, or cancel a scheduled message; after scheduling, changes happen only in Mike's client under "Drafts & Sent".
 
+**Two scheduling subsystems (discovered 2026-07-28)**: the MCP tool creates an **internal client "scheduled send"** (`Dr…`-prefixed id, the drafts subsystem) — INVISIBLE to `chat.scheduledMessages.list` and unmanageable by `slack-api.sh scheduled-*`; only Mike's client (Drafts & Sent → Scheduled) can edit/cancel it. Raw `chat.scheduleMessage` creates a **public-API scheduled message** (`Q…`-prefixed id) that our script CAN list/delete/reschedule. **Prefer the raw path when programmatic management matters** (recurring reminders); the confirmation rule applies identically to both.
+
 ### Mention keywords (@here / @channel / @everyone)
 
 Slack has exactly three special mentions (there is no `@all`): `@here` notifies only currently-active channel members; `@channel` notifies every channel member including offline; `@everyone` notifies the whole workspace and only works in #general. Policy:
