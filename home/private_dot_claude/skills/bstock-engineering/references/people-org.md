@@ -21,6 +21,7 @@ Bulk research for this file was done 2026-07-24 (Slack + Jira + Confluence sweep
 |---|---|---|
 | Google Analytics (admin, access) | **Mary Gutierrez** | granted Mike GA admin 2026-07-24; previous owner Ryan Jenkins (departed) |
 | Google Tag Manager | **Mike himself** (admin) | inherited from Ryan Jenkins; no Confluence-documented process |
+| Google Search Console | **unknown/possibly orphaned** — Mike has NO access (verified 2026-07-28); Mary has NONE for bstock.com either (her words, 2026-07-28 — only some ancient Magento-site properties) | GA/GTM admin does NOT carry over — each Google product has its own per-property ACL; zero Slack history of any GSC grant, ever; remaining candidates: Campfire (Tim Foster) or the DOM agency (Steve Solter's PPC/SEO team — coordination channel `#campfire-dom` C0APT7X1R1Q, run by Laura Rusznak/marketing), else orphaned with departed Ryan Jenkins → re-verify via DNS through DevOps; NOTE Campfire's contract is reportedly winding down (Mary 2026-07-28), so B-Stock-side owner access needs re-establishing regardless |
 | LaunchDarkly — flag flips (buyer product) | **Jeremy Walton** (PM) | gives the product go-ahead ("you've got my okay") |
 | LaunchDarkly — flag hygiene/retirement | **Mary Gutierrez**; buyer-pod flag process owned by Alexandra Ash | questions → `#feature-flags-launchdarkly` |
 | LaunchDarkly — access | `#feature-flags-launchdarkly` channel | no formal ticket process documented; Evizi QA credentials went through Justin James |
@@ -44,7 +45,7 @@ Bulk research for this file was done 2026-07-24 (Slack + Jira + Confluence sweep
 | UX / design-system sign-off | **Fred Leung** (design), impl. **Helen Foutch** | |
 | Figma access | **Vajira Nissanka** | |
 | IT: hardware, Cylance, SaaS provisioning, Zoom accounts | **Jon Paul Hutchins** via [IT service desk portal 15](https://bstock.atlassian.net/servicedesk/customer/portal/15) | he does NOT own app dependencies — those go to `#tech-general` |
-| Confluence **EN (Engineering) space admins** (page ownership transfers, space permissions) | Ken Shum, David Chan, Alex Cadalso, **Jon Paul Hutchins**, James Han, Parvinder Bhasin, Mary Gutierrez (+ `TechOps Integration` and `managedsercicesttn` service accounts) | snapshot 2026-07-24 from Space details; Mike is NOT one — page-owner changes need one of these (Jon Paul doubles as the IT-ticket route) |
+| Confluence **EN (Engineering) space admins** (page ownership transfers, space permissions) | Ken Shum, David Chan, Alex Cadalso, **Jon Paul Hutchins**, James Han, Parvinder Bhasin, Mary Gutierrez, **Mike** (+ `TechOps Integration` and `managedsercicesttn` service accounts) | snapshot 2026-07-24 from Space details; **Mike was granted Confluence admin 2026-07-28 by Jon Paul** and can now self-serve page-owner changes (did so for both guild pages) |
 | Prod SSH (Teleport), CAS, DSK | `techsupport@bstock.com` or `devops@bstock.com` | |
 | Error tracking / exception telemetry | **Datadog** (see Datadog row) | B-Stock does **not** use Sentry — Datadog covers it; any Sentry references (stale 2018/2021 Confluence pages) are historical |
 | GA4 offline events / Campfire program | **Aziz Vahora** (internal program owner), **Tim Foster** (Campfire, external) | |
@@ -144,7 +145,7 @@ QA reports through **Sohil Sethi (Manager, QA Engineering — Asia/Kolkata, IST)
 
 Evizi (Vietnam) runs much of the hands-on regression/story QA; internal QA (Lana, Olga, Anthony/automation) coordinates *with* them. Vietnamese national holidays (Hung Kings Day, Reunification Day, Labor Day, Tet…) take the whole vendor offline — Sohil announces these.
 
-**Other notable non-US timezones** (for async expectations): Parvinder — Asia/Kolkata; Shivam Bandral, Ashish Tulsankar, Amit Negi, Sachin Jagtap — Asia/Kolkata (contractors); Volodymyr Kelembet (`U01P9BBHKBN`), Michael Ilchuk (`U010CB1S533`) — Europe/Helsinki; Igor Shkulipa (`U01MQ6BVA7L`), Mykhailo Talimonchuk (`URFLQKZ6V`), Andrii Prasolov (`U01DWA7ES3W`) — Asia/Jerusalem (Israel-based, despite Slavic names); Yury Herlovich (`U01EMLYNK5Z`) — America/Denver (US-based despite the name); Helen Holyk, Joe Dube — Europe/Amsterdam.
+**Other notable non-US timezones** (for async expectations): Parvinder — Asia/Kolkata; Shivam Bandral, Ashish Tulsankar, Amit Negi, Sachin Jagtap — Asia/Kolkata (contractors); Nate Patel (`U07AC1M1WUX`, nate.patel@bstock.com) — Asia/Kolkata (FE engineer, Buyer-pod/wp-react work alongside Helen Foutch — auction cards, search-results pages; not in the 2026-07 Pingboard export, likely contractor; observed 2026-07-28); Volodymyr Kelembet (`U01P9BBHKBN`), Michael Ilchuk (`U010CB1S533`) — Europe/Helsinki; Igor Shkulipa (`U01MQ6BVA7L`), Mykhailo Talimonchuk (`URFLQKZ6V`), Andrii Prasolov (`U01DWA7ES3W`) — Asia/Jerusalem (Israel-based, despite Slavic names); Yury Herlovich (`U01EMLYNK5Z`) — America/Denver (US-based despite the name); Helen Holyk, Joe Dube — Europe/Amsterdam.
 
 ## Meetings & rituals
 

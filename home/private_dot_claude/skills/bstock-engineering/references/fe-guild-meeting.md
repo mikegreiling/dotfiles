@@ -1,78 +1,74 @@
-# FE Guild Meeting Automation
+# FE+BE Guild Meeting Automation
 
-Mike runs the bi-weekly Front End Guild meeting. This file canonizes the two actions he delegates: **(1) the pre-meeting agenda reminder** and **(2) post-meeting processing** of the Confluence notes page. Structure facts below were verified live 2026-07-24 against page version 426.
+Mike runs the bi-weekly FE+BE guild meeting (colloquially still "FE Guild"). This file canonizes the delegated actions: **(1) the pre-meeting agenda reminder**, **(2) the interactive post-meeting workflow**, and **(3) the quarterly archival sweep**. Structure facts verified live 2026-07-28 against page version 427.
 
 ## Stable facts
 
-- **Confluence page**: "Front End Guild Charter" — pageId `2345959440`, space `EN` (Engineering), cloudId `8fd1c100-2018-43ac-bdc1-ca69369799c3`, URL `https://bstock.atlassian.net/wiki/spaces/EN/pages/2345959440/Front+End+Guild+Charter` (tiny: `/wiki/x/EIDUiw`). Parent: "Guilds" (`2345435343`). Older years get pruned occasionally to "Historical Guild Meeting Notes" (`3357933581`) — that archival is manual/out of scope.
-- **Cadence**: every other **Tuesday**, morning. The schedule shifted from alternate Wednesdays to Tuesdays in late June 2026 — compute the next meeting as **newest dated section + 14 days**, and sanity-check the result is a Tuesday; if not, ask Mike rather than guessing.
+- **Charter page**: pageId `2345959440`, space `EN`, URL `https://bstock.atlassian.net/wiki/spaces/EN/pages/2345959440` (title currently "Front End Guild Charter"; an approved rename to **"FE+BE Guild Charter"** plus a preamble rewrite is pending the first write — see One-time pending edits below). **Owner: Mike** (transferred from deactivated Ryan Jenkins, 2026-07-28; Mike now holds Confluence admin).
+- **Archive page**: "Historical Guild Meeting Notes" — pageId `3357933581`, also **owned by Mike**. Ryan's tradition: older meeting sections get moved here verbatim; continued via the quarterly sweep below.
+- **Cadence**: every other **Tuesday**, morning (shifted from alternate Wednesdays late June 2026). Compute next meeting = newest dated section + 14 days; sanity-check it's a Tuesday. No calendar access yet — **always confirm the computed date with Mike** (meetings get moved for conflicts/holidays; the calendar event "FE+BE Guild meeting (bi-weekly)" is the source of truth only he can see).
 - **Slack channel**: `#fe-guild` = `C04225G5QCS`.
-- **Meeting scope**: despite the FE name, the meeting covers BE topics too (BE Guild merged in — hence the "Topic (FE and BE topics)" column header).
+- Scope covers FE **and** BE topics (BE Guild merged in).
 
 ## Page anatomy (do not deviate)
 
-Under `# Meeting Topics / Notes` → `## Recording Policy`, the sections run newest-first:
+Under `# Meeting Topics / Notes` → `## Recording Policy`, sections run newest-first:
 
-1. **`## Next Meeting`** — the accumulation slot where people add agenda rows between meetings. Canonical empty state is the table header plus three empty rows:
+1. **`## Next Meeting`** — the accumulation slot where people add agenda rows between meetings. Canonical empty state = table header (`**Topic (FE and BE topics)** | **Outcome** | **Owner**`) plus three empty rows.
+2. **`## YYYY-MM-DD`** dated sections, each: same table with filled rows, then the Zoom recording smartlink on its own line, then `Passcode: <passcode>`. Owners/people are **mention nodes**, not plain text.
 
-   ```
-   ## Next Meeting
-
-   | **Topic (FE and BE topics)** | **Outcome** | **Owner** |
-   | --- | --- | --- |
-   |  |  |  |
-   |  |  |  |
-   |  |  |  |
-   ```
-
-2. **`## YYYY-MM-DD`** dated sections (newest first), each: the same table with real rows (Topic | Outcome | Owner), then the Zoom recording as a **smartlink node** on its own line, then `Passcode: <passcode>`. Owners and people referenced in outcomes are **mention nodes**, not plain text.
+Storage format (XHTML) is the ONLY safe read/write representation — markdown is lossy on smartlinks/mentions. The body is ~180KB: always redirect to a file, extract regions by grep/offset, never dump into context.
 
 ## Action 1 — pre-meeting agenda reminder
 
-Trigger: Mike asks for the guild reminder (or a scheduled automation does).
+1. Read the `## Next Meeting` slot (region-extract, not whole page) and note queued topics.
+2. Compose for `#fe-guild`, e.g.: "Reminder: guild meets this Tuesday (Aug 4). Add topics to the agenda: <page URL> — N topic(s) queued so far." Live `<!here>` only if Mike approves it verbatim (slack-workflow.md mention policy).
+3. **Scheduling is sending** — Mike approves exact text + time (default suggestion: morning before, ~9am CT), then `slack_schedule_message` to `C04225G5QCS`. Report the `scheduled_message_id`.
 
-1. Compute the next meeting date (newest dated section + 14d). Read the current `## Next Meeting` table and note any topics already added.
-2. Compose the reminder for `#fe-guild`. Template (adjust topic line to reality):
+## Action 2 — post-meeting workflow (interim, hands-on)
 
-   > Reminder: FE Guild meets this Tuesday (Jul 21). Add topics you'd like discussed to the agenda: https://bstock.atlassian.net/wiki/spaces/EN/pages/2345959440/Front+End+Guild+Charter — N topic(s) queued so far / the agenda is currently empty.
+Trigger: Mike says something like "run the guild post-meeting workflow". No Zoom/email/calendar access exists yet, so the agent drives an interactive checklist, prompting Mike for what only he can see:
 
-   A live `<!here>` is allowed **only** if Mike approves it in the exact text (see slack-workflow.md mention policy).
-3. **Scheduling is sending** — get Mike's explicit OK on text + send time (default suggestion: the morning before, ~9am CT), then `slack_schedule_message` to `C04225G5QCS`. Report the `scheduled_message_id`; descheduling/rescheduling goes through `slack-api.sh scheduled-*`.
+1. **Read the page** (acli, storage → file) and validate anchors: `## Next Meeting` heading + canonical table present, newest dated section identified. Report the queued agenda rows.
+2. **Prompt Mike for the inputs**:
+   - the meeting date being processed (default: the most recent expected Tuesday — confirm, don't assume);
+   - Zoom recording **share URL + passcode** (from the Zoom email; treat passcodes as opaque — shell-hostile chars);
+   - the **transcript and/or AI summary** (pasted or a file path);
+   - whether the **next meeting is on schedule** (+14d Tuesday) or moved/cancelled;
+   - which queued topics were **actually discussed** — undiscussed rows **carry forward** into the fresh Next Meeting table rather than getting buried under the dated header.
+3. **Transform** (touch ONLY the Next Meeting section; never edit older dated sections):
+   - Rename `## Next Meeting` → `## YYYY-MM-DD`.
+   - Fill Outcome cells from the transcript — terse, decision-focused (what was decided + who acts), matching prior sections' style; keep/add Owner mention nodes; drop leftover empty rows; add rows for substantive unlisted topics discussed.
+   - Below the table: the Zoom share URL as a plain link (Confluence smartlinks it on render), then `Passcode: <passcode>`.
+   - Insert a fresh `## Next Meeting` empty-state block above the new dated section, seeded with any carry-forward rows.
+4. **Quarterly archival check** (see Action 3) — if due, fold it into the same edit.
+5. **Confirm before writing** — show Mike the composed dated section (transcript ambiguities as questions, not guesses). Shared team page: no write without his OK on the content.
+6. **Write and verify**: PUT the full storage body with version+1 via `confluence-api` (recipe below), then re-read the region and confirm: heading renamed, fresh slot present, recording+passcode in place, byte-identical below the edit. Report the page URL.
 
-## Action 2 — post-meeting processing
+```bash
+acli confluence page view --id 2345959440 --body-format storage --json > /tmp/guild.json   # read
+v=$(confluence-api GET '/api/v2/pages/2345959440' | jq '.version.number')                  # write:
+jq -n --argjson v "$((v + 1))" --arg t "<current title>" --rawfile b /tmp/guild-updated.html \
+  '{id:"2345959440", status:"current", title:$t, version:{number:$v},
+    body:{representation:"storage", value:$b}}' | confluence-api PUT '/api/v2/pages/2345959440'
+```
 
-Trigger: Mike provides the Zoom recording email (share link + passcode) and a transcript/summary/his notes. Interim workflow: he pastes the email content; a future automation may capture it from mail.
+**Collab-editing caveat**: API publishes rebase any open editor drafts; worst case is a messy merge in the touched region, never silent data loss (version history restores anything). Prefer quiet windows (right after the meeting / evening), keep the write atomic, and ask Mike to publish/discard his own unpublished draft first if the page banner shows one.
 
-1. **Read the page** in **storage format** — Confluence storage (XHTML) is round-trip safe and preserves smartlink/mention nodes; markdown is lossy and must never be used for an edit cycle. The page is ~56KB, so **always redirect to a file** and extract the regions you need by grep/offset; never dump it into context.
+## Action 3 — quarterly archival sweep
 
-   ```bash
-   acli confluence page view --id 2345959440 --body-format storage --json \
-     | jq -r '.body.storage.value' > /tmp/fe-guild.html
-   ```
+Tradition inherited from Ryan Jenkins, continued on Mike's proposal (~quarterly). Policy: the charter keeps roughly the **current + previous quarter** of dated sections (≈4–7 meetings); everything older moves **verbatim** (exact storage-format cut, order preserved) to "Historical Guild Meeting Notes" (`3357933581`), slotted under the year headings that page already uses. Before the FIRST sweep, inspect the archive page's storage structure and mirror its existing layout — do not invent a new one. Run the sweep as part of a post-meeting edit when due (one atomic write per page: cut from charter, prepend to archive), with Mike's confirmation on the exact sections moving.
 
-   (`confluence-api GET '/api/v2/pages/2345959440?body-format=storage'` is the equivalent if you already need the API token for the write.)
-2. **Transform** (touch ONLY the `## Next Meeting` section; never edit older dated sections):
-   - Rename `## Next Meeting` → `## YYYY-MM-DD` (the meeting's actual date).
-   - Fill the table from the transcript: concise decision-focused **Outcome** text per topic (what was decided + who acts, matching the terse style of prior sections), keep/add **Owner** mention nodes. Delete leftover empty rows. Add rows for substantive topics discussed that weren't pre-listed.
-   - Below the table: the Zoom share link (as a plain URL — Confluence converts it to a smartlink on render) and `Passcode: <passcode>` on its own line.
-   - Insert a fresh `## Next Meeting` empty-state block (template above) immediately before the new dated section.
-3. **Confirm before writing**: this is a shared team page — show Mike the composed dated section (and note any transcript ambiguities as questions, not guesses) before writing anything.
-4. **Write and verify**: PUT the full modified storage body back, with the version number **incremented by one** (Confluence rejects a reused version with 409):
+## One-time pending edits (approved 2026-07-25, apply on first write)
 
-   ```bash
-   v=$(confluence-api GET '/api/v2/pages/2345959440' | jq '.version.number')
-   jq -n --argjson v "$((v + 1))" --rawfile b /tmp/fe-guild-updated.html \
-     '{id:"2345959440", status:"current", title:"Front End Guild Charter",
-       version:{number:$v}, body:{representation:"storage", value:$b}}' \
-     | confluence-api PUT '/api/v2/pages/2345959440'
-   ```
+- Title → **"FE+BE Guild Charter"** (mirrors the calendar event; avoids collision with the separate "ai Engineering Guild Charter").
+- Preamble rewrite: intro paragraph 2 states the FE+BE merger plainly; "FE guild" → guild-inclusive phrasing through Goals/Non-Goals where coherent; Resources — Ryan bullet re-pointed to Mike (mention node + calendar event name), duplicate GLOB-board-75 bullets merged, "Feature Flag 2.0" link dropped.
+- Bundle with the first post-meeting write or do standalone — either way show Mike the before/after of the preamble region and verify dated sections come back untouched.
 
-   Then re-read the section region to confirm the structure landed (heading renamed, fresh Next Meeting slot present, recording+passcode in place). Report the page URL.
-
-> **Prerequisite — personal Atlassian API token.** Confluence *writes* require `confluence-api`, which authenticates with a personal API token; acli's OAuth session can read pages but its scopes are rejected for every write and search endpoint. If `confluence-api` exits with a missing-token error, stop and have Mike mint one at <https://id.atlassian.com/manage-profile/security/api-tokens>, then store it: `security add-generic-password -s atlassian-api-token -a mike.greiling@bstock.com -w '<token>'`. As of 2026-07-28 this token has **not** been minted, so step 4 cannot run yet.
+> **Prerequisite — personal Atlassian API token.** All Confluence writes go through `confluence-api` (basic auth, keychain token). acli's OAuth can only read. If `confluence-api` exits with a missing-token error: Mike mints at <https://id.atlassian.com/manage-profile/security/api-tokens> and stores via `security add-generic-password -s atlassian-api-token -a mike.greiling@bstock.com -w '<token>'`. As of 2026-07-28 the token is **not yet minted** — writes are blocked on this one step.
 
 ## Notes for future sessions
 
-- Zoom email parsing: the recording email contains the share URL (`bstock.zoom.us/rec/share/...`) and passcode verbatim — passcodes contain shell-hostile characters (`^`, `!`, `$`, `*`); treat as opaque strings, never interpolate unquoted.
-- Transcript ingestion via Zoom MCP/API is parked as a Someday task in the Things project "FE Guild Meeting Automation" (`JtnuWw8T89sRpNYv9kNifS`) — keep that project in sync via the `things` CLI as pieces get built or refined.
-- If the newest dated section is ≥3 weeks old, a meeting was likely skipped or the cadence moved again — ask Mike before assuming the next date.
+- Zoom email parsing: share URL (`bstock.zoom.us/rec/share/...`) + passcode arrive verbatim in the recording email; passcodes contain `^ ! $ *` — never interpolate unquoted.
+- Future upgrades parked in the Things project "FE Guild Meeting Automation" (`JtnuWw8T89sRpNYv9kNifS`): Zoom MCP (blocked on IT-granted developer role), Apple Mail/Calendar scripting for email+calendar reads (zero-OAuth local path), full deterministic `guild-charter` helper script (template-splice edits driven by a small JSON payload so no agent ingests the 180KB body). Keep that project in sync via the `things` CLI.
+- If the newest dated section is ≥3 weeks old, a meeting was skipped or moved — ask Mike, never guess the date.
