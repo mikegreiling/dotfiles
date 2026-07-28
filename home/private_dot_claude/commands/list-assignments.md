@@ -3,8 +3,28 @@ argument-hint: [force|refresh|refetch]
 description: Generate an epic-grouped summary of current Jira assignments with 48-hour caching
 ---
 
-Please use the Atlassian Jira MCP tools to generate a summary of my current
-assignments, grouped by epic.
+Please generate a summary of my current assignments, grouped by epic, using the
+`jira-api` CLI wrapper (on PATH; canonical copy in the `bstock-engineering`
+skill's `scripts/`).
+
+Every query below needs fields outside `acli jira workitem search`'s 10-field
+allowlist (`updated`, `parent`, `resolved`, `customfield_*`), so **`jira-api` is
+the mechanism** for all of them:
+
+```bash
+jira-api POST '/rest/api/3/search/jql' <<'EOF'
+{"jql":"assignee = currentUser() AND issuetype = Epic AND statusCategory != Done ORDER BY status ASC",
+ "fields":["summary","status","issuetype","priority","assignee","customfield_10049"],
+ "maxResults":50}
+EOF
+```
+
+- The old `GET /rest/api/3/search` is **410 Gone** — only `POST /rest/api/3/search/jql` works.
+- Paging is **token-based**: the response carries `nextPageToken` and `isLast`
+  (`total` is always `null`). To page, re-POST the same body with
+  `"nextPageToken":"<token>"` until `isLast` is true.
+- Requesting an explicit `fields` list also kills the old description-bloat
+  problem — nothing you didn't ask for comes back.
 
 > **Workflow note:** The Foundations Pod no longer runs two-week sprints. Work is
 > a kanban board of **epics assigned directly to me**, with child stories grouped
@@ -65,13 +85,18 @@ assignments, grouped by epic.
 
 ## API Response Size Management
 
-`searchJiraIssuesUsingJql` truncates large responses to a file. To stay inline:
+Raw search responses are large. To stay inline:
 
 1. Use small `maxResults` and the minimal field sets above.
-2. When a response is saved to a file, extract with `jq` — never `Read` the raw JSON into context:
-   `jq -c '.issues.nodes[] | {key, summary:.fields.summary, status:.fields.status.name, type:.fields.issuetype.name, parent:.fields.parent.key, assignee:.fields.assignee.displayName, pts:.fields.customfield_10049}' <file>`
-3. Cloud ID: `8fd1c100-2018-43ac-bdc1-ca69369799c3`. My accountId (fallback / for assignee checks):
-   `712020:102e13ca-76c4-4a0c-89e1-c9fc45369c5d`.
+2. **Always pipe through `jq` in the same Bash call** — never write the raw JSON to a file and `Read` it into context:
+   ```bash
+   jira-api POST '/rest/api/3/search/jql' <<'EOF' | jq -c '.issues[] | {key, summary:.fields.summary, status:.fields.status.name, type:.fields.issuetype.name, parent:.fields.parent.key, assignee:.fields.assignee.displayName, pts:.fields.customfield_10049}'
+   {"jql":"...","fields":["summary","status","issuetype","assignee","customfield_10049","parent"],"maxResults":50}
+   EOF
+   ```
+   (Note the results array is `.issues[]` — a flat array, not `.issues.nodes[]`.)
+3. My accountId (fallback / for assignee checks): `712020:102e13ca-76c4-4a0c-89e1-c9fc45369c5d`.
+   `jira-api` supplies the cloud ID itself — you never pass it.
 4. Child→epic linkage: `fields.parent.key` (primary), `customfield_10013` (redundant alias).
 
 ## Notes

@@ -4,16 +4,16 @@ How to upload files to Jira issues and surface them in rich-text bodies (comment
 
 ## Capability Matrix
 
-| Operation | MCP | acli | `scripts/jira-attach` / raw API |
-|---|---|---|---|
-| Upload attachment | ❌ no tool exists | ❌ (`attachment` has only `list`/`delete`) | ✅ v3 multipart POST |
-| List / delete attachments | ❌ | ✅ `acli jira workitem attachment list --key KEY` / `delete --id ID` | ✅ |
-| Embed media in a comment | ❌ markdown can't produce media nodes | ❌ | ✅ v2 wiki markup |
-| Threaded reply (with embeds) | ❌ | ❌ | ✅ v2 `parentId` |
-| Embed media in description | ❌ (markdown `![](file)` becomes a broken external-blob node) | ❌ (`-d` plain text stores markup literally) | ✅ v2 PUT, or lossless append via laundering |
-| Append to description/comment | ❌ | ❌ | ✅ `--append-*` modes |
+| Operation | acli | `scripts/jira-attach` / raw API |
+|---|---|---|
+| Upload attachment | ❌ (`attachment` has only `list`/`delete`) | ✅ v3 multipart POST |
+| List / delete attachments | ✅ `acli jira workitem attachment list --key KEY` / `delete --id ID` | ✅ |
+| Embed media in a comment | ❌ | ✅ v2 wiki markup |
+| Threaded reply (with embeds) | ❌ | ✅ v2 `parentId` |
+| Embed media in description | ❌ (`-d` plain text stores markup literally) | ✅ v2 PUT, or lossless append via laundering |
+| Append to description/comment | ❌ | ✅ `--append-*` modes |
 
-Both MCP (`contentFormat: "adf"`) and acli (`--description` ADF mode) *accept* raw ADF, but authoring a `media` node needs the attachment's **media services UUID**, which no attachment API returns — see [The media UUID problem](#the-media-uuid-problem).
+acli's `--description` / `--body` flags *accept* raw ADF, but authoring a `media` node needs the attachment's **media services UUID**, which no attachment API returns — see [The media UUID problem](#the-media-uuid-problem). (The Atlassian MCP server, which also could not upload, was removed in 2026-07; see the `atlassian-mcp-shim` skill.)
 
 ## The `jira-attach` script
 
@@ -29,7 +29,7 @@ jira-attach --append-comment ID TEXT ISSUE-KEY FILE...         # attach + lossle
 - Images embed inline as thumbnails; other file types embed as attachment cards.
 - `--reply-to COMMENT_ID` makes the comment a **threaded reply** (requires `--comment`).
 - The three body modes are mutually exclusive; TEXT may itself contain wiki markup (it goes through Jira's converter).
-- Zero-risk alternative ("policy option 1"): attach only, and write "see attached FILE" in prose via the normal MCP comment/edit tools — no body-rewrite risk at all.
+- Zero-risk alternative ("policy option 1"): attach only, and write "see attached FILE" in prose via the ordinary `acli jira workitem comment create` / `workitem edit --description` commands — no body-rewrite risk at all.
 
 ## Auth: reusing acli's OAuth token
 

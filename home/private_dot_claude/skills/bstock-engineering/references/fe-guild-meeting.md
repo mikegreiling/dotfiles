@@ -43,14 +43,33 @@ Trigger: Mike asks for the guild reminder (or a scheduled automation does).
 
 Trigger: Mike provides the Zoom recording email (share link + passcode) and a transcript/summary/his notes. Interim workflow: he pastes the email content; a future automation may capture it from mail.
 
-1. **Read the page** with `getConfluencePage` `contentFormat: "html"` — HTML is round-trip safe and preserves smartlink/mention nodes; markdown is lossy and must never be used for an edit cycle. The page is ~56KB and overflows the tool-result limit: the result lands in a file — extract the needed regions by offset/grep, don't read it all into context.
+1. **Read the page** in **storage format** — Confluence storage (XHTML) is round-trip safe and preserves smartlink/mention nodes; markdown is lossy and must never be used for an edit cycle. The page is ~56KB, so **always redirect to a file** and extract the regions you need by grep/offset; never dump it into context.
+
+   ```bash
+   acli confluence page view --id 2345959440 --body-format storage --json \
+     | jq -r '.body.storage.value' > /tmp/fe-guild.html
+   ```
+
+   (`confluence-api GET '/api/v2/pages/2345959440?body-format=storage'` is the equivalent if you already need the API token for the write.)
 2. **Transform** (touch ONLY the `## Next Meeting` section; never edit older dated sections):
    - Rename `## Next Meeting` → `## YYYY-MM-DD` (the meeting's actual date).
    - Fill the table from the transcript: concise decision-focused **Outcome** text per topic (what was decided + who acts, matching the terse style of prior sections), keep/add **Owner** mention nodes. Delete leftover empty rows. Add rows for substantive topics discussed that weren't pre-listed.
    - Below the table: the Zoom share link (as a plain URL — Confluence converts it to a smartlink on render) and `Passcode: <passcode>` on its own line.
    - Insert a fresh `## Next Meeting` empty-state block (template above) immediately before the new dated section.
-3. **Confirm before writing**: this is a shared team page — show Mike the composed dated section (and note any transcript ambiguities as questions, not guesses) before calling `updateConfluencePage`.
-4. **Write and verify**: `updateConfluencePage`, then re-read the section region to confirm the structure landed (heading renamed, fresh Next Meeting slot present, recording+passcode in place). Report the page URL.
+3. **Confirm before writing**: this is a shared team page — show Mike the composed dated section (and note any transcript ambiguities as questions, not guesses) before writing anything.
+4. **Write and verify**: PUT the full modified storage body back, with the version number **incremented by one** (Confluence rejects a reused version with 409):
+
+   ```bash
+   v=$(confluence-api GET '/api/v2/pages/2345959440' | jq '.version.number')
+   jq -n --argjson v "$((v + 1))" --rawfile b /tmp/fe-guild-updated.html \
+     '{id:"2345959440", status:"current", title:"Front End Guild Charter",
+       version:{number:$v}, body:{representation:"storage", value:$b}}' \
+     | confluence-api PUT '/api/v2/pages/2345959440'
+   ```
+
+   Then re-read the section region to confirm the structure landed (heading renamed, fresh Next Meeting slot present, recording+passcode in place). Report the page URL.
+
+> **Prerequisite — personal Atlassian API token.** Confluence *writes* require `confluence-api`, which authenticates with a personal API token; acli's OAuth session can read pages but its scopes are rejected for every write and search endpoint. If `confluence-api` exits with a missing-token error, stop and have Mike mint one at <https://id.atlassian.com/manage-profile/security/api-tokens>, then store it: `security add-generic-password -s atlassian-api-token -a mike.greiling@bstock.com -w '<token>'`. As of 2026-07-28 this token has **not** been minted, so step 4 cannot run yet.
 
 ## Notes for future sessions
 

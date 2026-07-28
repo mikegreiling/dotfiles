@@ -9,7 +9,7 @@ Who's who at B-Stock: the org structure, cross-system identities, domain experts
 - **Stable caches** (Slack/GitLab/Jira IDs, emails, DM channel IDs): safe to rely on; verify only on visible failure.
 - **Snapshots** (titles, team membership, current projects, "recent interaction" notes): dated where possible; presume drift after a few months. Refresh via live lookup when a decision hinges on one.
 
-Verification recipes: `slack_search_users` (returns title + email + timezone), `GITLAB_HOST=gitlab.bstock.io glab api "users?search=<term>"`, Atlassian MCP `lookupJiraAccountId`. **Email is the reliable join key across systems.** For "recent interactions with person X", use the sync-since-cursor recipe in `slack-workflow.md` (`with:<@UID>` scoped to `im,mpim`, plus `from:<@UID>`), Jira JQL on their accountId, and `glab` MR activity on their GitLab username.
+Verification recipes: `slack_search_users` (returns title + email + timezone), `GITLAB_HOST=gitlab.bstock.io glab api "users?search=<term>"`, `jira-api GET '/rest/api/3/user/search?query=<name-or-email>'`. **Email is the reliable join key across systems.** For "recent interactions with person X", use the sync-since-cursor recipe in `slack-workflow.md` (`with:<@UID>` scoped to `im,mpim`, plus `from:<@UID>`), Jira JQL on their accountId, and `glab` MR activity on their GitLab username.
 
 Bulk research for this file was done 2026-07-24 (Slack + Jira + Confluence sweeps); undated claims below are as of then.
 

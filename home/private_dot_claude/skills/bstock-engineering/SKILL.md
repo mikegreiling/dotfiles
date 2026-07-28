@@ -68,7 +68,7 @@ Full service project ID mapping (19 services) → see `references/project-ids.md
 
 - B-Stock uses **Jira** (not GitLab Issues) for ticket tracking. Never use `glab` for issue/ticket/story operations.
 - **Epics are created in the `GLOB` project, never in `FP`.** GLOB epics carry the Pod field (Mike's pod: "Payment and Foundations"); FP issues have no Pod field. Child stories/tasks/bugs live in `FP`, parented to the GLOB epic. See `references/jira-workflow.md`.
-- **NEVER move a Jira issue between projects by cloning/recreating it and re-parenting children.** The API/MCP cannot perform a true cross-project move; recreating loses history and leaves a zombie ticket. Compounding this: Mike **does not have delete permission** on these projects (verified 2026-07-20 — `acli jira workitem delete` returns "You do not have permission to delete issues in this project"), so a mistaken recreation cannot be cleaned up and becomes a **permanent tombstone**, which hurts auditability and adds noise. If an issue is in the wrong project, STOP and ask Mike to run the Jira UI Move wizard — only clone-and-reparent with his explicit permission.
+- **NEVER move a Jira issue between projects by cloning/recreating it and re-parenting children.** The REST API cannot perform a true cross-project move; recreating loses history and leaves a zombie ticket. Compounding this: Mike **does not have delete permission** on these projects (verified 2026-07-20 — `acli jira workitem delete` returns "You do not have permission to delete issues in this project"), so a mistaken recreation cannot be cleaned up and becomes a **permanent tombstone**, which hurts auditability and adds noise. If an issue is in the wrong project, STOP and ask Mike to run the Jira UI Move wizard — only clone-and-reparent with his explicit permission.
 - Every feature branch pushed to GitLab should have a corresponding MR.
 - Every MR should be associated with at least one Jira ticket.
 - Use `"ticket"`, `"issue"`, and `"story"` interchangeably — they all mean Jira tickets.
@@ -122,24 +122,26 @@ Load the appropriate reference file when performing these tasks:
 
 ## Tool Preferences (GitLab & Atlassian)
 
-Prefer purpose-built tools — `glab`, `gh`, and MCP — over hand-rolled HTTP. Raw `curl` against an API endpoint is a **last resort**, only when no `glab`/`gh`/MCP tool covers the operation.
+Prefer purpose-built CLIs — `glab`, `gh`, `acli` — over hand-rolled HTTP. Raw `curl` against an API endpoint is a **last resort**, only when no CLI or bundled script covers the operation.
 
 - **GitLab**: `glab` (authenticated to `gitlab.bstock.io`) is the tool for all GitLab work — reads, routine ops, CI polling (see `references/pipeline-polling.md`), and MR creation. Use it freely; it keeps responses out of the context window. Anything the subcommands don't cover directly is reachable via `GITLAB_HOST=gitlab.bstock.io glab api <endpoint>`.
-- **Atlassian/Jira**: no CLI equivalent — use the Atlassian MCP tools.
-- **Jira attachments & media embeds**: the MCP server cannot upload attachments or produce media embeds, and `acli` can only list/delete attachments. Use the bundled `scripts/jira-attach` (also on PATH as `jira-attach`): upload, embed in a new comment or threaded reply (`--comment` / `--reply-to`), or losslessly append embeds to the description or an existing comment (`--append-description` / `--append-comment`). Full mechanism notes, capability matrix, and safe-editing recipes: `references/jira-attachments.md`.
-- If the **Atlassian** MCP tools are unavailable (check for `mcp__atlassian__getVisibleJiraProjects`): STOP and prompt the user to run `/mcp` to authenticate.
+- **Jira**: `acli` is **the** tool — searches (`acli jira workitem search --jql … --json`), issue reads (`workitem view KEY --fields … --json`), create/edit, comments, links, transitions, assignment, and bulk operations over a JQL/filter set. Always pass `--json`; the default table output is unparseable, and the short flags are inconsistent (on `search`, `-j` means `--jql`). Liveness probe: `acli jira auth status`.
+- **Jira gaps → `scripts/jira-api`** (on PATH as `jira-api`; `jira-api METHOD PATH`, JSON body on stdin). Use it for what acli can't do: JQL searches needing fields outside acli's 10-field allowlist (`POST /rest/api/3/search/jql`), **any custom-field edit** (story points/sprint/epic link — `acli workitem edit` cannot set them), transition listing, user lookup, createmeta, remote links, worklogs. It reuses acli's OAuth token from the keychain.
+- **Confluence**: `acli confluence page view --id N --body-format storage --json` reads a page. Everything else (CQL search, space/page listing, create/update, comments) goes through `scripts/confluence-api` (on PATH as `confluence-api`), which needs a **personal Atlassian API token** — acli's OAuth scopes are rejected by the Confluence API. Setup: mint at <https://id.atlassian.com/manage-profile/security/api-tokens>, then `security add-generic-password -s atlassian-api-token -a mike.greiling@bstock.com -w '<token>'`.
+- **Jira attachments & media embeds**: `acli` can only list/delete attachments. Use the bundled `scripts/jira-attach` (also on PATH as `jira-attach`): upload, embed in a new comment or threaded reply (`--comment` / `--reply-to`), or losslessly append embeds to the description or an existing comment (`--append-description` / `--append-comment`). Full mechanism notes, capability matrix, and safe-editing recipes: `references/jira-attachments.md`.
+- If Atlassian access fails, run `acli jira auth status`. If it reports unauthenticated, re-authenticate with `acli auth login` (opens a browser flow) — prompt Mike rather than trying to script it.
+- The `bstock-common` plugin skills (`jira-create-stories`, `jira-create-epics`, `jira-story-pointer`, `jira-epic-sizer`) and any other skill still written against `mcp__atlassian__*` tools: the Atlassian MCP server has been **removed by design**. Load the `atlassian-mcp-shim` skill alongside them and translate every `mcp__atlassian__*` call per the shim — do not stop or report Atlassian as unavailable.
 - If a `glab` call returns 401/403, run `GITLAB_HOST=gitlab.bstock.io glab auth status`; re-authenticate with `glab auth login --hostname gitlab.bstock.io` if needed.
 
 ## Jira API Response Optimization
 
-When using `mcp__atlassian__getJiraIssue`, always include the `fields` parameter to prevent context window bloat (responses can exceed 40,000 tokens without it):
+Always limit the fields you request — an unbounded issue read can exceed 40,000 tokens:
 
-```javascript
-mcp__atlassian__getJiraIssue({
-  issueIdOrKey: "FP-123",
-  fields: ["summary", "status", "created", "updated", "description", "assignee"]
-})
+```bash
+acli jira workitem view FP-123 --fields "summary,status,created,updated,description,assignee" --json
 ```
+
+`workitem view`'s `--fields` is unrestricted (any field, including `customfield_*`, plus `*all` / `*navigable` / `-field` exclusions) but takes **one key per call**. Its default field set includes the full description, so pass `--fields` explicitly even for cheap lookups. The same discipline applies to `workitem search --fields` and to `jira-api` search payloads.
 
 ## Working Rules
 

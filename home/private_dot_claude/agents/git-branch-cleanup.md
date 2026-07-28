@@ -1,7 +1,7 @@
 ---
 name: git-branch-cleanup
 description: Use this agent when you need to analyze a specific git branch to determine if it should be deleted based on merge status, staleness, or activity. Examples: <example>Context: User wants to clean up old branches in their project and needs analysis of a specific branch. user: "Can you analyze the branch 'feature/old-login-fix' to see if it should be deleted?" assistant: "I'll use the git-branch-cleanup agent to analyze that branch for deletion eligibility." <commentary>Since the user is asking for branch analysis, use the git-branch-cleanup agent to analyze the specific branch.</commentary></example> <example>Context: User is working through a list of branches and wants to analyze each one individually. user: "Please analyze the branch 'mg-SPR-1234-update-dependencies' for cleanup" assistant: "I'll analyze that branch using the git-branch-cleanup agent to determine if it's safe to delete." <commentary>The user is requesting analysis of a specific branch, so use the git-branch-cleanup agent.</commentary></example>
-tools: Bash, Glob, Grep, LS, Read, TodoWrite, BashOutput, KillBash, mcp__atlassian__getJiraIssue, mcp__atlassian__lookupJiraAccountId, mcp__atlassian__searchJiraIssuesUsingJql, mcp__atlassian__getJiraIssueRemoteIssueLinks, mcp__atlassian__getVisibleJiraProjects, mcp__atlassian__getJiraProjectIssueTypesMetadata
+tools: Bash, Glob, Grep, LS, Read, TodoWrite, BashOutput, KillBash
 model: haiku
 color: green
 ---
@@ -84,18 +84,17 @@ For unclear cases, gather additional context:
 **Commit Analysis:** Examine commit messages and changed files if merge evidence is unclear
 **Jira Integration:** Look up tickets referenced in branch names for context
 
-#### Jira API Response Optimization
+#### Jira Lookups (via Bash — `acli`)
 
-**CRITICAL**: When using `mcp__atlassian__getJiraIssue`, ALWAYS include the `fields` parameter to limit the response size and avoid context window bloat:
+Jira is read through the `acli` CLI, not an MCP server. **CRITICAL**: ALWAYS pass `--fields` to limit the response size and avoid context window bloat, and always pass `--json`:
 
-```javascript
-mcp__atlassian__getJiraIssue({
-  issueIdOrKey: "SPR-1234",
-  fields: ["summary", "status", "created", "updated", "description", "assignee"]
-})
+```bash
+acli jira workitem view SPR-1234 --fields "summary,status,created,updated,description,assignee" --json
 ```
 
-**Why this matters**: Jira issue responses can exceed 40,000+ tokens due to extensive metadata (comments, change history, attachments, custom fields, worklogs, etc.). Using field limiting reduces responses to manageable sizes while retaining essential information for branch analysis.
+**Why this matters**: Jira issue responses can exceed 40,000+ tokens due to extensive metadata (comments, change history, attachments, custom fields, worklogs, etc.). Field limiting reduces responses to manageable sizes while retaining essential information for branch analysis. `--fields` takes one issue key per call.
+
+If Jira access fails, check `acli jira auth status` and report — do not attempt to re-authenticate.
 
 #### Caveats
 
@@ -243,7 +242,7 @@ Provide a structured JSON response:
 
 ## Quality Assurance
 - Cross-reference multiple data sources when available
-- Use `glab` / Jira MCP tools to verify context when MR/ticket references found
+- Use `glab` / `acli` to verify context when MR/ticket references found
 - Flag inconsistencies or unusual patterns
 - Conservative approach - preserve when uncertain
 - Always provide SHA for recovery

@@ -3,7 +3,7 @@
 ## Important Terminology
 
 - "Ticket", "issue", and "story" are used interchangeably — they all mean Jira tickets
-- B-Stock does NOT use GitLab issues. All issue/ticket/story operations use Atlassian MCP tools
+- B-Stock does NOT use GitLab issues. All issue/ticket/story operations go through `acli jira …` (add `--json`), falling back to the bundled `jira-api` wrapper for the handful of things acli can't do — see **Atlassian Tooling Limits** below
 - Mike's primary team is **Foundations Pod** (`FP` project key)
 
 ## Ticket Status Workflow
@@ -117,6 +117,17 @@ Per **Jira Epic Workflow**:
 - An epic typically only appears on the team **kanban board columns once it reaches In Development**; earlier
   planning statuses live in the board's **Backlog**.
 
+### STORY workflow statuses differ from epics (verified 2026-07-27 via acli)
+
+Stories/tasks do NOT use the epic status names. The story flow is:
+
+`To Do → In Progress → Technical Review → Merged → Quality Review → Done`
+
+- There is **no "In Development", "Dev Complete", or "Release Candidate" on stories** — acli/API transitions to those names fail with "No allowed transitions found". The dev-active status is `In Progress`; the QA-handoff parking status is `Merged` (reached only via `Technical Review` — step through both when advancing from In Progress).
+- Failed-QA rework: the transition from Quality Review back to `In Progress` is named **"Rework"**.
+- Mike's stop point on stories is `Merged` (analogous to epics' Dev Complete); QA moves `Merged → Quality Review → Done`.
+- `acli jira workitem transition --key <KEY> --status "<exact status name>" --yes` — status names are the exact ones above.
+
 ### Who moves an epic through which statuses — MIKE STOPS AT DEV COMPLETE
 
 Validated against the GLOB-4588/GLOB-4674 audit trails (2026-07-23):
@@ -132,9 +143,9 @@ Validated against the GLOB-4588/GLOB-4674 audit trails (2026-07-23):
 The team kanban board is `https://bstock.atlassian.net/jira/software/c/projects/FP/boards/678`. Validated empirically 2026-07-20 (full-field inspection of board-resident epics):
 
 - **Epics are created in the `GLOB` project, never in `FP`** (per Mike, 2026-07-20). GLOB epics carry the **Pod** select field `customfield_11053` — Mike's pod is **"Payment and Foundations"** (option `11398`). FP issues have no Pod field at all (that's how you know an epic landed in the wrong project). Child stories/tasks/bugs live in `FP` and are parented to the GLOB epic (cross-project parenting works via the `parent` field).
-- Board-resident epics also carry **`Components: kanban`** (component ids: `11289` in GLOB, `11322` in FP) and reach the board columns at **status In Development** (id `10295`). Set fields at creation via `additional_fields`, e.g. `{"components": [{"name": "kanban"}], "customfield_11053": {"id": "11398"}}`.
-- **NEVER "move" an issue across projects by recreating it and re-parenting children** — the API/MCP has no true move; recreation loses history and leaves a zombie. Zombies are effectively **permanent**: Mike lacks issue-delete permission (verified 2026-07-20 — `acli jira workitem delete FP-2570` → "You do not have permission to delete issues in this project"), and unnecessary tombstones hurt auditability and add noise to the tracker. STOP and ask Mike to run the Jira UI Move wizard instead. (Clone-and-reparent only with his explicit permission.)
-- The board's exact filter JQL has not been read directly — the Atlassian MCP cannot fetch board configs and `acli jira board get --id 678` doesn't expose the filter id. Capture it from Board settings → General in the UI and update this section.
+- Board-resident epics also carry **`Components: kanban`** (component ids: `11289` in GLOB, `11322` in FP) and reach the board columns at **status In Development** (id `10295`). Set these at creation via the `additionalAttributes` object of an `acli jira workitem create --from-json` payload, e.g. `"additionalAttributes": {"components": [{"name": "kanban"}], "customfield_11053": {"id": "11398"}}` — or afterwards with `jira-api PUT '/rest/api/3/issue/KEY'` (`acli workitem edit` cannot set custom fields).
+- **NEVER "move" an issue across projects by recreating it and re-parenting children** — the REST API has no true move; recreation loses history and leaves a zombie. Zombies are effectively **permanent**: Mike lacks issue-delete permission (verified 2026-07-20 — `acli jira workitem delete FP-2570` → "You do not have permission to delete issues in this project"), and unnecessary tombstones hurt auditability and add noise to the tracker. STOP and ask Mike to run the Jira UI Move wizard instead. (Clone-and-reparent only with his explicit permission.)
+- The board's exact filter JQL has not been read directly — `acli jira board get --id 678` doesn't expose the filter id, and the board-configuration REST endpoints are not reachable with the available credentials. Capture it from Board settings → General in the UI and update this section.
 - **Epic transition path** (workflow ids, validated on both GLOB and FP epics): Open → `211` "Ready for Sizing" → `201` "Sized" (→ T-shirt Sized) → `161` "Dev Started" (→ In Development). "In Shaping"/"Shaped" are optional intermediate stops, not required hops.
 - **Story transition path** (validated, FP): To Do → `11` "Start Work" (→ In Progress) → `21` "Merge Request" (→ TECHNICAL REVIEW). T-Shirt Size option ids: XS `11033`, S `10839`, M `10840`, L `10841`, XL `10842`.
 
@@ -252,22 +263,29 @@ Reference examples: `FP-1968` (Jest vs Vitest perf research), `FP-2256` (V8 vs I
 
 ### Sprint Assignment
 
-To assign a ticket to the current sprint, use `customfield_10018` with a direct number (NOT an array):
-```javascript
-// ✅ Correct
-{ "customfield_10018": 3660 }
+To assign a ticket to the current sprint, set `customfield_10018` to a direct number (NOT an array). `acli jira workitem edit` cannot set custom fields, so use `jira-api`:
 
-// ❌ Wrong
-{ "customfield_10018": [3660] }
+```bash
+# ✅ Correct
+echo '{"fields":{"customfield_10018":3660}}' | jira-api PUT '/rest/api/3/issue/FP-123'
+
+# ❌ Wrong — an array is rejected
+echo '{"fields":{"customfield_10018":[3660]}}' | jira-api PUT '/rest/api/3/issue/FP-123'
 ```
+
+At creation time the same value goes in the `additionalAttributes` object of an `acli jira workitem create --from-json` payload.
 
 **Note (2026-07): the Foundations Pod no longer runs sprints — work is tracked on a kanban board of epics.** `customfield_10018` is generally no longer set. The mechanics above remain only for the rare case a sprint field is still required. `~/.claude/caches/bstock-assignments-cache.md` no longer contains a sprint ID.
 
-## Atlassian API Limitations
+## Atlassian Tooling Limits
 
-### Issue Links — CAN Be Created via API
+Two classes of limit: **platform** facts (true regardless of client) and **acli** edges (where you drop to `jira-api`).
 
-Issue links CAN be created programmatically via `mcp__atlassian__createIssueLink` (verified 2026-06-03 — created Relates + Parent-Child links successfully). Common link type IDs:
+### Platform limits
+
+#### Issue Links — CAN be created programmatically
+
+Verified 2026-06-03 (Relates + Parent-Child created successfully). Common link type IDs:
 
 | Link Type | ID | inward / outward |
 |-----------|-----|------------------|
@@ -277,34 +295,52 @@ Issue links CAN be created programmatically via `mcp__atlassian__createIssueLink
 | Duplicate | `10002` | is duplicated by / duplicates |
 | Cloners | `10001` | is cloned by / clones |
 
-For `createIssueLink`, `inwardIssue` takes the subject of the OUTWARD verb (e.g. for Parent-Child, `inwardIssue` = the parent, `outwardIssue` = the child; for Blocks, `inwardIssue` = the blocker).
+```bash
+acli jira workitem link create --out FP-123 --in FP-456 --type Blocks --yes
+acli jira workitem link type --json          # list available types
+acli jira workitem link list --key FP-123    # existing links on an issue
+```
+
+**Direction semantics:** the *inward* issue is the subject of the OUTWARD verb. For Parent-Child, `--in` = the parent and `--out` = the child; for Blocks, `--in` = the blocker. acli's `--type` takes the **outward description** ("Blocks", "Relates", "Splits to"), so `--out A --in B --type Blocks` reads "A blocks B". Getting these backwards silently creates the inverse relationship.
 
 **Hierarchy caveat:** a Story cannot be a hierarchy `parent` of another Story — the `parent` field only accepts a higher level (Epic). To express "child of" between same-level issues (e.g. a Story under the GLOB-2674 umbrella Story), use a **Parent-Child link**, not the `parent` field.
 
-### Story Points on Bug Issue Types
+#### Story Points on Bug issue types
 
 `customfield_10049` (Story Points) cannot be set via API on `Bug` issue types in the `SPR` project:
 - Works: Story, Task, Epic
 - Fails: Bug (returns "Bad Request")
 
-For Bug tickets, tell user to set story points manually in Jira UI.
+For Bug tickets, tell the user to set story points manually in the Jira UI.
 
-### addCommentToJiraIssue — Omit `contentFormat`
+#### No cross-project move, no delete
 
-Passing `contentFormat: "markdown"` to `addCommentToJiraIssue` double-escapes newlines — the posted comment renders literal `\n` instead of line breaks (observed 2026-07-16 on multi-paragraph bodies). Omit the parameter entirely; comments then post with correct formatting. `editJiraIssue` description edits do NOT have this bug — the quirk is specific to the comment endpoint. If a broken comment lands, fix it by re-posting/updating without the parameter.
+There is no true cross-project move in the REST API, and Mike has **no issue-delete permission** — see the board section above. Never clone-and-reparent without explicit permission.
 
-### getJiraIssue — Always Use Field Limiting
+### acli edges (drop to `jira-api`)
 
-Jira responses can exceed 40,000 tokens. Always include `fields` parameter:
+| acli can't | Use instead |
+|---|---|
+| `workitem search --fields` beyond the allowlist — only `key, issuetype, summary, status, assignee, priority, reporter, creator, labels, description` are accepted (no `created`/`updated`/`parent`/`customfield_*`) | `jira-api POST '/rest/api/3/search/jql'` with `{"jql":"…","fields":[…],"maxResults":50}`. Token-based paging: re-POST with `nextPageToken` until `isLast`; `total` is always `null`. The old `GET /rest/api/3/search` is 410 Gone. |
+| Set **any** custom field via `workitem edit` (its `--from-json` schema has no `additionalAttributes`) | `echo '{"fields":{"customfield_10049":5}}' \| jira-api PUT '/rest/api/3/issue/KEY'` (204, empty body) |
+| List available transitions for an issue | `jira-api GET '/rest/api/3/issue/KEY/transitions'` — then `acli jira workitem transition --key KEY --status "<name>" --yes` (acli takes the target status *name*, not a transition id) |
+| Look up a user's accountId | `jira-api GET '/rest/api/3/user/search?query=<name-or-email>'` |
+| Fetch createmeta (which fields a project/issue-type accepts) | `jira-api GET '/rest/api/3/issue/createmeta/FP/issuetypes'` and `…/issuetypes/<typeId>` |
+| Upload attachments, embed media, threaded comment replies | `jira-attach` — see `references/jira-attachments.md` |
 
-```javascript
-mcp__atlassian__getJiraIssue({
-  issueIdOrKey: "FP-123",
-  fields: ["summary", "status", "created", "updated", "description", "assignee"]
-})
+Custom fields **can** be set at creation time: `acli jira workitem create --from-json` accepts an `additionalAttributes` object (`--generate-json` prints the template to stdout).
+
+### Keep field lists tight
+
+Unbounded issue reads can exceed 40,000 tokens. `acli jira workitem view` defaults to `key,issuetype,summary,status,assignee,description` — always pass `--fields` explicitly:
+
+```bash
+acli jira workitem view FP-123 --fields "summary,status,created,updated,description,assignee" --json
 ```
 
-### When API Limitations Block a Task
+`view`'s `--fields` is unrestricted (any field including `customfield_*`, plus `*all` / `*navigable` / `-field` exclusions) but takes **one key per call**. The same discipline applies to `workitem search --fields` and `jira-api` search payloads.
+
+### When tooling limits block a task
 
 1. Provide manual instructions with specific steps
 2. Include resource URLs to relevant Jira interfaces

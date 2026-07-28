@@ -9,6 +9,26 @@ How the team uses Slack, and how to act there on Mike's behalf via the official 
 - **Reactions are lighter-weight**: when they follow from a task Mike instructed (e.g. he asks for work on an MR solicited in Slack → adding `:eyes:`/`:white_check_mark:` per the conventions below), no pre-confirmation needed — but **always tell Mike about every reaction added**, in the report for that task. Don't add reactions unrelated to what he asked for.
 - **Drafts are exempt from confirmation**: creating a draft via `slack_send_message_draft` is always fine — Mike reviews and sends drafts himself in the Slack client. Default to drafts whenever composing anything on his behalf.
 
+### Voice: don't sound like an AI (per Mike, 2026-07-27)
+
+Messages drafted for Mike should read as if he typed them; it should not be obvious Claude composed them.
+
+- **Em dashes: very sparingly.** Not strictly forbidden, but they are the loudest AI tell. Prefer semicolons, commas, regular hyphens, parentheses, or splitting into two sentences. One em dash in a long message is fine; several is a giveaway.
+- Avoid other AI-isms: "Not X — Y" contrast constructions, triadic flourishes ("clear, concise, and correct"), bolded lead-in labels on every bullet, "Here's the thing:", "worth noting", "to be clear", excessive hedging, and tidy section-header structure in what should be a casual message.
+- Match Mike's actual register, which is visible in any DM history: lowercase informal openers, short direct sentences, light punctuation, minimal formatting in DMs, emoji rarely and only where natural. Channel posts (e.g. #fe-guild review asks) are terse link lists, not prose.
+- Before creating a draft, reread it once specifically hunting for these tells and rewrite them out.
+
+### Always link the things you reference (per Mike, 2026-07-27)
+
+Whenever a message mentions a specific referenceable artifact, embed the direct link rather than a bare identifier the reader has to go look up:
+
+- **Jira tickets**: make the ticket ID itself clickable — markdown `[FP-1234](https://bstock.atlassian.net/browse/FP-1234)` (the MCP converts markdown links to Slack link tokens in both sends and drafts).
+- **Merge requests**: link the MR — `[seller-portal !2095](https://gitlab.bstock.io/b-stock/code/three-mp/fe/seller-portal/-/merge_requests/2095)`.
+- **GitLab jobs/pipelines**: link the specific job (`.../-/jobs/<id>`) or pipeline (`.../-/pipelines/<id>`), not just its numeric ID.
+- Same idea for anything else with a canonical URL (Confluence pages, dashboards, commits).
+
+Resolve real URLs (via glab/acli/known URL patterns); never guess a link. Bare IDs are acceptable only when no canonical URL exists.
+
 ### Draft gotchas — verify after write (verified 2026-07-22)
 
 - **Thread replies can be drafted** (verified 2026-07-24): pass `thread_ts` to `slack_send_message_draft` and the draft attaches to that thread's composer — so "draft a response to this threaded message" works everywhere drafting works.
@@ -194,7 +214,7 @@ Uses:
 
 ## People — Cross-System Identity Map
 
-**Moved to `references/people-org.md`** (2026-07-24), which now holds the full identity map (Slack/email/GitLab/Jira IDs, timezones), name-disambiguation rules, per-person dossiers with DM channel IDs, gatekeeper routing, and org/meeting structure. Load it before resolving any colleague's identity or drafting to a person. Quick rules that remain here: verify new people with `slack_search_users`, `glab api "users?search=<name>"`, and `lookupJiraAccountId` rather than guessing — email is the reliable join key.
+**Moved to `references/people-org.md`** (2026-07-24), which now holds the full identity map (Slack/email/GitLab/Jira IDs, timezones), name-disambiguation rules, per-person dossiers with DM channel IDs, gatekeeper routing, and org/meeting structure. Load it before resolving any colleague's identity or drafting to a person. Quick rules that remain here: verify new people with `slack_search_users`, `glab api "users?search=<name>"`, and `jira-api GET '/rest/api/3/user/search?query=<name>'` rather than guessing — email is the reliable join key.
 
 ## Slack Status (PTO / meetings)
 

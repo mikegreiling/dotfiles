@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+# jira-api — thin authenticated curl wrapper for the Jira Cloud REST API, reusing
+# the acli OAuth token from the macOS login keychain (service "acli",
+# go-keyring base64+gzip format). Use this for everything `acli jira` can't do:
+# JQL searches needing fields outside acli's 10-field allowlist, custom-field
+# edits (story points, sprint, epic link), transition listing, user lookup,
+# createmeta, remote links, worklogs.
+#
+# Usage:
+#   jira-api METHOD PATH [extra curl args...]
+#
+#   METHOD  GET | POST | PUT | DELETE | ...
+#   PATH    must start with /rest/ — e.g. /rest/api/3/issue/FP-123?fields=summary
+#
+# Request bodies: piped on **stdin** (any non-tty stdin is sent as the body, with
+# Content-Type: application/json). Example:
+#   echo '{"fields":{"customfield_10049":5}}' | jira-api PUT /rest/api/3/issue/FP-123
+#   jira-api POST /rest/api/3/search/jql <<<'{"jql":"...","fields":["summary"]}'
+#
+# Output: raw response body on stdout (pipe to jq). Exit 0 on HTTP < 400;
+# otherwise exit 1 with "HTTP <status>" on stderr (body still goes to stdout).
+#
+# Auth notes: the acli OAuth bearer token works ONLY against the
+# api.atlassian.com gateway, never the bstock.atlassian.net vanity host. Tokens
+# last ~1h; acli refreshes and re-persists on any authenticated command, so a
+# 401 triggers one cheap `acli jira project list` + retry.
+#
+# Canonical copy of this script lives in the bstock-engineering skill's scripts/
+# dir; ~/.local/bin/jira-api is a symlink to it.
+set -euo pipefail
+
+CLOUD_ID="8fd1c100-2018-43ac-bdc1-ca69369799c3" # bstock.atlassian.net
+BASE="https://api.atlassian.com/ex/jira/$CLOUD_ID"
+
+usage() {
+  sed -n '/^# Usage:/,/^#$/p' "$0" | sed 's/^# \{0,1\}//' >&2
+  exit 2
+}
+
+[[ $# -ge 2 ]] || usage
+method="$1"
+path="$2"
+shift 2
+[[ "$path" == /rest/* ]] || { echo "error: PATH must start with /rest/ (got: $path)" >&2; usage; }
+
+read_token() {
+  security find-generic-password -s acli -w 2>/dev/null |
+    sed 's/^go-keyring-base64://' | base64 -d | gunzip | jq -r .access_token
+}
+
+# acli refreshes and re-persists its token on any authenticated command; use a
+# cheap read-only call to force that when our stolen copy has expired.
+refresh_token() {
+  acli jira project list --limit 1 >/dev/null 2>&1 || true
+  read_token
+}
+
+token=$(read_token)
+[[ -n "$token" && "$token" != "null" ]] || {
+  echo "error: could not read acli token from keychain (is acli authenticated? run: acli auth login)" >&2
+  exit 1
+}
+
+# Body from stdin when stdin is not a terminal (and not empty).
+body_args=()
+if [[ ! -t 0 ]]; then
+  payload=$(cat)
+  if [[ -n "$payload" ]]; then
+    body_args=(-H "Content-Type: application/json" --data-binary "$payload")
+  fi
+fi
+
+do_request() { # token [extra curl args...]
+  local tok="$1"; shift
+  curl -s -w '\n%{http_code}' \
+    -X "$method" \
+    -H "Authorization: Bearer $tok" \
+    -H "Accept: application/json" \
+    "${body_args[@]+"${body_args[@]}"}" \
+    "$@" \
+    "$BASE$path"
+}
+
+out=$(do_request "$token" "$@")
+status="${out##*$'\n'}"
+resp="${out%$'\n'*}"
+
+if [[ "$status" == "401" ]]; then
+  token=$(refresh_token)
+  out=$(do_request "$token" "$@")
+  status="${out##*$'\n'}"
+  resp="${out%$'\n'*}"
+fi
+
+printf '%s\n' "$resp"
+
+if [[ "$status" -ge 400 ]]; then
+  echo "error: $method $path -> HTTP $status" >&2
+  exit 1
+fi

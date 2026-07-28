@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+# confluence-api — thin authenticated curl wrapper for the Confluence Cloud REST
+# API, using a **personal Atlassian API token** (basic auth) from the macOS login
+# keychain (service "atlassian-api-token").
+#
+# Why not the acli OAuth token? acli's OAuth grant carries only classic Jira/
+# Confluence scopes: the Confluence v2 API rejects it outright, and the classic
+# v1 content endpoints are 410-gone through the api.atlassian.com gateway. API
+# tokens are not scope-limited, so both v1 CQL search and v2 pages work.
+#
+# Usage:
+#   confluence-api METHOD PATH [extra curl args...]
+#
+#   METHOD  GET | POST | PUT | DELETE | ...
+#   PATH    must start with /rest/ (v1, e.g. /rest/api/content/search?cql=...)
+#           or /api/    (v2, e.g. /api/v2/pages/12345?body-format=storage)
+#           Both are resolved against https://bstock.atlassian.net/wiki
+#
+# Request bodies: piped on **stdin** (any non-tty stdin is sent as the body, with
+# Content-Type: application/json). Example:
+#   jira-like: cat page.json | confluence-api PUT /api/v2/pages/12345
+#
+# Output: raw response body on stdout (pipe to jq). Exit 0 on HTTP < 400;
+# otherwise exit 1 with "HTTP <status>" on stderr (body still goes to stdout).
+#
+# One-time setup (the keychain item is NOT created by this script):
+#   1. Mint a token: https://id.atlassian.com/manage-profile/security/api-tokens
+#   2. security add-generic-password -s atlassian-api-token \
+#        -a mike.greiling@bstock.com -w '<token>'
+#
+# Canonical copy of this script lives in the bstock-engineering skill's scripts/
+# dir; ~/.local/bin/confluence-api is a symlink to it.
+set -euo pipefail
+
+EMAIL="mike.greiling@bstock.com"
+BASE="https://bstock.atlassian.net/wiki"
+
+usage() {
+  sed -n '/^# Usage:/,/^#$/p' "$0" | sed 's/^# \{0,1\}//' >&2
+  exit 2
+}
+
+[[ $# -ge 2 ]] || usage
+method="$1"
+path="$2"
+shift 2
+[[ "$path" == /rest/* || "$path" == /api/* ]] || {
+  echo "error: PATH must start with /rest/ (v1) or /api/ (v2) — got: $path" >&2
+  usage
+}
+
+token=$(security find-generic-password -s atlassian-api-token -w 2>/dev/null || true)
+if [[ -z "$token" ]]; then
+  cat >&2 <<'EOF'
+error: no Atlassian API token in the login keychain (service "atlassian-api-token").
+
+Confluence REST automation needs a personal Atlassian API token — acli's OAuth
+token cannot be used (its classic scopes are rejected by Confluence v2, and the
+v1 content endpoints are gone through the OAuth gateway).
+
+One-time setup:
+  1. Mint a token at https://id.atlassian.com/manage-profile/security/api-tokens
+  2. security add-generic-password -s atlassian-api-token \
+       -a mike.greiling@bstock.com -w '<token>'
+EOF
+  exit 1
+fi
+
+body_args=()
+if [[ ! -t 0 ]]; then
+  payload=$(cat)
+  if [[ -n "$payload" ]]; then
+    body_args=(-H "Content-Type: application/json" --data-binary "$payload")
+  fi
+fi
+
+out=$(curl -s -w '\n%{http_code}' \
+  -X "$method" \
+  -u "$EMAIL:$token" \
+  -H "Accept: application/json" \
+  "${body_args[@]+"${body_args[@]}"}" \
+  "$@" \
+  "$BASE$path")
+
+status="${out##*$'\n'}"
+resp="${out%$'\n'*}"
+
+printf '%s\n' "$resp"
+
+if [[ "$status" -ge 400 ]]; then
+  echo "error: $method $path -> HTTP $status" >&2
+  exit 1
+fi
