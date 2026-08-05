@@ -12,8 +12,9 @@
 #   METHOD  GET | POST | PUT | DELETE | ...
 #   PATH    must start with /rest/ — e.g. /rest/api/3/issue/FP-123?fields=summary
 #
-# Request bodies: piped on **stdin** (any non-tty stdin is sent as the body, with
-# Content-Type: application/json). Example:
+# Request bodies: piped on **stdin** (for POST/PUT/PATCH, any non-tty stdin is
+# sent as the body, with Content-Type: application/json; other methods never
+# read stdin). Example:
 #   echo '{"fields":{"customfield_10049":5}}' | jira-api PUT /rest/api/3/issue/FP-123
 #   jira-api POST /rest/api/3/search/jql <<<'{"jql":"...","fields":["summary"]}'
 #
@@ -61,9 +62,11 @@ token=$(read_token)
   exit 1
 }
 
-# Body from stdin when stdin is not a terminal (and not empty).
+# Body from stdin when stdin is not a terminal (and not empty). Only read it
+# for body-bearing methods: on GET/HEAD/DELETE, $(cat) against an open-but-idle
+# stdin (as in some agent harnesses) blocks forever waiting for EOF.
 body_args=()
-if [[ ! -t 0 ]]; then
+if [[ "$method" =~ ^(POST|PUT|PATCH)$ && ! -t 0 ]]; then
   payload=$(cat)
   if [[ -n "$payload" ]]; then
     body_args=(-H "Content-Type: application/json" --data-binary "$payload")

@@ -16,8 +16,9 @@
 #           or /api/    (v2, e.g. /api/v2/pages/12345?body-format=storage)
 #           Both are resolved against https://bstock.atlassian.net/wiki
 #
-# Request bodies: piped on **stdin** (any non-tty stdin is sent as the body, with
-# Content-Type: application/json). Example:
+# Request bodies: piped on **stdin** (for POST/PUT/PATCH, any non-tty stdin is
+# sent as the body, with Content-Type: application/json; other methods never
+# read stdin). Example:
 #   jira-like: cat page.json | confluence-api PUT /api/v2/pages/12345
 #
 # Output: raw response body on stdout (pipe to jq). Exit 0 on HTTP < 400;
@@ -66,8 +67,10 @@ EOF
   exit 1
 fi
 
+# Only read stdin for body-bearing methods: on GET/HEAD/DELETE, $(cat) against
+# an open-but-idle stdin (as in some agent harnesses) blocks forever.
 body_args=()
-if [[ ! -t 0 ]]; then
+if [[ "$method" =~ ^(POST|PUT|PATCH)$ && ! -t 0 ]]; then
   payload=$(cat)
   if [[ -n "$payload" ]]; then
     body_args=(-H "Content-Type: application/json" --data-binary "$payload")
