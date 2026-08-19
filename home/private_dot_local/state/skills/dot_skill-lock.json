@@ -1,0 +1,205 @@
+{
+  "version": 3,
+  "skills": {
+    "skill-creator": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/anthropics/skills.git",
+      "skillPath": "skills/skill-creator/SKILL.md",
+      "skillFolderHash": "98a510d1cfef9f82c3b1eec200229ca68725e613",
+      "pluginName": "example-skills",
+      "installedAt": "2026-04-13T21:56:09.544Z",
+      "updatedAt": "2026-04-13T21:56:09.544Z"
+    },
+    "bstock-code-review-guidelines": {
+      "source": "git@gitlab.bstock.io:b-stock/code/three-mp/common/agent-skills.git",
+      "sourceType": "git",
+      "sourceUrl": "git@gitlab.bstock.io:b-stock/code/three-mp/common/agent-skills.git",
+      "skillPath": "skills/bstock-code-review-guidelines/SKILL.md",
+      "skillFolderHash": "",
+      "installedAt": "2026-04-17T17:11:06.388Z",
+      "updatedAt": "2026-04-17T17:36:30.217Z"
+    },
+    "context7-cli": {
+      "source": "upstash/context7",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/upstash/context7.git",
+      "skillPath": "skills/context7-cli/SKILL.md",
+      "skillFolderHash": "7a2b0a212c04af2bafcc64e53209d0b68f68c7f4",
+      "installedAt": "2026-04-24T21:54:16.508Z",
+      "updatedAt": "2026-04-24T21:54:16.508Z"
+    },
+    "find-docs": {
+      "source": "upstash/context7",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/upstash/context7.git",
+      "skillPath": "skills/find-docs/SKILL.md",
+      "skillFolderHash": "f97910e9c43c6fe378ca52aa8dba0cbcf28bb420",
+      "installedAt": "2026-04-24T21:54:51.340Z",
+      "updatedAt": "2026-04-24T21:54:51.340Z"
+    },
+    "dd-pup": {
+      "source": "datadog-labs/agent-skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/datadog-labs/agent-skills.git",
+      "skillPath": "dd-pup/SKILL.md",
+      "skillFolderHash": "f5d3d1e9c69bea4954ae438a19d2a6a0796b4f8d",
+      "installedAt": "2026-05-04T19:21:38.017Z",
+      "updatedAt": "2026-05-04T19:22:21.880Z"
+    },
+    "obsidian-cli": {
+      "source": "kepano/obsidian-skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/kepano/obsidian-skills.git",
+      "skillPath": "skills/obsidian-cli/SKILL.md",
+      "skillFolderHash": "96254a554e480359de7b685571876f2e7f9ba57d",
+      "installedAt": "2026-06-19T21:31:44.225Z",
+      "updatedAt": "2026-06-19T21:31:44.225Z"
+    },
+    "obsidian-markdown": {
+      "source": "kepano/obsidian-skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/kepano/obsidian-skills.git",
+      "skillPath": "skills/obsidian-markdown/SKILL.md",
+      "skillFolderHash": "4723197c6dc59abc29819da87863b1ac20b96095",
+      "installedAt": "2026-06-19T21:31:44.226Z",
+      "updatedAt": "2026-06-19T21:31:44.226Z"
+    },
+    "agents-sdk": {
+      "source": "cloudflare/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/cloudflare/skills.git",
+      "skillPath": "skills/agents-sdk/SKILL.md",
+      "skillFolderHash": "fe7c98385541543a62abf65090654fcbc181c8b7",
+      "installedAt": "2026-08-17T21:00:51.917Z",
+      "updatedAt": "2026-08-17T21:00:51.917Z"
+    },
+    "cloudflare": {
+      "source": "cloudflare/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/cloudflare/skills.git",
+      "skillPath": "skills/cloudflare/SKILL.md",
+      "skillFolderHash": "a92bec38b7b5ff5e634b509c7ff3c289d9d61290",
+      "installedAt": "2026-08-17T21:00:51.937Z",
+      "updatedAt": "2026-08-17T21:00:51.937Z"
+    },
+    "cloudflare-email-service": {
+      "source": "cloudflare/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/cloudflare/skills.git",
+      "skillPath": "skills/cloudflare-email-service/SKILL.md",
+      "skillFolderHash": "af7bd16246149247d4b699382d951dc376491bac",
+      "installedAt": "2026-08-17T21:00:51.939Z",
+      "updatedAt": "2026-08-17T21:00:51.939Z"
+    },
+    "cloudflare-one": {
+      "source": "cloudflare/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/cloudflare/skills.git",
+      "skillPath": "skills/cloudflare-one/SKILL.md",
+      "skillFolderHash": "c692b9ddaf8ac60485b758a22100be27e4ec782e",
+      "installedAt": "2026-08-17T21:00:51.942Z",
+      "updatedAt": "2026-08-17T21:00:51.942Z"
+    },
+    "cloudflare-one-migrations": {
+      "source": "cloudflare/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/cloudflare/skills.git",
+      "skillPath": "skills/cloudflare-one-migrations/SKILL.md",
+      "skillFolderHash": "6ab7a1f3220dae699b5cb1325ec86b952ccf6a3e",
+      "installedAt": "2026-08-17T21:00:51.945Z",
+      "updatedAt": "2026-08-17T21:00:51.945Z"
+    },
+    "durable-objects": {
+      "source": "cloudflare/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/cloudflare/skills.git",
+      "skillPath": "skills/durable-objects/SKILL.md",
+      "skillFolderHash": "72810f48414f2e68d0aa65a8895f749c959dea91",
+      "installedAt": "2026-08-17T21:00:51.946Z",
+      "updatedAt": "2026-08-17T21:00:51.946Z"
+    },
+    "sandbox-migrate-to-next": {
+      "source": "cloudflare/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/cloudflare/skills.git",
+      "skillPath": "skills/sandbox-migrate-to-next/SKILL.md",
+      "skillFolderHash": "6653491197cd99b53582df12eca6b51dcf1e60a1",
+      "installedAt": "2026-08-17T21:00:51.949Z",
+      "updatedAt": "2026-08-17T21:00:51.949Z"
+    },
+    "sandbox-next": {
+      "source": "cloudflare/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/cloudflare/skills.git",
+      "skillPath": "skills/sandbox-next/SKILL.md",
+      "skillFolderHash": "79eb14458fd6008858c63e68f4ab75ae9ef7f861",
+      "installedAt": "2026-08-17T21:00:51.951Z",
+      "updatedAt": "2026-08-17T21:00:51.951Z"
+    },
+    "sandbox-stable": {
+      "source": "cloudflare/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/cloudflare/skills.git",
+      "skillPath": "skills/sandbox-stable/SKILL.md",
+      "skillFolderHash": "8be972b0142500bce72fda802ff4a37bd5c87b79",
+      "installedAt": "2026-08-17T21:00:51.951Z",
+      "updatedAt": "2026-08-17T21:00:51.951Z"
+    },
+    "turnstile-spin": {
+      "source": "cloudflare/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/cloudflare/skills.git",
+      "skillPath": "skills/turnstile-spin/SKILL.md",
+      "skillFolderHash": "8f135e415060480d73aeb8f0170c3e9cfb31c3ec",
+      "installedAt": "2026-08-17T21:00:51.952Z",
+      "updatedAt": "2026-08-17T21:00:51.952Z"
+    },
+    "web-perf": {
+      "source": "cloudflare/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/cloudflare/skills.git",
+      "skillPath": "skills/web-perf/SKILL.md",
+      "skillFolderHash": "e8e8c50ca6abf0849a4d9d69c1bed8b98b5d7411",
+      "installedAt": "2026-08-17T21:00:51.953Z",
+      "updatedAt": "2026-08-17T21:00:51.953Z"
+    },
+    "workers-best-practices": {
+      "source": "cloudflare/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/cloudflare/skills.git",
+      "skillPath": "skills/workers-best-practices/SKILL.md",
+      "skillFolderHash": "7dd384e79c76d3e388dfe53e12e93642679ff1fd",
+      "installedAt": "2026-08-17T21:00:51.953Z",
+      "updatedAt": "2026-08-17T21:00:51.953Z"
+    },
+    "wrangler": {
+      "source": "cloudflare/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/cloudflare/skills.git",
+      "skillPath": "skills/wrangler/SKILL.md",
+      "skillFolderHash": "45cc198b2aad3f06e8abf91333f55fbe7579f659",
+      "installedAt": "2026-08-17T21:00:51.954Z",
+      "updatedAt": "2026-08-17T21:00:51.954Z"
+    }
+  },
+  "dismissed": {
+    "findSkillsPrompt": true
+  },
+  "lastSelectedAgents": [
+    "amp",
+    "antigravity",
+    "cline",
+    "codex",
+    "cursor",
+    "deepagents",
+    "dexto",
+    "firebender",
+    "gemini-cli",
+    "github-copilot",
+    "kimi-cli",
+    "opencode",
+    "warp",
+    "claude-code"
+  ]
+}
