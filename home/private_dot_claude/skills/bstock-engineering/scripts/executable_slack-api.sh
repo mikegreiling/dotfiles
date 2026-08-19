@@ -68,11 +68,23 @@ die() { echo "error: $*" >&2; exit 1; }
 # nudge a cheap mcporter connection first, then re-read the vault. NEVER refresh
 # directly against oauth.v2.user.access here — the rotating refresh token is
 # single-use and racing mcporter for it orphans whichever client loses.
-_VAULT="$HOME/.mcporter/credentials.json"
+# Vault path mirrors mcporter's data-dir rule (src/paths.ts): $XDG_DATA_HOME/mcporter
+# when that var is absolute, else ~/.mcporter — plus the conventional XDG default as
+# a last resort for contexts (launchd, cron) that lack the env var.
+_vault_path() {
+  local xdg="${XDG_DATA_HOME:-}" p
+  for p in "${xdg:+$xdg/mcporter/credentials.json}" \
+           "$HOME/.mcporter/credentials.json" \
+           "$HOME/.local/share/mcporter/credentials.json"; do
+    [[ -n "$p" && "$p" = /* && -r "$p" ]] && { printf '%s' "$p"; return 0; }
+  done
+  return 1
+}
 
 _vault_token() { # prints "<token> <expires_at_ms>" (0 when no expiry recorded), or fails
-  [[ -r "$_VAULT" ]] || return 1
-  python3 - "$_VAULT" <<'PY'
+  local vault
+  vault=$(_vault_path) || return 1
+  python3 - "$vault" <<'PY'
 import sys, json
 try:
     d = json.load(open(sys.argv[1]))

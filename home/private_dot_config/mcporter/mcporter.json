@@ -1,0 +1,19 @@
+{
+  "imports": [],
+  "daemonIdleTimeoutMs": 600000,
+  "mcpServers": {
+    "fastmail": {
+      "url": "https://api.fastmail.com/mcp",
+      "auth": "oauth",
+      "oauthRedirectUrl": "http://localhost:3119/callback",
+      "description": "Fastmail official MCP server (mail, contacts, calendars) — Mike's personal account. Agents: call with --no-oauth; if issue.kind is 'auth', tell Mike to run 'mcporter auth fastmail' in a terminal."
+    },
+    "slack": {
+      "url": "https://mcp.slack.com/mcp",
+      "auth": "oauth",
+      "oauthClientId": "1601185624273.8899143856786",
+      "oauthRedirectUrl": "http://localhost:3118/callback",
+      "description": "Slack official MCP server — B-Stock workspace (bstocksolutions.slack.com), user-scoped token (acts as Mike). Slack's AS has no dynamic client registration, so the client ID is pinned to the Claude Slack app (A08SF47R6P4) with its registered localhost:3118 callback. Agents: call with --no-oauth; if issue.kind is 'auth', tell Mike to run 'mcporter auth slack' in a terminal."
+    }
+  }
+}
