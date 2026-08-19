@@ -77,13 +77,12 @@ Standard markdown converts correctly: bold/italic/strikethrough, inline code, fe
 
 The Slack MCP tools don't cover everything. The plugin's user OAuth token can drive the **public Slack Web API directly** for gaps like listing/deleting scheduled messages and deleting Mike's own messages. Verified working 2026-07-22.
 
-- **Token location**: macOS Keychain, service `Claude Code-credentials`, account `mike` — a JSON blob; the Slack entry is `mcpOAuth["plugin:slack:slack|<hash>"].accessToken` (an `xoxe.` rotating user token). Extract in-process; **never echo the token to output or logs**:
+- **Token location** (since the 2026-08 mcporter migration): the mcporter vault, `~/.mcporter/credentials.json` — plain 0600 JSON; the Slack entry is the object under `.entries` whose `serverName == "slack"`, token at `.tokens.access_token` (an `xoxe.` rotating user token). `scripts/slack-api.sh`'s `_token()` is the canonical extractor — it reads the vault, nudges `mcporter list slack --no-oauth` to refresh when the cached token is stale, and falls back to the legacy Claude Code keychain entry (service `Claude Code-credentials`) until that's decommissioned. Extract in-process; **never echo the token to output or logs**:
   ```bash
-  CRED=$(security find-generic-password -s "Claude Code-credentials" -a "mike" -w)
-  TOKEN=$(echo "$CRED" | python3 -c "import sys,json;d=json.load(sys.stdin);[print(v['accessToken']) for k,v in d['mcpOAuth'].items() if k.startswith('plugin:slack')]")
+  TOKEN=$(python3 -c "import json;print(next(e['tokens']['access_token'] for e in json.load(open('$HOME/.mcporter/credentials.json'))['entries'].values() if e.get('serverName')=='slack'))")
   curl -s -H "Authorization: Bearer $TOKEN" "https://slack.com/api/auth.test"
   ```
-  The token rotates — always re-read it from the keychain; never cache it. Reading it triggers a one-time macOS keychain prompt Mike must allow.
+  The token rotates (~12h) — always re-read it per call; never cache it. mcporter refreshes it only during its own calls, so prefer `_token()` (which handles the stale case) over the raw read above. **Never redeem the refresh token yourself** — it's single-use/rotating; racing mcporter for it kills the token family. If everything reports auth failure, Mike runs `mcporter auth slack` in a real terminal. (No keychain prompt applies to the vault path.)
 - **Granted scopes** (define what's callable): `chat:write` (send/delete own messages + manage scheduled), `channels/groups/im/mpim:history`, `groups/im/mpim:write` (private-surface writes incl. mark-read), `*:read`, `search:read.*`, `reactions:write`, `canvases:write`, `users:read.email`. **Not granted**: `users.profile:write` (status-setting impossible), `channels:write` (so no mark-read on PUBLIC channels), `files:write` (no file/image uploads — `files:read` only), and `links:write` (no custom `chat.unfurl` content).
 - **Verified raw-API wins over the MCP**:
   - `chat.scheduledMessages.list` — **read pending scheduled messages** (MCP can't).

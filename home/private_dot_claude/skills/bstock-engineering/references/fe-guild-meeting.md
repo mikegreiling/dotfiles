@@ -31,7 +31,7 @@ Storage format (XHTML) is the ONLY safe read/write representation — markdown i
    - **Active voice for topic solicitation**: people who raise topics drive the conversation — "a topic you'd like to discuss" / "something to bring to the group", never the passive "anything you'd like discussed".
    - State meeting times in **Eastern + Pacific** (noon EDT / 9am PDT; EST/PST in winter — a dated Things task covers the DST boundary check), not CT.
    - **Vary the wording every cycle** — these land near the previous cycle's message in low-traffic channels; never reuse phrasing.
-3. **Scheduling is sending** — Mike approves exact text + time first. Use **raw `chat.scheduleMessage`** (keychain token), NOT the MCP tool, so `slack-api.sh scheduled-*` can list/cancel/reschedule (see slack-workflow.md "Two scheduling subsystems"); report the `Q…` scheduled-message ids.
+3. **Scheduling is sending** — Mike approves exact text + time first. Use **raw `chat.scheduleMessage`** (via `slack-api.sh`'s `_token()` — mcporter vault token), NOT the MCP tool, so `slack-api.sh scheduled-*` can list/cancel/reschedule (see slack-workflow.md "Two scheduling subsystems"); report the `Q…` scheduled-message ids.
 
 ## Action 2 — post-meeting workflow (interim, hands-on)
 
@@ -52,6 +52,7 @@ Trigger: Mike says something like "run the guild post-meeting workflow". No Zoom
 4. **Quarterly archival check** (see Action 3) — if due, fold it into the same edit.
 5. **Confirm before writing** — show Mike the composed dated section (transcript ambiguities as questions, not guesses). Shared team page: no write without his OK on the content.
 6. **Write and verify**: PUT the full storage body with version+1 via `confluence-api` (recipe below), then re-read the region and confirm: heading renamed, fresh slot present, recording+passcode in place, byte-identical below the edit. Report the page URL.
+7. **Notes-available announcement in `#fe-guild`** (added 2026-08-04): after the page write is verified, post a short message announcing that notes + recording are on the charter page, as a **broadcast thread reply** to that cycle's `#fe-guild` reminder message — i.e. the "Also send to #fe-guild" behavior, so it lands in the thread AND at the channel root. Mechanics (verified 2026-08-04): the MCP `slack_send_message` supports this directly via `thread_ts: <reminder ts>` + `reply_broadcast: true` (read back `subtype: thread_broadcast` to confirm); find the reminder's ts via `conversations.history` on `C04225G5QCS` windowed to the meeting morning. No `<!here>` — the broadcast itself is the surfacing. Link with the dated-section anchor (`…/FE+BE+Guild+Charter#YYYY-MM-DD`). Confirmation rule applies: Mike approves the text before sending. If the reminder message can't be found (e.g. it was cancelled), fall back to a plain channel message.
 
 ```bash
 acli confluence page view --id 2345959440 --body-format storage --json > /tmp/guild.json   # read

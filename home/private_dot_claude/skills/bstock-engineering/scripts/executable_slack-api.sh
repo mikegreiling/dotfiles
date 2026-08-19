@@ -61,10 +61,54 @@ set -euo pipefail
 
 die() { echo "error: $*" >&2; exit 1; }
 
+# Token source: the mcporter vault (~/.mcporter/credentials.json) is primary since
+# the 2026-08 migration off harness-managed MCP; the legacy Claude Code keychain
+# entry is the fallback until decommissioned. The xoxe. user token rotates (~12h
+# TTL) and mcporter only refreshes it inside its own calls, so on a stale token we
+# nudge a cheap mcporter connection first, then re-read the vault. NEVER refresh
+# directly against oauth.v2.user.access here — the rotating refresh token is
+# single-use and racing mcporter for it orphans whichever client loses.
+_VAULT="$HOME/.mcporter/credentials.json"
+
+_vault_token() { # prints "<token> <expires_at_ms>" (0 when no expiry recorded), or fails
+  [[ -r "$_VAULT" ]] || return 1
+  python3 - "$_VAULT" <<'PY'
+import sys, json
+try:
+    d = json.load(open(sys.argv[1]))
+except Exception:
+    sys.exit(1)
+for e in d.get("entries", {}).values():
+    tok = (e.get("tokens") or {}).get("access_token")
+    if e.get("serverName") == "slack" and tok:
+        exp = float((e["tokens"].get("expires_at")) or 0)
+        if exp and exp < 1e12:  # seconds epoch -> ms
+            exp *= 1000
+        print(tok, int(exp))
+        sys.exit(0)
+sys.exit(1)
+PY
+}
+
 _token() {
+  local out tok exp now
+  if out=$(_vault_token); then
+    tok=${out% *}; exp=${out##* }
+    now=$(( $(date +%s) * 1000 ))
+    if [[ "$exp" == "0" ]] || (( exp > now + 120000 )); then
+      printf '%s' "$tok"; return 0
+    fi
+    mcporter list slack --no-oauth --json >/dev/null 2>&1 || true
+    if out=$(_vault_token); then
+      tok=${out% *}; exp=${out##* }
+      if [[ "$exp" == "0" ]] || (( exp > now )); then printf '%s' "$tok"; return 0; fi
+    fi
+    die "mcporter slack token is expired and refresh failed — run: mcporter auth slack"
+  fi
+  # Legacy fallback: Claude Code keychain (pre-mcporter). Remove after decommission.
   local cred
   cred=$(security find-generic-password -s "Claude Code-credentials" -a "$(whoami)" -w 2>/dev/null) \
-    || die "could not read Claude Code credentials from keychain"
+    || die "no Slack token: mcporter vault has no 'slack' entry (run: mcporter auth slack) and the legacy keychain fallback failed"
   printf '%s' "$cred" | python3 -c "import sys,json;d=json.load(sys.stdin);[print(v['accessToken']) for k,v in d['mcpOAuth'].items() if k.startswith('plugin:slack')]" \
     | head -n1
 }
