@@ -41,6 +41,8 @@ Registry note: the fastmail entry pins `oauthRedirectUrl` to `http://localhost:3
 
 Fastmail's server can require confirmation before destructive operations (an MCP elicitation request — the "press to confirm" UI seen in MCP-native harnesses). mcporter relays these prompts only when BOTH stdin and stderr are TTYs. From an agent (non-TTY), mcporter automatically DECLINES the request and the operation does not execute. When that happens: report it and hand Mike the exact `mcporter call fastmail.<tool> --args '<json>'` command to run in a real terminal, where mcporter prompts inline. There is currently no auto-accept flag; do not try to work around the decline.
 
+"Real terminal" means Terminal.app/iTerm — Claude Code's `!` bash-input prefix does NOT attach a TTY, so mcporter still auto-declines there (verified 2026-08-19 with `delete_event`). A declined elicitation is silent: the call exits 0 and echoes the staged event back as if it succeeded, so after any destructive call, verify the effect (e.g. `search_events`) before reporting success.
+
 ## Safety
 
 Fastmail grants read / change / send scopes. Sending email and deleting or moving messages are real-world actions — confirm with Mike before invoking send or destructive tools unless he explicitly asked for that exact operation.
