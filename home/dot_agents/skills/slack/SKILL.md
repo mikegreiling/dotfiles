@@ -27,6 +27,20 @@ mcporter call slack.<tool_name> --args '<json>' --output json --no-oauth
 - Exit codes are only 0/1 — branch on the JSON payload. On `issue.kind == "auth"`, see "Re-authentication" below.
 - If a call reports the server requested interactive input (elicitation): mcporter auto-declines it in non-TTY contexts. Hand Mike the exact same `mcporter call` command to run in a real terminal, where mcporter prompts inline.
 
+## Enumerating actual mentions (exclude bots and search noise)
+
+For requests like “what are my latest mentions?”, use `slack_search_public_and_private` with the user's exact display name, sorted newest-first. Set both `include_bots: false` and `include_context: false` explicitly. The bot flag is important even though the schema currently describes `false` as the default; an explicit value was verified to remove Jira app-DM results from mention searches on 2026-08-19. Disabling context keeps neighboring thread messages from being mistaken for matches.
+
+Search is still only a discovery step. Slack can match the user's name because they authored a message, and API-authored messages may be labeled `[BOT]` even when they were sent as the user. After retrieval, retain only results whose **message text itself** contains the literal user-mention token prefix, such as `<@U065SDTU138` for Mike, and exclude results authored by the same user. This distinguishes a real `@Mike` mention from ordinary DMs, self-authored posts, author-name matches, and thread context. If the user asked for a specific number of mentions, keep paginating until that many validated matches are collected or Slack exhausts the results; discarded noise does not count toward the requested total.
+
+Example discovery call (Mike's B-Stock identity):
+
+```bash
+mcporter call slack.slack_search_public_and_private --args '{"query":"\"Mike Greiling\"","content_types":"messages","channel_types":"public_channel,private_channel,mpim,im","limit":20,"sort":"timestamp","sort_dir":"desc","include_bots":false,"include_context":false,"response_format":"detailed"}' --output json --no-oauth
+```
+
+Do not maintain a hard-coded bot list unless a workspace-specific bot demonstrably survives `include_bots: false`. Prefer the response's `[BOT]` author metadata for any final exclusion; bot IDs and app identities are more brittle than the server-provided classification. If a B-Stock-specific exception is ever proven necessary, document its verified ID and behavior in `bstock-engineering/references/slack-workflow.md`, not here.
+
 ## Token lifecycle and refresh
 
 The Slack token is a rotating `xoxe.` user token (~12h TTL) stored in mcporter's vault (`$XDG_DATA_HOME/mcporter/credentials.json`, falling back to `~/.mcporter/credentials.json`). mcporter refreshes it automatically during ANY connection — **including under `--no-oauth`** — redeeming the single-use refresh token under a cross-process lock and persisting the result.

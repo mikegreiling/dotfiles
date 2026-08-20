@@ -35,7 +35,8 @@ Any changes to the following should be committed to the dotfiles repo via chezmo
 - `bash` or `zsh` config files
 - macOS applications managed by `brew`
 - Claude slash commands (`~/.claude/commands/`)
-- Claude memory files (`~/.claude/CLAUDE.md`, `~/.claude/skills/`, etc.)
+- Claude memory files (`~/.claude/CLAUDE.md`, etc.)
+- Agent skills under `~/.agents/skills/` (symlinked from `~/.claude/skills/`) — but only the hand-written ones; `~/.agents/skills/AGENTS.md` explains which skills are chezmoi-managed vs installed by `npx skills` vs symlinked from elsewhere, and must be consulted before `chezmoi add`ing anything there
 - MCP config files
 - Any other user-level configuration files managed by chezmoi
 
