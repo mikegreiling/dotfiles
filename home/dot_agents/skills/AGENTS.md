@@ -27,6 +27,7 @@ Rules:
 - **Do not hand-edit these** — `npx skills update` will overwrite them and the edit is lost silently. If a third-party skill needs B-Stock/Mike-specific behavior, put it in a tier-1 skill that references the third-party one (the way `bstock-engineering` layers on `slack`).
 - Install/remove/update only through the CLI (`npx -y skills add|remove|update -g`), then `chezmoi add ~/.local/state/skills/.skill-lock.json` and commit so a fresh machine can reinstall the same set.
 - `npx -y skills list -g` is the authoritative inventory; `Source: local` means the skill is NOT tier 2.
+- **Fresh-machine recovery (high level — deliberately no scripting, the lock format changes between CLI versions):** `chezmoi apply` restores the ledger but NOT the skills; the CLI has no restore-from-lock command for global installs. Reinstall by reading the ledger's entries and replaying each as `npx -y skills add <sourceUrl> --skill <name> -g -y` (add `-a claude-code` or other `-a` flags to limit agent targets). Two caveats: make sure `XDG_STATE_HOME` is set before the first `skills` run on the new machine (Mike's shell config sets it; run `skills` from a configured shell) or the CLI starts a second ledger at `~/.agents/.skill-lock.json`, and treat the lock file as the human-readable inventory of record, not a stable machine contract.
 
 ## Tier 3 — Skills whose content lives elsewhere and is symlinked in
 
