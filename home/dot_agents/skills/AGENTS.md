@@ -2,13 +2,13 @@
 
 `~/.agents/skills/` is the single canonical home for Mike's agent skills. Every agent harness (Claude Code, Codex, Cursor, OpenCode, Pi, …) reads skills from here, either natively or via symlinks (e.g. `~/.claude/skills/<name>` → `../../.agents/skills/<name>`). Never create a skill directly under `~/.claude/skills/`; create it here and symlink.
 
-Skills fall into four management tiers. **Before editing any skill, identify its tier** (quickest check: `chezmoi managed | grep '.agents/skills/<name>'` — a hit means tier 1; otherwise `npx -y skills list -g` shows `Source: local` for tiers 3/4 or a repo for tier 2).
+Skills fall into five management tiers. **Before editing any skill, identify its tier** (quickest check: `chezmoi managed | grep '.agents/skills/<name>'` — a hit means tier 1; otherwise `npx -y skills list -g` shows `Source: local` for tiers 3–5 or a repo for tier 2).
 
 ## Tier 1 — Local skills, version-controlled by chezmoi (the default for anything hand-written)
 
 Authored by Mike/agents, tracked in the dotfiles repo (`~/.local/share/chezmoi`, source dir `home/dot_agents/skills/<name>/`). The matching `~/.claude/skills/<name>` symlink is also managed (`home/private_dot_claude/skills/symlink_<name>`).
 
-Currently: `atlassian-mcp-shim`, `bstock-demo-video`, `bstock-engineering`, `bstock-merge-requests`, `dotfiles-workflow`, `fastmail`, `slack`, `oss-checkout`, `prune-stale-node-modules`, `record-idea`, `things-cli`.
+Currently: `atlassian-mcp-shim`, `bstock-demo-video`, `bstock-engineering`, `bstock-merge-requests`, `dotfiles-workflow`, `fastmail`, `slack`, `oss-checkout`, `prune-stale-node-modules`, `record-idea`.
 
 Rules (see the `dotfiles-workflow` skill for the full chezmoi procedure):
 
@@ -34,7 +34,11 @@ Currently: `things-gtd` → `~/Memex/04 - Resources/Agent Skills/things-gtd` (Mi
 
 Rules: edit the content in place (through the symlink is fine). Nothing to `chezmoi add` unless the symlink target changes. Don't `chezmoi add` the resolved content — it would freeze a copy that diverges from the vault.
 
-## Tier 4 — Untracked (should be empty)
+## Tier 4 — Skills installed by their own CLI
+
+Some tools ship their skill and install it themselves. Currently: `things-cli`, installed by `things install-skill` (replaces the directory wholesale and creates the `~/.agents` / `~/.claude` entries; `things install-skill --check` compares versions). **Do not `chezmoi add` these** (content or symlinks) — a new machine gets them by installing the tool and running its install command, and chezmoi copies would silently diverge from the tool's bundled version. Don't hand-edit them either; re-running the installer discards edits.
+
+## Tier 5 — Untracked (should be empty)
 
 A skill that is in none of the above is unmanaged and will be lost on a new machine. When you find one, ask Mike which tier it belongs to; the usual answer for hand-written skills is tier 1 (`chezmoi add` it and its symlink). As of 2026-08-20 this tier is empty.
 
