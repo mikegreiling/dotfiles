@@ -26,6 +26,19 @@ mcporter call fastmail.<tool_name> --args '<json>' --output json --no-oauth
 - Always pass `--no-oauth` (never trigger a browser flow) and `--output json`.
 - Tool arguments are one JSON object via `--args`; the complete MCP result prints on stdout as JSON — pipe to `jq` as needed.
 
+## Calendar times across daylight-saving transitions
+
+Verified 2026-08-20: `search_events` can return a future timed event one hour off when the event is on the other side of a daylight-saving transition from the current date, even though its `timeZone` is correctly labeled. Two independent `America/Chicago` events after the November 2026 fall-back were returned one hour later than the same Fastmail events displayed in Apple Calendar. The observed error matches converting with the current UTC offset instead of the offset in effect on the event date.
+
+When a timed event is across a DST boundary in a zone that observes DST:
+
+- Treat the wall-clock portion of `start` as suspect; the `timeZone` label alone does not validate it.
+- Before reporting the time or using it in another system, compare it with a calendar client rendering of the same event when available. If the user refers to the visible event, inspect that screen before answering.
+- If the client is unavailable, disclose the raw integration time and the possible one-hour DST skew, and ask the user to confirm the displayed local time. Do not silently apply a correction based only on this observation.
+- When the client and integration disagree by exactly the difference between the current and event-date UTC offsets, use the client-rendered local time for the user-facing answer and record that the connector response was skewed.
+
+This behavior has been demonstrated for `search_events` reads only. Do not assume that event creation or updates have the same defect; verify those operations separately.
+
 ## Error handling
 
 Exit codes are only 0/1 — branch on the JSON payload, not `$?`. Failures print an envelope with `issue.kind`:
