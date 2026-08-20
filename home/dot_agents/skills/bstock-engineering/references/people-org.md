@@ -207,6 +207,7 @@ Stable cross-system IDs. GitLab = `gitlab.bstock.io` usernames. "—" = verified
 - "Alex" → Alex Garcia (engineer; probably "Javier Garcia Godinez" in Pingboard). `alex@bstock.com` (Slack `UCF85FWRW`) is **Alexander Cadalso — Lead Product Manager** under Kenny Fung (Strategy & Biz Ops), who does product/business-rules work on SP/XLTR. Alex Vasylyk (`alex@startupsoft.com`) is an external contractor account.
 - "Ken" → Ken Shum (VP Eng). **Kenny Fung** is VP Strategy & Business Operation (a different executive). Searching Slack for "Cy" false-positives on Parvinder (matches "Cybersecurity").
 - "Jay" → Jay (Jeroen) Hormes, Director of Analytics.
+- "PB" → Parvinder Bhasin (Director, DevOps & Cybersecurity) — common initialism in speech/transcripts, e.g. Security Guild context (confirmed by Mike 2026-08-19).
 - "Mike"/"Michael" is heavily overloaded: Mike Greiling, Mike Feldman (Buyer pod SWE), Mike Ruth (Backend Engineering Lead, Seller/Inventory), Mike Talimonchuk (contractor), Michael Ilchuk (contractor).
 - "Susan"/"Sohil" pair on releases: Susan = release manifests/PjM; Sohil = QA cycles.
 
