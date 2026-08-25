@@ -303,7 +303,13 @@ acli jira workitem link type --json          # list available types
 acli jira workitem link list --key FP-123    # existing links on an issue
 ```
 
-**Direction semantics:** the *inward* issue is the subject of the OUTWARD verb. For Parent-Child, `--in` = the parent and `--out` = the child; for Blocks, `--in` = the blocker. acli's `--type` takes the **outward description** ("Blocks", "Relates", "Splits to"), so `--out A --in B --type Blocks` reads "A blocks B". Getting these backwards silently creates the inverse relationship.
+**Direction semantics (counter-intuitive — re-verified 2026-08-25 after getting it backwards on 15 links):** the **inward issue is the SUBJECT of the outward verb.** Jira displays the *outward* description ("blocks") on the *inward* issue and the *inward* description ("is blocked by") on the *outward* issue. So:
+
+- REST `POST /rest/api/3/issueLink` with `{"type":{"name":"Blocks"},"inwardIssue":{"key":"A"},"outwardIssue":{"key":"B"}}` → **A blocks B** (A = blocker, B = blocked). Mnemonic: *inwardIssue = the one doing the verb*.
+- acli mirrors that: `--in` = inward issue = blocker, `--out` = outward issue = blocked; `--type` takes the outward description. `acli jira workitem link create --in A --out B --type Blocks` → "A blocks B". (An earlier version of this note had the acli example reversed.)
+- Parent-Child: `--in` = parent ("is parent of"), `--out` = child.
+
+Getting these backwards silently creates the inverse relationship with no error. After a batch, **verify from the blocked side**: `jira-api GET /rest/api/3/issue/B?fields=issuelinks` should show `inwardIssue: A` under the type's `inward` label ("is blocked by"). To fix a reversed batch, `DELETE /rest/api/3/issueLink/{id}` each link (ids come from the `issuelinks` field) and recreate — there is no in-place flip.
 
 **Hierarchy caveat:** a Story cannot be a hierarchy `parent` of another Story — the `parent` field only accepts a higher level (Epic). To express "child of" between same-level issues (e.g. a Story under the GLOB-2674 umbrella Story), use a **Parent-Child link**, not the `parent` field.
 
@@ -331,6 +337,8 @@ There is no true cross-project move in the REST API, and Mike has **no issue-del
 | Upload attachments, embed media, threaded comment replies | `jira-attach` — see `references/jira-attachments.md` |
 
 Custom fields **can** be set at creation time: `acli jira workitem create --from-json` accepts an `additionalAttributes` object (`--generate-json` prints the template to stdout).
+
+**JQL gotchas (verified 2026-08-25):** `created >= -18M` silently returns zero rows via `POST /rest/api/3/search/jql` — use day units (`-540d`). `\[` is an illegal JQL escape, so `summary ~ "\[CI\]"` is rejected; search the bare word instead. `text ~` tokenizes hyphenated/dotted terms (`common-ci`, `deploy.js`) into noisy partial matches — prefer `summary ~ "…"` for precision. Confluence CQL needs a quoted phrase for hyphenated terms: `text ~ "\"common-ci\""`. Attachment downloads 302 — `jira-api GET '/rest/api/3/attachment/content/<id>' -L`.
 
 ### Keep field lists tight
 

@@ -216,6 +216,7 @@ Uses:
 
 - **Interpreting**: when checking the status of a posted review request, read its reactions — `:eyes:` = someone's on it, `:white_check_mark:` = approved, `:merged:` = done.
 - **Acting** (on Mike's instruction): add `:eyes:` when Mike starts looking at something, `:white_check_mark:` when he approves, `:thankyou:` after someone approves/merges for him.
+- **Batching norm (Acker Apple, `#foundation-pod`, 2026-08-24)**: don't post one Slack ask covering many MRs across repos. Request approvals for the shared repo (fe-core) first, then the portal bumps once that version exists — "8 different code reviews in one slack chat, could be improved". Treat as a stated pod norm when drafting review requests.
 - The workspace has many near-duplicate thanks emojis (`:thank-you:`, `:thank_you:`, `:thankyou_ty:`, …) — Mike's convention is **`:thankyou:`**. Use `slack_search_emojis` to verify any other custom emoji name before reacting.
 
 ## People — Cross-System Identity Map

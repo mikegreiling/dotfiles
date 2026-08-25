@@ -65,7 +65,7 @@ Company-wide: **239 people**, everything stems from **Marcus Shen — CEO**. His
 - **Azizahmed "Aziz" Vahora — Senior Director, Data Engineering** → Justin Spracklen† (Senior Data Engineer), **Jeroen "Jay" Hormes (Director, Analytics)** → Kyle Magner, Stanley Ho, Sriram Sridhar (Senior Data Analysts), Arran Wass-Little, Swara Gandhi, Malachy McGovern (Data Analysts)
 - **Data Analytics group reporting straight to Ken**: Louies Tam (Data Scientist II), Gavin Lang (Jr SWE Data), Mark Ma (Staff Data Engineer), Harish Deepak Verlekar (Senior Data Scientist II)
 - **Mary Gutierrez — Director, Engineering** → Alexandra Ash (Senior SWE, "3MP - Shipments Engineering"), Cole Allan, Michael Feldman (Senior SWE), Yury Herlovich (Senior SWE), Helen Foutch, Eric Chu (Senior SWE React), Bryan Lopez (Senior SWE React)
-- **Alvaro Ferreira — Director, Engineering** → Joseph "Joe" Ellis (Senior SWE), Javier Garcia Godinez† (Software Engineering Lead — almost certainly "Alex Garcia"), **James Han (Senior Engineering Manager)** → Timothy Tate (Backend Engineering Lead), Jorge Castillo (Senior SWE React), Patrick Fisher (Senior SWE React); Cy Kong (React Engineer), **Michael "Mike" Greiling (Staff Software Engineer)**, **Sohil Sethi (Manager, QA Engineering)** → Olga Chmikhun, Gavin Grooms, Sviatlana "Lana" Kukharchyk (QA Engineers), Daria Kazhybay (SWE, QA)
+- **Alvaro Ferreira — Director, Engineering** → Joseph "Joe" Ellis (Senior SWE), Javier Garcia Godinez† (Software Engineering Lead — almost certainly "Alex Garcia"), **James Han (Senior Engineering Manager)** → Timothy Tate (Backend Engineering Lead), Jorge Castillo (Senior SWE React), Patrick Fisher (Senior SWE React); ~~Cy Kong (React Engineer)~~ (**departed 2026-08-25**, see dossier), **Michael "Mike" Greiling (Staff Software Engineer)**, **Sohil Sethi (Manager, QA Engineering)** → Olga Chmikhun, Gavin Grooms, Sviatlana "Lana" Kukharchyk (QA Engineers), Daria Kazhybay (SWE, QA)
 - **Justin James — Senior Director, Engineering** → Acker Apple (SWE, "3MP - Payments Engineering"), Kai DiRamio (SWE), **Homer "Paul" Robertson (Staff Software Engineer)**, one unnamed card† ("3MP - Orders Engineering", SWE Node.js Microservices), Ary Baldioceda (SWE), **Susan Oakes (Technical Project Manager)**
 
 † = see "chart anomalies" below.
@@ -90,7 +90,7 @@ Company-wide: **239 people**, everything stems from **Marcus Shen — CEO**. His
 
 Pattern (verified on Patrick and Lana, 2026-07-24): **Pingboard org-chart cards print the legal name; clicking through to the profile bio shows the preferred/go-by name.** When a chart name looks unfamiliar, assume legal-vs-preferred before assuming a different person.
 
-**Chart anomalies / people missing from Pingboard:** the export appears to cover **employees only — contractors and vendor staff are absent**. Missing despite being active in Slack/GitLab: Anthony Lombardo (QA automation — either a contractor or the one blank/unrendered card under Justin James's "3MP - Orders Engineering"), Volodymyr Kelembet, Igor Shkulipa, Michael Ilchuk, Mykhailo Talimonchuk, Andrii Prasolov, Josh Mozley, Umesh Balasubramaniam, Shivam Bandral, Ashish Tulsankar, Amit Negi, Sachin Jagtap, Calvin La, Nihit Jain, Anmol Anand, all Evizi QA (below). The Jun-2025 Confluence roster explicitly tags several of these "Contractor" (Talimonchuk, Ilchuk, Andrii, Josh Mozley, Umesh, Shivam, Nihit, Anmol). Daehee Kim (Director Data Engineering on the 2025 roster) is also absent from the chart — possibly departed, with Aziz now holding that org (unconfirmed).
+**Chart anomalies / people missing from Pingboard:** the export appears to cover **employees only — contractors and vendor staff are absent**. Missing despite being active in Slack/GitLab: Anthony Lombardo (QA automation contractor), Volodymyr Kelembet, Igor Shkulipa, Michael Ilchuk, Mykhailo Talimonchuk, Andrii Prasolov, Josh Mozley, Umesh Balasubramaniam, Shivam Bandral, Ashish Tulsankar, Amit Negi, Sachin Jagtap, Calvin La, Nihit Jain, Anmol Anand, all Evizi QA (below). The Jun-2025 Confluence roster explicitly tags several of these "Contractor" (Talimonchuk, Ilchuk, Andrii, Josh Mozley, Umesh, Shivam, Nihit, Anmol). Daehee Kim (Director Data Engineering on the 2025 roster) is also absent from the chart — possibly departed, with Aziz now holding that org (unconfirmed).
 
 ## Org structure — pods (working teams)
 
@@ -102,7 +102,7 @@ Product work is divided into three **pods** (the Jira `GLOB` Pod field has exact
 |---|---|---|---|
 | **Buyer** | **Mary Gutierrez** (Director); **James Han** (Sr. EM / team lead) | **Jeremy Walton** | accounts incl. registration, auction/bidding, documents, locations, notifications, search + saved search, some permissions |
 | **Seller** | **Al Veitas** (Senior Director) | **Yang Luan** | Client Ops Portal (COPS), Seller Portal, Listings, Ingestion |
-| **Payment and Foundations** (Mike's pod) | **Justin James** (Sr Director) + **Alvaro Ferreira** (Director — Mike's manager) | unconfirmed — **Sarah Xu** (top epic reporter) and **Austin Jones** (Senior PM, *Payments* — title fits the pod) are the candidates | shipment, payment, orders, disputes, bridge, CS Portal, contracts |
+| **Payment and Foundations** (Mike's pod) | **Justin James** (Sr Director) + **Alvaro Ferreira** (Director — Mike's manager) | **Austin Jones** for Payments; **Sarah Xu** for Foundations-adjacent parcel and migration work | shipment, payment, orders, disputes, bridge, CS Portal, contracts |
 
 **Jira project prefixes map to pods**: `FP` = Payment and Foundations stories/tasks/bugs · `BP` = Buyer pod · `SP` = Seller pod · `GLOB` = epics for all pods (Pod custom field distinguishes) · `SPR` = legacy Team Sprinters (historical). Non-pod projects: `BUGS` (cross-pod bug intake), `PS` (Platform Support), `DEVOPS`, `QA`, `DET` (Data Engineering), `UXD` (design), `XLTR` (CrossListr). A person's recent FP/BP/SP assignment history is the fastest way to place them in a pod.
 
@@ -133,7 +133,7 @@ QA reports through **Sohil Sethi (Manager, QA Engineering — Asia/Kolkata, IST)
 | Person | Slack ID | Timezone | Notes |
 |---|---|---|---|
 | Sohil Sethi | `U01M2C9DRS4` | Asia/Kolkata (IST) | QA manager; coordinates Evizi; relays their Vietnamese-holiday leave schedules |
-| Anthony Lombardo | `U05QBEQGE0N` | America/New_York | QA automation (not in Pingboard — possibly contractor) |
+| Anthony Lombardo | `U05QBEQGE0N` | America/New_York | QA automation contractor (not in Pingboard) |
 | Lana (Sviatlana) Kukharchyk | `U080N3NKSFJ` | America/New_York (NY) | internal QA; loudest P0/P1 escalation voice in `#foundation-pod`; relays to Evizi. Started 2024-11-12; birthday Dec 18 |
 | Olga Chmikhun | `U03LQFXEVGQ` | (unset/US-hours observed) | internal QA |
 | Gavin Grooms | — (resolve on demand) | — | QA Engineer (per Pingboard, under Sohil) |
@@ -151,7 +151,7 @@ Evizi (Vietnam) runs much of the hands-on regression/story QA; internal QA (Lana
 
 - **Weekly Deck Shuffle + Optimization Cabal** — Tuesdays 1:30–2:00pm CT. Informal tech-leads huddle: Al Veitas (de-facto chair), Alvaro, Justin James, Mary, James Han, Mike (seat inherited from Ryan Jenkins, who departed early 2026), Yang Luan sometimes. Channel: `#3mp-tactical-planning` (`C0873VC4FU2`). Content: goings-on across teams, migration timelines (AT&T AOMP, mobile), infra flare-ups, Jira workflow friction, upgrade coordination — plus nominally fielding Optimization Cabal tech-debt/perf/DX tickets to teams with bandwidth. Cancelled ~40–50% of the time (conflicts or empty agenda). Note: the **Optimization Cabal itself is a Jira board, not the meeting** — GLOB-1987, the tech-debt backlog, curated day-to-day by Joe Spandrusyszyn and Paul Robertson; Mike pulls from it when between priority assignments. See the `/optimization-cabal-prep` command for meeting prep.
 - **Scrum of Scrums (SoS)** — weekly Fridays, headed by **Susan Oakes** with **Sohil Sethi**. Cross-team blockers and release coordination; Joe S uses it as the escalation lever ("so I could bring it up in Scrum of Scrums if I need to poke anybody"). Slack channel `#3mp-scrum_of_scrums` (release-timeline updates, Evizi leave notices). To surface something there: tag Susan and Sohil.
-- **Sprinters standup** — Tuesdays; the former-Sprinters crew (Alvaro's direct reports: Mike, Cy Kong, Joe Ellis, Alex Garcia, et al.). Survives the team's Oct-2025 dissolution into Foundations.
+- **Sprinters standup** — Tuesdays; the former-Sprinters crew (Alvaro's direct reports: Mike, Joe Ellis, Alex Garcia, et al.; Cy Kong until his 2026-08-25 departure). Survives the team's Oct-2025 dissolution into Foundations.
 - **FE Guild meeting** — see `references/fe-guild-meeting.md` (agenda automation, Confluence notes). Channel `#fe-guild`.
 - **ai-guild meeting** — co-run by Paul Robertson; Mike is the fallback host (hosted 2026-06-26). Channels `#ai-engineering`, `#mr-ai-agent-tiger-team`.
 - **3MP Weekly Defect Triage** — rotating owner among the leads (Al usually), run out of `#3mp-tactical-planning`.
@@ -177,7 +177,7 @@ Stable cross-system IDs. GitLab = `gitlab.bstock.io` usernames. "—" = verified
 | Joe Spandrusyszyn | Principal Software Engineer (FE) | `U049J4ALL69` | joseph.spandrusyszyn@bstock.com | America/New_York | `joseph.spandrusyszyn` (332) | `63659c17b7b39379d722512a` |
 | Paul Robertson ("Homer") | Staff Software Engineer (FE), AI tooling lead | `U065LP1M6UX` | paul@bstock.com | America/Chicago | `paul` (419) | `712020:b9d94b10-920e-4d35-915b-9994724c9934` |
 | Joe Ellis (Joseph) | Senior Software Engineer (BE), Foundations | `UDQ1PD1H6` | joe.ellis@bstock.com | America/New_York | `joe.ellis` (43) | `70121:46cb1856-1239-4833-b2b8-599729de54e8` |
-| Cy Kong (Cyrus) | React Engineer / epic lead, Foundations | `UJBMM6K4N` | cyrus@bstock.com | America/Chicago | `Cy-Kong` (48) | `5cb8e545b01aec0e591d6c55` |
+| Cy Kong (Cyrus) — **DEPARTED 2026-08-25** | (was) React Engineer / epic lead, Foundations | `UJBMM6K4N` | cyrus@bstock.com | America/Chicago | `Cy-Kong` (48) | `5cb8e545b01aec0e591d6c55` |
 | Alex Garcia (Pingboard: Javier Garcia Godinez) | Software Engineering Lead, Logistics & Finance | `U013Y1Y4G5C` | alex.garcia@bstock.com | America/Chicago | `alex.garcia` (100) | `5ec7f4036c50620c1cb0fc61` |
 | Helen Foutch | Software Engineer (FE/full-stack), Buyer pod | `U99JLJBDZ` | helen@bstock.com | America/Chicago | `helen` (16) | `5afb0999d1d9445cd3a60343` |
 | Waldemar "Waldek" Dziubek | Senior React Engineer, Seller pod — contracts-service expert | `U075L0TF7PS` | waldemar.dziubek@bstock.com | ? | `waldemar` (450) | `712020:c2e981c1-00fe-4b5d-ad4e-4c21d516c090` |
@@ -239,7 +239,7 @@ Format: what they do → when to reach out → surfaces (DM channel IDs are stab
 
 **Joe Ellis — Senior Software Engineer (BE), Boston.** Reports to Alvaro; ex-Sprinters. Mike's highest-volume backend counterpart: order-process, shipment/Shippo parcel rates, listings-summary, NetSuite item provisioning, shipping-insurance backend (GLOB-4613). Feeds Mike the FE side of parcel epics. Runs Claude for backend spelunking. Surfaces: group DMs `C079FD6GZEH` (with Alvaro), `C0BAVNNQ2GP` (with Alex Garcia + Volodymyr, parcel/Shippo), `C09JKAFSW8G` (with Cy). Snapshot 2026-06-30: flagged GLOB-4613 insurance epic entering technical review.
 
-**Cy Kong (Cyrus) — React Engineer, ex-Sprinters.** cs-portal, home-portal, CSP config, quotes endpoints; epic-level owner of the Enterprise-systems decommission (GLOB-4017/4922). Mike's mutual MR-approval pact partner. Surfaces: DM `D066KTSBF7C` (daily-ish), `#fe-guild`. Snapshot 2026-07-24: raised (unanswered) rising post-merge CI failures across cs-portal/home-portal in `#fe-guild`.
+**Cy Kong (Cyrus) — DEPARTED 2026-08-25 (let go; Slack account deactivated 2026-08-25 ~11:43 CDT, last message 2026-08-24 16:59 CDT; GitLab `Cy-Kong` state=`blocked` same day; no announcement was posted in any channel Mike can see as of that afternoon).** Was: React Engineer, ex-Sprinters, Alvaro's direct report; cs-portal, home-portal, CSP config, quotes endpoints; epic-level owner of the Enterprise-systems decommission (GLOB-4017/4922); Mike's mutual MR-approval pact partner (that pact is now void — find a new default approver). His in-flight work is expected to land on Mike; see the 2026-08-25 handoff research for what was open. Former surfaces: DM `D066KTSBF7C`, `#fe-guild`. Do not assign, @-mention, or route review requests to him; treat any stale Jira assignee = Cy or GitLab reviewer = `Cy-Kong` as an orphan needing a new owner.
 
 **Alex Garcia — Software Engineering Lead, Logistics & Finance** (Pingboard prints "Javier Garcia Godinez" — probable same person). Ex-Sprinters BE. Disputes service, ERP/NetSuite billing reliability (GLOB-4942), stuck-loads autofix, risk service. Active AI-tooling contributor (agent-skills). Surfaces: group DMs `C09LDUNP1EH` (agent-skills, with Paul R), `C0BAVNNQ2GP` (parcel), `C09R0QDRMPU` (disputes). Snapshot 2026-06-26: conceded to Mike's blocking feedback on agent-skills MR !79.
 
@@ -261,7 +261,7 @@ Format: what they do → when to reach out → surfaces (DM channel IDs are stab
 
 **Parvinder Bhasin — Director, DevOps** ("& Cybersecurity" per Slack; India tz, works odd hours, offers day-or-night phone escalation). Cloudflare WAF/bot rules, GitLab tier/licensing decisions, SAST/dependency-scanning policy, GCP IAM audits. Surfaces: group DM `C0BERD4144D` (with Orest + Joe S + Mike — the standing CI/GitLab governance channel), `#tech-operations`. Snapshot 2026-07-02→10: SARIF/vulnerability-view work with Mike + Joe.
 
-**Orest Stetsiak — Senior DevOps Engineer, hands-on CI operator.** GitLab upgrades, runners/job-token auth, `common/ci` pipeline config (needs Mike's or Joe S's approval on his MRs), FusionAuth updates on dev/qa, Datadog alert triage, Helm/deploy tuning. Ran the 2026-06-03 legacy-channel retirement wave. Surfaces: `C0BERD4144D`, `#tech-operations`, `#3mp-datadog-alerts-prod`. Snapshot 2026-07-10: DOCKER_AUTH_CONFIG removal verified clean.
+**Orest Stetsiak — Senior DevOps Engineer, hands-on CI operator.** GitLab upgrades, runners/job-token auth, `common/ci` pipeline config (needs Mike's or Joe S's approval on his MRs), FusionAuth updates on dev/qa, Datadog alert triage, Helm/deploy tuning. Ran the 2026-06-03 legacy-channel retirement wave. Surfaces: DM `D069CA0P8F9` (common-ci / shipyard planning), `C0BERD4144D`, wider CI-architecture group DM `C0B6NHV3VQB` (Orest + Parvinder + Joe S + Anthony Lombardo + David Chan + Michael Ilchuk + Mike — where the 2026-05-28 common-ci → shipyard/CI-components decision was made), `#tech-operations`, `#3mp-datadog-alerts-prod`. Created the `common/shipyard` repo (project 947) for Mike 2026-05-28; owns the CI/CD-components half of the common-ci de-vendoring (DEVOPS-3332) and is waiting on Mike for a sync promised for the week of 2026-08-03. Snapshot 2026-07-10: DOCKER_AUTH_CONFIG removal verified clean.
 
 **David Chan — Senior Site Reliability Engineer.** The access-grant person: app-level roles (granted Mike seller-admin), Jira permissions (fixed Mike's PS-project commenting), prod service accounts; also executes seller-onboarding/warehouse infra scripts (often at Susan's direction), GDPR deletions. Purely transactional DM `D067AGLBRAM` — state the request plainly. Snapshot 2026-06-10: permissions verified working after two rounds.
 
@@ -283,9 +283,9 @@ Format: what they do → when to reach out → surfaces (DM channel IDs are stab
 
 **Fred Leung — Senior UX Designer** (reports to Yang). Design system (FP-1973/FP-2005 color+typography), platform-wide copy consistency. Fast same-day turnaround on UX review asks. Notably piloting Claude Code + Storybook MCP himself (Mike is his setup buddy). Surfaces: DM `D0A7FL9691S`, parcel-copy group DM `C0BKD5JMJSJ` (with Sarah Xu), design-system group DM `C0B98AJA3GX`. Snapshot 2026-07-23: approved/tightened the shipping-insurance disclosure copy for home-portal !2320 within the hour.
 
-**Sarah Xu — Senior PM (3MP parcel, seller/migrations; candidate Foundations-pod PM).** Owns product copy sign-off and vendor decisions (passed on Shippo 2026-07-23); sets migration cutover dates; LOE-vs-scope calls. Surfaces: group DM `C0BKD5JMJSJ` (with Fred). Snapshot 2026-07-23: closed the last open parcel-insurance copy item.
+**Sarah Xu — Senior PM (3MP parcel, seller/migrations; Foundations-adjacent product work).** Owns product copy sign-off and vendor decisions (passed on Shippo 2026-07-23); sets migration cutover dates; LOE-vs-scope calls. Surfaces: group DM `C0BKD5JMJSJ` (with Fred). Snapshot 2026-07-23: closed the last open parcel-insurance copy item.
 
-**Austin Jones — Senior Product Manager, Payments** (under Yang; in `#foundation-pod`). The other candidate for "Foundations pod PM" — title says Payments, which is half the pod's name. Worth confirming with Mike.
+**Austin Jones — Senior Product Manager, Payments** (under Yang; in `#foundation-pod`). He is the Payments PM for the combined Payment and Foundations pod; current Slack activity confirms payment-policy and payment-rollout ownership.
 
 **Others:** Anushka Jain (Senior Product Designer — Seller designs with Fred), Alyssa Shum (Associate Product Designer — design-system launch messaging), Amara Mir (UX Researcher — Q3 UXR epic), Helen Holyk (UX Designer, Amsterdam — UXD project), Geethika Kilaru (Senior PM under Jeremy), Neil Zhu (UX — CS-portal filters, Oct 2025), Vajira Nissanka (Figma access).
 
@@ -323,8 +323,6 @@ Policy (per Mike, 2026-07-24): **keep lingering dossiers on departed employees**
 
 ## Known unknowns / open questions
 
-- **Foundations pod PM**: unconfirmed — Sarah Xu vs Austin Jones (Senior PM, Payments); possibly split. Ask Mike.
-- **Anthony Lombardo's employment status** (absent from Pingboard; possibly the blank Orders-engineering card or a contractor).
 - **Sohil-vs-Anthony QA hierarchy** and who performs day-to-day ticket QA audits — still fuzzy (Mike's own note).
 - Remaining `?` IDs in the identity table (Waldek/Aziz timezones, Tim Foster tz) — fill opportunistically.
 
