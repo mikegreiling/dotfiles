@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # carddav-contact — read/write Fastmail contacts over CardDAV so Apple Contacts
-# renders them correctly. See ../SKILL.md for why the Fastmail MCP contact
-# writers must not be used.
+# renders them correctly. See ../references/carddav-contacts.md for why the
+# Fastmail MCP contact writers must not be used, and
+# ../references/carddav-credentials.md for the credential runbook.
 set -euo pipefail
 
 PROG=${0##*/}
@@ -52,6 +53,7 @@ CREDENTIALS
   (Fastmail Settings -> Privacy & Security -> Integrations -> New app password).
   The mcporter OAuth token is scoped to the MCP server only and will 401 here.
   Override with env FASTMAIL_CARDDAV_USER / FASTMAIL_CARDDAV_PASS.
+  See references/carddav-credentials.md for the re-mint runbook.
 
 ENDPOINT
   https://carddav.fastmail.com/dav/addressbooks/user/<login-email>/Default/
@@ -92,6 +94,9 @@ Then store it in the login keychain:
 
 Or export FASTMAIL_CARDDAV_USER / FASTMAIL_CARDDAV_PASS for a one-off run.
 The mcporter OAuth token is NOT usable here (it is scoped to the MCP server).
+
+See references/carddav-credentials.md in the fastmail skill for the full re-mint
+runbook, and ask Mike to re-mint it (do not retry with other credentials).
 NOCRED
     exit 1
   fi
@@ -124,6 +129,9 @@ req() {
 fail_http() {
   printf '%s: %s failed with HTTP %s\n' "$PROG" "$1" "$HTTP_STATUS" >&2
   if [[ -s $BODY ]]; then printf -- '--- response body ---\n' >&2; cat "$BODY" >&2; fi
+  if [[ $HTTP_STATUS == 401 ]]; then
+    printf 'hint: the fastmail-carddav app password is missing/revoked — see references/carddav-credentials.md in the fastmail skill and ask Mike to re-mint it (do not retry with other credentials).\n' >&2
+  fi
   exit 1
 }
 
