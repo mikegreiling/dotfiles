@@ -1,6 +1,6 @@
 ---
 name: fastmail
-description: Read, search, organize, draft, and send Mike's Fastmail email, contacts, and calendar events via the mcporter CLI (Fastmail's official MCP server). Use whenever a task involves Mike's personal email, inbox, messages, mail folders, contacts, or personal (non-work) calendar.
+description: Read, search, organize, draft, and send Mike's Fastmail email, contacts, and calendar events via the mcporter CLI (Fastmail's official MCP server); create and edit contacts over CardDAV (scripts/carddav-contact) so Apple Contacts renders them correctly. Use whenever a task involves Mike's personal email, inbox, messages, mail folders, contacts, or personal (non-work) calendar.
 ---
 
 # Fastmail (via mcporter)
@@ -25,6 +25,90 @@ mcporter call fastmail.<tool_name> --args '<json>' --output json --no-oauth
 
 - Always pass `--no-oauth` (never trigger a browser flow) and `--output json`.
 - Tool arguments are one JSON object via `--args`; the complete MCP result prints on stdout as JSON — pipe to `jq` as needed.
+
+## Contacts: Apple Contacts compatibility (use CardDAV, not the MCP contact writers)
+
+Mike consumes his Fastmail contacts primarily through **Apple Contacts** (iOS/macOS) over CardDAV. The MCP contact *writers* produce vCards Apple mangles, so all contact writes go through `scripts/carddav-contact` instead. Verified 2026-08-25:
+
+- `create_contact` takes `name` only as a flat string. Fastmail stores it as JSContact `name.full` with no components, so the vCard 3.0 CardDAV serves has `FN:Waldemar Dziubek` but an empty `N:;;;;`. Apple Contacts treats empty-`N` + `ORG` as a **company card**: it shows the org ("B-Stock") as the contact's name and ignores `FN` entirely.
+- MCP-written `TEL` / `EMAIL` carry only a `PROP-ID=<hash>` parameter and no `TYPE=`, so Apple labels the phone field literally "PROP-ID". `ORG` is emitted under a hashed group prefix (`fec2c614085b502e.ORG;PROP-ID=…:B-Stock`).
+- `update_contact` **with `name` set wipes `N` back to `;;;;`** — even on a card that was previously clean. *Without* `name` (a notes/phones/emails delta) it preserves an existing `N` and existing `TYPE=` params; it still re-serializes the card (adding `PROP-ID`s and the hashed `ORG` group), which Apple renders acceptably.
+- A proper vCard 3.0 written over CardDAV fixes everything and Fastmail stores and serves it back verbatim: `N:Dziubek;Waldemar;;;`, `FN`, `ORG:B-Stock`, `TEL;TYPE=CELL,VOICE:…`, `EMAIL;TYPE=INTERNET,HOME,PREF:…`, optional `NOTE:`. MCP `search_contacts` reads CardDAV-written cards fine.
+
+Rules:
+
+1. **Never use MCP `create_contact`.** Create contacts with `scripts/carddav-contact new`.
+2. **Never pass `name` to MCP `update_contact`.** For a name change or any structural edit: `carddav-contact get <name> > c.vcf` → edit the file → `carddav-contact put c.vcf`.
+3. MCP `update_contact` for an emails / phones / notes delta is tolerable, but prefer CardDAV. **Never pass `notes: ""`** — it leaves an empty `NOTE:` property on the card; omit the field instead, or clear the note via CardDAV.
+4. MCP `search_contacts` remains the right tool for reads and lookups. Its `id` values are Fastmail contact ids (e.g. `D-Ork`) and are **not** the CardDAV UID — map one to the other with `carddav-contact get <name>` (or `list`), which prints the UID. Its `name` field is derived from the JSContact name components, so it can differ from the card's `FN`.
+
+### `scripts/carddav-contact`
+
+Credentials come from a login-keychain generic password with service name `fastmail-carddav`: account = the Fastmail login email, password = a Fastmail **app password with Contacts (CardDAV) access** (Fastmail → Settings → Privacy & Security → Integrations → New app password). The mcporter OAuth token is scoped to the MCP server only — it 401s on CardDAV and JMAP, and must never be reused here.
+
+```bash
+security add-generic-password -s fastmail-carddav -a mike@greiling.me -w '<app-password>'
+```
+
+`FASTMAIL_CARDDAV_USER` / `FASTMAIL_CARDDAV_PASS` override the keychain for a one-off run. Endpoint: `https://carddav.fastmail.com/dav/addressbooks/user/<login-email>/Default/` (displayname "Personal"; serves vCard 3.0 and 4.0). The resource filename is `<uid>.vcf`, i.e. the vCard's own UID.
+
+```
+carddav-contact — manage Fastmail contacts over CardDAV (Apple-Contacts-safe vCards)
+
+USAGE
+  carddav-contact list
+  carddav-contact get <text|uid>
+  carddav-contact new --given G --family F [options]
+  carddav-contact put <file.vcf>
+  carddav-contact delete <uid>
+  carddav-contact --help
+
+COMMANDS
+  list              Every card in the Default address book as: UID<TAB>FN<TAB>ORG
+  get <text|uid>    Raw vCard(s) whose FN, ORG or EMAIL contains <text>
+                    (case-insensitive), each preceded by a "# etag: ..." line.
+                    A bare UID is fetched directly by GET.
+  new               Build a clean vCard 3.0 and create it (HTTP 201), then
+                    print the UID and re-read the stored card.
+  put <file.vcf>    Upload a hand-written vCard. The UID inside the file names
+                    the resource; an existing resource is updated with If-Match,
+                    a new one is created with If-None-Match: *. Prints the
+                    re-read card.
+  delete <uid>      DELETE the card (If-Match). DESTRUCTIVE AND IRREVERSIBLE —
+                    only run it after the user has explicitly confirmed that
+                    specific contact should be deleted.
+
+OPTIONS for `new`
+  --given G            Given (first) name          [required]
+  --family F           Family (last) name          [required]
+  --fn "Display Name"  FN override                 [default: "G F"]
+  --org ORG            Organization
+  --email ADDR[:TYPE]  Repeatable. TYPE default HOME; first email also gets PREF.
+                       Emits EMAIL;TYPE=INTERNET,<TYPE>[,PREF]
+  --phone NUM[:TYPE]   Repeatable. TYPE default CELL.
+                       Emits TEL;TYPE=<TYPE>,VOICE
+  --note TEXT          NOTE property
+
+CREDENTIALS
+  Read from the login keychain item with service name `fastmail-carddav`:
+    security add-generic-password -s fastmail-carddav -a <login-email> -w '<app-password>'
+  The password must be a Fastmail *app password* with Contacts (CardDAV) access
+  (Fastmail Settings -> Privacy & Security -> Integrations -> New app password).
+  The mcporter OAuth token is scoped to the MCP server only and will 401 here.
+  Override with env FASTMAIL_CARDDAV_USER / FASTMAIL_CARDDAV_PASS.
+
+ENDPOINT
+  https://carddav.fastmail.com/dav/addressbooks/user/<login-email>/Default/
+
+EXAMPLES
+  carddav-contact list
+  carddav-contact get "Waldemar"
+  carddav-contact new --given Jane --family Doe --org B-Stock \
+      --email jane@example.com --phone 555-123-4567:CELL --note "Met at KubeCon"
+  carddav-contact get 0d1c...-uuid > jane.vcf && $EDITOR jane.vcf && carddav-contact put jane.vcf
+```
+
+If you ever hand-roll curl against this endpoint instead: use `Depth: 1` on the `addressbook-query` REPORT, request `<card:address-data content-type="text/vcard" version="3.0"/>`, `PUT` with `Content-Type: text/vcard; charset=utf-8` plus `If-None-Match: *` (create → 201) or `If-Match: "<etag>"` (update → 204), and use CRLF line endings in the vCard. Do it from **bash**, not zsh — zsh does not word-split `${var:+-H "..."}`, so header arguments must be built as an array.
 
 ## Calendar times across daylight-saving transitions
 

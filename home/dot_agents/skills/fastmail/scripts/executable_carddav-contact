@@ -1,0 +1,364 @@
+#!/usr/bin/env bash
+# carddav-contact — read/write Fastmail contacts over CardDAV so Apple Contacts
+# renders them correctly. See ../SKILL.md for why the Fastmail MCP contact
+# writers must not be used.
+set -euo pipefail
+
+PROG=${0##*/}
+DAV_HOST="https://carddav.fastmail.com"
+
+usage() {
+  cat <<'HELP_EOF'
+carddav-contact — manage Fastmail contacts over CardDAV (Apple-Contacts-safe vCards)
+
+USAGE
+  carddav-contact list
+  carddav-contact get <text|uid>
+  carddav-contact new --given G --family F [options]
+  carddav-contact put <file.vcf>
+  carddav-contact delete <uid>
+  carddav-contact --help
+
+COMMANDS
+  list              Every card in the Default address book as: UID<TAB>FN<TAB>ORG
+  get <text|uid>    Raw vCard(s) whose FN, ORG or EMAIL contains <text>
+                    (case-insensitive), each preceded by a "# etag: ..." line.
+                    A bare UID is fetched directly by GET.
+  new               Build a clean vCard 3.0 and create it (HTTP 201), then
+                    print the UID and re-read the stored card.
+  put <file.vcf>    Upload a hand-written vCard. The UID inside the file names
+                    the resource; an existing resource is updated with If-Match,
+                    a new one is created with If-None-Match: *. Prints the
+                    re-read card.
+  delete <uid>      DELETE the card (If-Match). DESTRUCTIVE AND IRREVERSIBLE —
+                    only run it after the user has explicitly confirmed that
+                    specific contact should be deleted.
+
+OPTIONS for `new`
+  --given G            Given (first) name          [required]
+  --family F           Family (last) name          [required]
+  --fn "Display Name"  FN override                 [default: "G F"]
+  --org ORG            Organization
+  --email ADDR[:TYPE]  Repeatable. TYPE default HOME; first email also gets PREF.
+                       Emits EMAIL;TYPE=INTERNET,<TYPE>[,PREF]
+  --phone NUM[:TYPE]   Repeatable. TYPE default CELL.
+                       Emits TEL;TYPE=<TYPE>,VOICE
+  --note TEXT          NOTE property
+
+CREDENTIALS
+  Read from the login keychain item with service name `fastmail-carddav`:
+    security add-generic-password -s fastmail-carddav -a <login-email> -w '<app-password>'
+  The password must be a Fastmail *app password* with Contacts (CardDAV) access
+  (Fastmail Settings -> Privacy & Security -> Integrations -> New app password).
+  The mcporter OAuth token is scoped to the MCP server only and will 401 here.
+  Override with env FASTMAIL_CARDDAV_USER / FASTMAIL_CARDDAV_PASS.
+
+ENDPOINT
+  https://carddav.fastmail.com/dav/addressbooks/user/<login-email>/Default/
+
+EXAMPLES
+  carddav-contact list
+  carddav-contact get "Waldemar"
+  carddav-contact new --given Jane --family Doe --org B-Stock \
+      --email jane@example.com --phone 555-123-4567:CELL --note "Met at KubeCon"
+  carddav-contact get 0d1c...-uuid > jane.vcf && $EDITOR jane.vcf && carddav-contact put jane.vcf
+HELP_EOF
+}
+
+die() { printf '%s: %s\n' "$PROG" "$*" >&2; exit 1; }
+
+# ---------------------------------------------------------------- credentials
+load_credentials() {
+  DAV_USER=${FASTMAIL_CARDDAV_USER:-}
+  DAV_PASS=${FASTMAIL_CARDDAV_PASS:-}
+
+  if [[ -z $DAV_PASS ]]; then
+    DAV_PASS=$(security find-generic-password -s fastmail-carddav -w 2>/dev/null || true)
+  fi
+  if [[ -z $DAV_USER ]]; then
+    DAV_USER=$(security find-generic-password -s fastmail-carddav 2>/dev/null \
+      | sed -n 's/.*"acct"<blob>="\(.*\)"/\1/p' || true)
+  fi
+
+  if [[ -z $DAV_USER || -z $DAV_PASS ]]; then
+    cat >&2 <<'NOCRED'
+carddav-contact: no Fastmail CardDAV credentials found.
+
+Mint a Fastmail app password with Contacts (CardDAV) access:
+  Fastmail -> Settings -> Privacy & Security -> Integrations -> New app password
+
+Then store it in the login keychain:
+  security add-generic-password -s fastmail-carddav -a <login-email> -w '<app-password>'
+
+Or export FASTMAIL_CARDDAV_USER / FASTMAIL_CARDDAV_PASS for a one-off run.
+The mcporter OAuth token is NOT usable here (it is scoped to the MCP server).
+NOCRED
+    exit 1
+  fi
+
+  AB_URL="$DAV_HOST/dav/addressbooks/user/$DAV_USER/Default/"
+}
+
+# ------------------------------------------------------------------- plumbing
+setup_tmp() {
+  TMPDIR_SELF=$(mktemp -d "${TMPDIR:-/tmp}/carddav-contact.XXXXXX")
+  trap 'rm -rf "$TMPDIR_SELF"' EXIT
+  CURL_CFG="$TMPDIR_SELF/curl.cfg"
+  BODY="$TMPDIR_SELF/body"
+  HDRS="$TMPDIR_SELF/hdrs"
+  : >"$CURL_CFG"; chmod 600 "$CURL_CFG"
+  # keep the password off the process table
+  local esc_u esc_p
+  esc_u=${DAV_USER//\\/\\\\}; esc_u=${esc_u//\"/\\\"}
+  esc_p=${DAV_PASS//\\/\\\\}; esc_p=${esc_p//\"/\\\"}
+  printf 'user = "%s:%s"\n' "$esc_u" "$esc_p" >"$CURL_CFG"
+}
+
+# req METHOD URL [extra curl args...] -> sets HTTP_STATUS, body in $BODY, headers in $HDRS
+req() {
+  local method=$1 url=$2; shift 2
+  HTTP_STATUS=$(curl -sS -K "$CURL_CFG" -X "$method" "$url" \
+    -o "$BODY" -D "$HDRS" -w '%{http_code}' "$@")
+}
+
+fail_http() {
+  printf '%s: %s failed with HTTP %s\n' "$PROG" "$1" "$HTTP_STATUS" >&2
+  if [[ -s $BODY ]]; then printf -- '--- response body ---\n' >&2; cat "$BODY" >&2; fi
+  exit 1
+}
+
+# unfold vCard continuation lines (CRLF + space/tab), normalize to LF
+unfold() {
+  awk '
+    { line = $0; sub(/\r$/, "", line)
+      if (line ~ /^[ \t]/ && started) { printf "%s", substr(line, 2); next }
+      if (started) printf "\n"
+      printf "%s", line; started = 1
+    }
+    END { if (started) printf "\n" }'
+}
+
+# field NAME  (reads a vCard on stdin, prints the first matching value)
+field() {
+  awk -v want="$1" '
+    { p = index($0, ":"); if (p == 0) next
+      name = substr($0, 1, p - 1); val = substr($0, p + 1)
+      sub(/;.*$/, "", name)          # drop parameters
+      sub(/^[^.]*\./, "", name)      # drop group prefix
+      if (toupper(name) == toupper(want) && !seen) { print val; seen = 1 } }'
+}
+
+etag_header() { sed -n 's/^[Ee][Tt][Aa][Gg]: *//p' "$HDRS" | tr -d '\r' | tail -1; }
+
+# ------------------------------------------------------------------ reporting
+# report_query FILTER_XML -> multistatus in $BODY
+report_query() {
+  local filter=$1 reqfile="$TMPDIR_SELF/report.xml"
+  cat >"$reqfile" <<XML
+<?xml version="1.0" encoding="utf-8"?>
+<card:addressbook-query xmlns:d="DAV:" xmlns:card="urn:ietf:params:xml:ns:carddav">
+  <d:prop>
+    <d:getetag/>
+    <card:address-data content-type="text/vcard" version="3.0"/>
+  </d:prop>
+  $filter
+</card:addressbook-query>
+XML
+  req REPORT "$AB_URL" -H 'Depth: 1' -H 'Content-Type: application/xml; charset=utf-8' \
+    --data-binary "@$reqfile"
+  [[ $HTTP_STATUS == 207 ]] || fail_http "addressbook-query REPORT"
+}
+
+xp() { xmllint --xpath "$1" "$BODY" 2>/dev/null || true; }
+
+response_count() { xp 'count(//*[local-name()="response"])' | tr -d '[:space:]'; }
+response_etag() { xp "string((//*[local-name()='response'])[$1]//*[local-name()='getetag'])"; }
+response_card() { xp "string((//*[local-name()='response'])[$1]//*[local-name()='address-data'])"; }
+
+# ------------------------------------------------------------------- commands
+cmd_list() {
+  report_query '<card:filter><card:prop-filter name="FN"/></card:filter>'
+  local n i card uid fn org
+  n=$(response_count); n=${n:-0}
+  for ((i = 1; i <= n; i++)); do
+    card=$(response_card "$i" | unfold)
+    uid=$(printf '%s\n' "$card" | field UID)
+    fn=$(printf '%s\n' "$card" | field FN)
+    org=$(printf '%s\n' "$card" | field ORG)
+    printf '%s\t%s\t%s\n' "$uid" "$fn" "$org"
+  done
+}
+
+cmd_get() {
+  local needle=${1:-}
+  [[ -n $needle ]] || die "get requires a search string or UID"
+
+  if [[ $needle =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
+    req GET "$AB_URL$needle.vcf" -H 'Accept: text/vcard'
+    if [[ $HTTP_STATUS == 200 ]]; then
+      printf '# etag: %s\n' "$(etag_header)"
+      unfold <"$BODY"
+      return 0
+    fi
+    [[ $HTTP_STATUS == 404 ]] || fail_http "GET $needle.vcf"
+    # fall through and try a text search
+  fi
+
+  local esc
+  esc=$(printf '%s' "$needle" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g')
+  report_query "<card:filter test=\"anyof\">
+    <card:prop-filter name=\"FN\"><card:text-match collation=\"i;unicode-casemap\" match-type=\"contains\">$esc</card:text-match></card:prop-filter>
+    <card:prop-filter name=\"ORG\"><card:text-match collation=\"i;unicode-casemap\" match-type=\"contains\">$esc</card:text-match></card:prop-filter>
+    <card:prop-filter name=\"EMAIL\"><card:text-match collation=\"i;unicode-casemap\" match-type=\"contains\">$esc</card:text-match></card:prop-filter>
+  </card:filter>"
+
+  local n i first=1
+  n=$(response_count); n=${n:-0}
+  if [[ $n == 0 ]]; then
+    printf '%s: no contact matching %q\n' "$PROG" "$needle" >&2
+    return 1
+  fi
+  for ((i = 1; i <= n; i++)); do
+    [[ $first == 1 ]] || printf '\n'
+    first=0
+    printf '# etag: %s\n' "$(response_etag "$i")"
+    response_card "$i" | unfold
+  done
+}
+
+# vcard-escape a text value
+vesc() {
+  printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/;/\\;/g' -e 's/,/\\,/g' \
+    | awk '{ if (NR > 1) printf "\\n"; printf "%s", $0 } END { printf "\n" }'
+}
+
+# emit a vCard line with CRLF
+vline() { printf '%s\r\n' "$1" >>"$VCF"; }
+
+cmd_new() {
+  local given='' family='' fn='' org='' note='' have_note=0
+  local -a emails=() phones=()
+  while (($#)); do
+    case $1 in
+      --given)  given=${2:?--given needs a value}; shift 2 ;;
+      --family) family=${2:?--family needs a value}; shift 2 ;;
+      --fn)     fn=${2:?--fn needs a value}; shift 2 ;;
+      --org)    org=${2:?--org needs a value}; shift 2 ;;
+      --email)  emails+=("${2:?--email needs a value}"); shift 2 ;;
+      --phone)  phones+=("${2:?--phone needs a value}"); shift 2 ;;
+      --note)   note=${2:?--note needs a value}; have_note=1; shift 2 ;;
+      -h|--help) usage; exit 0 ;;
+      *) die "unknown option for new: $1" ;;
+    esac
+  done
+  [[ -n $given && -n $family ]] || die "new requires --given and --family"
+  [[ -n $fn ]] || fn="$given $family"
+
+  local uid
+  uid=$(uuidgen | tr '[:upper:]' '[:lower:]')
+
+  VCF="$TMPDIR_SELF/new.vcf"; : >"$VCF"
+  vline 'BEGIN:VCARD'
+  vline 'VERSION:3.0'
+  vline "UID:$uid"
+  vline "N:$(vesc "$family");$(vesc "$given");;;"
+  vline "FN:$(vesc "$fn")"
+  [[ -n $org ]] && vline "ORG:$(vesc "$org")"
+
+  local spec num type addr first_email=1
+  for spec in ${phones+"${phones[@]}"}; do
+    num=${spec%%:*}
+    if [[ $spec == *:* ]]; then type=${spec#*:}; else type=CELL; fi
+    type=$(printf '%s' "$type" | tr '[:lower:]' '[:upper:]')
+    vline "TEL;TYPE=$type,VOICE:$(vesc "$num")"
+  done
+  for spec in ${emails+"${emails[@]}"}; do
+    addr=${spec%%:*}
+    if [[ $spec == *:* ]]; then type=${spec#*:}; else type=HOME; fi
+    type=$(printf '%s' "$type" | tr '[:lower:]' '[:upper:]')
+    if [[ $first_email == 1 ]]; then
+      vline "EMAIL;TYPE=INTERNET,$type,PREF:$(vesc "$addr")"
+      first_email=0
+    else
+      vline "EMAIL;TYPE=INTERNET,$type:$(vesc "$addr")"
+    fi
+  done
+  (( have_note )) && [[ -n $note ]] && vline "NOTE:$(vesc "$note")"
+  vline 'END:VCARD'
+
+  req PUT "$AB_URL$uid.vcf" -H 'Content-Type: text/vcard; charset=utf-8' \
+    -H 'If-None-Match: *' --data-binary "@$VCF"
+  [[ $HTTP_STATUS == 201 || $HTTP_STATUS == 204 ]] || fail_http "PUT $uid.vcf"
+
+  printf '# created %s (HTTP %s)\n' "$uid" "$HTTP_STATUS"
+  cmd_get "$uid"
+}
+
+cmd_put() {
+  local file=${1:-}
+  [[ -n $file ]] || die "put requires a .vcf file"
+  [[ -f $file ]] || die "no such file: $file"
+
+  local card uid
+  card=$(unfold <"$file")
+  uid=$(printf '%s\n' "$card" | field UID)
+  [[ -n $uid ]] || die "no UID property in $file — add one (lowercase uuid)"
+
+  # normalize to CRLF
+  VCF="$TMPDIR_SELF/put.vcf"
+  printf '%s\n' "$card" | sed -e 's/\r$//' -e 's/$/\r/' >"$VCF"
+
+  req GET "$AB_URL$uid.vcf" -H 'Accept: text/vcard'
+  local -a cond
+  if [[ $HTTP_STATUS == 200 ]]; then
+    cond=(-H "If-Match: $(etag_header)")
+  elif [[ $HTTP_STATUS == 404 ]]; then
+    cond=(-H 'If-None-Match: *')
+  else
+    fail_http "GET $uid.vcf"
+  fi
+
+  req PUT "$AB_URL$uid.vcf" -H 'Content-Type: text/vcard; charset=utf-8' \
+    "${cond[@]}" --data-binary "@$VCF"
+  [[ $HTTP_STATUS == 201 || $HTTP_STATUS == 204 ]] || fail_http "PUT $uid.vcf"
+
+  printf '# stored %s (HTTP %s)\n' "$uid" "$HTTP_STATUS"
+  cmd_get "$uid"
+}
+
+cmd_delete() {
+  local uid=${1:-}
+  [[ -n $uid ]] || die "delete requires a UID"
+
+  req GET "$AB_URL$uid.vcf" -H 'Accept: text/vcard'
+  [[ $HTTP_STATUS == 200 ]] || fail_http "GET $uid.vcf"
+  local etag
+  etag=$(etag_header)
+
+  req DELETE "$AB_URL$uid.vcf" -H "If-Match: $etag"
+  [[ $HTTP_STATUS == 204 || $HTTP_STATUS == 200 ]] || fail_http "DELETE $uid.vcf"
+  printf '# deleted %s (HTTP %s)\n' "$uid" "$HTTP_STATUS"
+}
+
+# ----------------------------------------------------------------------- main
+main() {
+  local cmd=${1:-}
+  case $cmd in
+    -h|--help|help|'') usage; exit 0 ;;
+  esac
+  shift
+
+  load_credentials
+  setup_tmp
+
+  case $cmd in
+    list)   cmd_list "$@" ;;
+    get)    cmd_get "$@" ;;
+    new)    cmd_new "$@" ;;
+    put)    cmd_put "$@" ;;
+    delete) cmd_delete "$@" ;;
+    *) die "unknown command: $cmd (try --help)" ;;
+  esac
+}
+
+main "$@"
