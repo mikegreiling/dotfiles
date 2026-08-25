@@ -42,7 +42,7 @@ Either way, **stop and ask Mike**. Do not work around it.
 
 ## What an agent must NOT do
 
-- Do **not** look for the password in 1Password. An `op` invocation triggers an authorization prompt Mike will deny, and the app password is not stored there.
+- Do **not** look for the password in 1Password. An `op` invocation triggers an authorization prompt Mike will deny; whether or not he keeps a copy there, the keychain item is the only sanctioned source for agents.
 - Do **not** print, echo, or paste the password (or any candidate password) into the conversation, a file, a commit, or a command an agent runs.
 - Do **not** substitute the mcporter OAuth token, a Fastmail account password, or any other credential.
 - Do **not** run `security add-generic-password` with a secret on an agent-issued command line — the secret would land in the transcript and the shell history. Mike runs that himself.
