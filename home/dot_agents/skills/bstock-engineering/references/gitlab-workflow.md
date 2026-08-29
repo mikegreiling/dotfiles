@@ -125,3 +125,20 @@ Every pushed branch should have:
 When creating an MR, suggest the Jira ticket based on the current sprint. If no ticket matches, offer to create one in Foundations Pod (FP project). Ask for verification before creating a new ticket.
 
 When a MR is ready for code review, transition the associated Jira ticket to "Technical Review" (transition id: 21 "Merge Request").
+
+
+## MR review drafts (staged batch comments) via API
+
+GitLab's "Start a review / Submit review" flow is the **draft notes** API — `glab` has no subcommand, but `glab api` drives it. Draft notes stage under the token owner's pending review, visible only to them until they click **Submit review** in the MR UI (or `POST …/draft_notes/bulk_publish`).
+
+- Create (unpositioned/overview): `glab api -X POST projects/<id>/merge_requests/<iid>/draft_notes -f note='…'`
+- Create (inline/positioned): the `position` hash **MUST be sent as a JSON request body** — nested form fields (`-f 'position[base_sha]=…'`) and a JSON-string form value are both **silently ignored** (the note lands unpositioned; the create response even returns a truthy all-null `position`, so verify via the list endpoint, not the create response). Verified 2026-08-28 on MR 2286:
+
+  ```bash
+  # payload.json: {"note":"…","position":{"position_type":"text","base_sha":B,"head_sha":H,
+  #   "start_sha":B,"new_path":"src/x.ts","old_path":"src/x.ts","new_line":420}}
+  glab api -X POST "projects/<id>/merge_requests/<iid>/draft_notes"     -H "Content-Type: application/json" --input payload.json
+  ```
+
+- SHAs come from `GET …/merge_requests/<iid>/versions` (first entry: `base_commit_sha`/`head_commit_sha`/`start_commit_sha`); `new_line` for added lines only (omit `old_line`).
+- List/verify: `GET …/draft_notes` · delete one: `DELETE …/draft_notes/<id>` · never publish (`bulk_publish`) without Mike's explicit go-ahead — submitting the review is his action by default.
