@@ -1,0 +1,689 @@
+#!/usr/bin/env python3
+"""Three-way synchronization for FluidVoice's replacement rules and vocabulary."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import math
+import os
+import plistlib
+import sys
+import tempfile
+import urllib.error
+import urllib.parse
+import urllib.request
+import uuid
+from pathlib import Path
+from typing import Any, Callable
+
+
+SCHEMA_VERSION = 1
+DEFAULT_PORT = 47733
+UUID_NAMESPACE = uuid.UUID("ac835a67-c0ac-44e4-9634-5565b42d2328")
+EMPTY_DOCUMENT = {"version": SCHEMA_VERSION, "replacements": [], "customWords": []}
+
+
+class SyncError(Exception):
+    """An expected error suitable for display without a traceback."""
+
+
+class APIError(SyncError):
+    """FluidVoice's local API is unavailable or returned an invalid response."""
+
+
+def _validate_list_response(response: Any, endpoint: str) -> list[dict[str, Any]]:
+    if not isinstance(response, dict):
+        raise APIError(f"FluidVoice {endpoint} endpoint returned a non-object response")
+    if "count" not in response or "items" not in response:
+        raise APIError(f"FluidVoice {endpoint} endpoint omitted required count/items fields")
+    count = response["count"]
+    items = response["items"]
+    if isinstance(count, bool) or not isinstance(count, int) or count < 0:
+        raise APIError(f"FluidVoice {endpoint} endpoint returned an invalid count")
+    if not isinstance(items, list):
+        raise APIError(f"FluidVoice {endpoint} endpoint returned a non-array items field")
+    if count != len(items):
+        raise APIError(
+            f"FluidVoice {endpoint} endpoint count ({count}) does not match its items ({len(items)})"
+        )
+    if not all(isinstance(item, dict) for item in items):
+        raise APIError(f"FluidVoice {endpoint} endpoint returned a non-object dictionary item")
+    return items
+
+
+def _validate_api_replacements(items: list[dict[str, Any]]) -> None:
+    for index, item in enumerate(items):
+        missing = {"id", "triggers", "replacement"} - item.keys()
+        if missing:
+            raise APIError(
+                f"FluidVoice replacements item {index} omitted required field(s): {', '.join(sorted(missing))}"
+            )
+
+
+def _validate_api_custom_words(items: list[dict[str, Any]]) -> None:
+    for index, item in enumerate(items):
+        missing = {"text", "aliases"} - item.keys()
+        if missing:
+            raise APIError(
+                f"FluidVoice custom-words item {index} omitted required field(s): {', '.join(sorted(missing))}"
+            )
+
+
+def _normalized_strings(values: Any, field: str, *, lowercase: bool) -> list[str]:
+    if not isinstance(values, list):
+        raise SyncError(f"{field} must be an array of strings")
+    result: dict[str, str] = {}
+    for value in values:
+        if not isinstance(value, str):
+            raise SyncError(f"{field} must contain only strings")
+        text = value.strip()
+        if not text:
+            continue
+        output = text.lower() if lowercase else text
+        result.setdefault(output.casefold(), output)
+    return [result[key] for key in sorted(result)]
+
+
+def _normalized_replacement(value: Any, field: str) -> str:
+    if not isinstance(value, str):
+        raise SyncError(f"{field} must be a string")
+    trimmed = value.strip()
+    result = trimmed if trimmed else value
+    if result == "":
+        raise SyncError(f"{field} must not be empty")
+    return result
+
+
+def _normalized_weight(value: Any, field: str) -> int | float | None:
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise SyncError(f"{field} must be a finite number or null")
+    number = float(value)
+    if not math.isfinite(number):
+        raise SyncError(f"{field} must be a finite number or null")
+    return int(number) if number.is_integer() else number
+
+
+def _replacement_uuid(entry: dict[str, Any], field: str) -> str:
+    raw_id = entry.get("id")
+    if raw_id is not None:
+        if not isinstance(raw_id, str):
+            raise SyncError(f"{field}.id must be a UUID string or null")
+        try:
+            return str(uuid.UUID(raw_id))
+        except ValueError as error:
+            raise SyncError(f"{field}.id is not a valid UUID") from error
+
+    fingerprint = json.dumps(
+        [entry["triggers"], entry["replacement"]],
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
+    return str(uuid.uuid5(UUID_NAMESPACE, fingerprint))
+
+
+def normalize_document(raw: Any, source: str = "dictionary") -> dict[str, Any]:
+    """Validate and canonicalize a managed/base/API dictionary document."""
+    if not isinstance(raw, dict):
+        raise SyncError(f"{source} must contain a JSON object")
+
+    missing = {"version", "replacements", "customWords"} - raw.keys()
+    if missing:
+        raise SyncError(f"{source} omitted required field(s): {', '.join(sorted(missing))}")
+
+    version = raw["version"]
+    if version != SCHEMA_VERSION:
+        raise SyncError(f"{source} has unsupported version {version!r}")
+
+    raw_replacements = raw["replacements"]
+    raw_words = raw["customWords"]
+    if not isinstance(raw_replacements, list):
+        raise SyncError(f"{source}.replacements must be an array")
+    if not isinstance(raw_words, list):
+        raise SyncError(f"{source}.customWords must be an array")
+
+    replacements: list[dict[str, Any]] = []
+    replacement_ids: set[str] = set()
+    for index, raw_entry in enumerate(raw_replacements):
+        field = f"{source}.replacements[{index}]"
+        if not isinstance(raw_entry, dict):
+            raise SyncError(f"{field} must be an object")
+        triggers = _normalized_strings(raw_entry.get("triggers", []), f"{field}.triggers", lowercase=True)
+        if not triggers:
+            raise SyncError(f"{field}.triggers must contain at least one nonblank string")
+        replacement = _normalized_replacement(raw_entry.get("replacement"), f"{field}.replacement")
+        entry = {"triggers": triggers, "replacement": replacement}
+        entry["id"] = _replacement_uuid({**raw_entry, **entry}, field)
+        if entry["id"] in replacement_ids:
+            raise SyncError(f"{source} contains duplicate replacement id {entry['id']}")
+        replacement_ids.add(entry["id"])
+        replacements.append({"id": entry["id"], "triggers": triggers, "replacement": replacement})
+
+    custom_words: list[dict[str, Any]] = []
+    word_keys: set[str] = set()
+    for index, raw_entry in enumerate(raw_words):
+        field = f"{source}.customWords[{index}]"
+        if not isinstance(raw_entry, dict):
+            raise SyncError(f"{field} must be an object")
+        text = raw_entry.get("text")
+        if not isinstance(text, str) or not text.strip():
+            raise SyncError(f"{field}.text must be a nonblank string")
+        text = text.strip()
+        key = text.casefold()
+        if key in word_keys:
+            raise SyncError(f"{source} contains duplicate custom word {text!r}")
+        word_keys.add(key)
+        custom_words.append(
+            {
+                "text": text,
+                "weight": _normalized_weight(raw_entry.get("weight"), f"{field}.weight"),
+                "aliases": _normalized_strings(raw_entry.get("aliases", []), f"{field}.aliases", lowercase=False),
+            }
+        )
+
+    replacements.sort(key=lambda entry: entry["id"])
+    custom_words.sort(key=lambda entry: (entry["text"].casefold(), entry["text"]))
+    return {"version": SCHEMA_VERSION, "replacements": replacements, "customWords": custom_words}
+
+
+def _entry_map(entries: list[dict[str, Any]], key: Callable[[dict[str, Any]], str]) -> dict[str, dict[str, Any]]:
+    return {key(entry): entry for entry in entries}
+
+
+def _render_entry(entry: dict[str, Any] | None) -> str:
+    if entry is None:
+        return "deleted"
+    return json.dumps(entry, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+def _merge_entries(
+    section: str,
+    base_entries: list[dict[str, Any]],
+    managed_entries: list[dict[str, Any]],
+    live_entries: list[dict[str, Any]],
+    key: Callable[[dict[str, Any]], str],
+    label: Callable[[str, dict[str, Any] | None, dict[str, Any] | None, dict[str, Any] | None], str],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    base = _entry_map(base_entries, key)
+    managed = _entry_map(managed_entries, key)
+    live = _entry_map(live_entries, key)
+    merged: list[dict[str, Any]] = []
+    conflicts: list[str] = []
+
+    for item_key in sorted(set(base) | set(managed) | set(live)):
+        base_value = base.get(item_key)
+        managed_value = managed.get(item_key)
+        live_value = live.get(item_key)
+        if managed_value == live_value:
+            chosen = managed_value
+        elif managed_value == base_value:
+            chosen = live_value
+        elif live_value == base_value:
+            chosen = managed_value
+        else:
+            conflicts.append(
+                f"{section} {label(item_key, base_value, managed_value, live_value)} changed differently:\n"
+                f"  base:    {_render_entry(base_value)}\n"
+                f"  managed: {_render_entry(managed_value)}\n"
+                f"  live:    {_render_entry(live_value)}"
+            )
+            continue
+        if chosen is not None:
+            merged.append(chosen)
+    return merged, conflicts
+
+
+def _replacement_label(
+    item_id: str,
+    base: dict[str, Any] | None,
+    managed: dict[str, Any] | None,
+    live: dict[str, Any] | None,
+) -> str:
+    entry = managed or live or base
+    replacement = entry.get("replacement") if entry else None
+    return f"{replacement!r} (id {item_id})"
+
+
+def _word_label(
+    item_key: str,
+    base: dict[str, Any] | None,
+    managed: dict[str, Any] | None,
+    live: dict[str, Any] | None,
+) -> str:
+    entry = managed or live or base
+    return repr(entry.get("text", item_key) if entry else item_key)
+
+
+def _semantic_replacement_conflicts(entries: list[dict[str, Any]]) -> list[str]:
+    conflicts: list[str] = []
+    replacements: dict[str, dict[str, Any]] = {}
+    triggers: dict[str, dict[str, Any]] = {}
+    for entry in sorted(entries, key=lambda value: value["id"]):
+        replacement_key = entry["replacement"].casefold()
+        existing = replacements.get(replacement_key)
+        if existing is not None and existing["id"] != entry["id"]:
+            conflicts.append(
+                f"replacement {entry['replacement']!r} belongs to both ids "
+                f"{existing['id']} and {entry['id']}"
+            )
+        else:
+            replacements[replacement_key] = entry
+        for trigger in entry["triggers"]:
+            trigger_key = trigger.casefold()
+            existing = triggers.get(trigger_key)
+            if existing is not None and existing["id"] != entry["id"]:
+                conflicts.append(
+                    f"trigger {trigger!r} maps to both {existing['replacement']!r} "
+                    f"and {entry['replacement']!r}"
+                )
+            else:
+                triggers[trigger_key] = entry
+    return sorted(set(conflicts))
+
+
+def _deduplicate_equivalent_replacements(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Collapse independent additions that are exactly equivalent except for UUID."""
+    by_semantics: dict[tuple[str, tuple[str, ...]], dict[str, Any]] = {}
+    for entry in sorted(entries, key=lambda value: value["id"]):
+        signature = (entry["replacement"], tuple(entry["triggers"]))
+        by_semantics.setdefault(signature, entry)
+    return list(by_semantics.values())
+
+
+def merge_documents(
+    base: dict[str, Any], managed: dict[str, Any], live: dict[str, Any]
+) -> tuple[dict[str, Any] | None, list[str]]:
+    """Three-way merge two normalized documents against their normalized base."""
+    replacements, replacement_conflicts = _merge_entries(
+        "replacement",
+        base["replacements"],
+        managed["replacements"],
+        live["replacements"],
+        lambda entry: entry["id"],
+        _replacement_label,
+    )
+    custom_words, word_conflicts = _merge_entries(
+        "custom word",
+        base["customWords"],
+        managed["customWords"],
+        live["customWords"],
+        lambda entry: entry["text"].casefold(),
+        _word_label,
+    )
+    replacements = _deduplicate_equivalent_replacements(replacements)
+    conflicts = replacement_conflicts + word_conflicts
+    conflicts.extend(f"replacement semantic collision: {message}" for message in _semantic_replacement_conflicts(replacements))
+    if conflicts:
+        return None, sorted(conflicts)
+    return normalize_document(
+        {"version": SCHEMA_VERSION, "replacements": replacements, "customWords": custom_words},
+        "merged dictionary",
+    ), []
+
+
+def read_document(path: Path, *, missing_ok: bool, description: str) -> dict[str, Any]:
+    if not path.exists():
+        if missing_ok:
+            return normalize_document(EMPTY_DOCUMENT, description)
+        raise SyncError(f"{description} does not exist: {path}")
+    try:
+        with path.open("rb") as handle:
+            raw = json.load(handle)
+    except (OSError, json.JSONDecodeError) as error:
+        raise SyncError(f"cannot read {description} {path}: {error}") from error
+    return normalize_document(raw, description)
+
+
+def encode_document(document: dict[str, Any]) -> bytes:
+    return (json.dumps(document, ensure_ascii=False, indent=2, sort_keys=False) + "\n").encode()
+
+
+def write_document(path: Path, document: dict[str, Any]) -> None:
+    path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    try:
+        with tempfile.NamedTemporaryFile(dir=path.parent, prefix=f".{path.name}.", delete=False) as handle:
+            temporary = Path(handle.name)
+            os.chmod(temporary, 0o600)
+            handle.write(encode_document(document))
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+    except OSError as error:
+        try:
+            temporary.unlink(missing_ok=True)
+        except (OSError, UnboundLocalError):
+            pass
+        raise SyncError(f"cannot write {path}: {error}") from error
+
+
+def _preferences_port() -> int:
+    configured = os.environ.get("FLUIDVOICE_API_PORT")
+    if configured is not None:
+        try:
+            port = int(configured)
+        except ValueError as error:
+            raise SyncError("FLUIDVOICE_API_PORT must be an integer") from error
+        if not 1 <= port <= 65535:
+            raise SyncError("FLUIDVOICE_API_PORT must be between 1 and 65535")
+        return port
+
+    preferences = Path.home() / "Library/Preferences/com.FluidApp.app.plist"
+    try:
+        with preferences.open("rb") as handle:
+            raw_port = plistlib.load(handle).get("LocalAPIPort")
+        if isinstance(raw_port, int) and 1 <= raw_port <= 65535:
+            return raw_port
+    except (OSError, plistlib.InvalidFileException):
+        pass
+    return DEFAULT_PORT
+
+
+class FluidVoiceAPI:
+    def __init__(self, base_url: str | None = None, timeout: float = 3.0) -> None:
+        self.base_url = (base_url or f"http://127.0.0.1:{_preferences_port()}").rstrip("/")
+        parsed = urllib.parse.urlsplit(self.base_url)
+        if (
+            parsed.scheme != "http"
+            or parsed.hostname not in {"127.0.0.1", "localhost", "::1"}
+            or parsed.username is not None
+            or parsed.password is not None
+        ):
+            raise SyncError("FluidVoice API URL must be an unauthenticated HTTP loopback address")
+        self.timeout = timeout
+        # Dictionary contents must never follow ambient HTTP proxy settings.
+        self.opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+
+    def request(self, method: str, path: str, payload: dict[str, Any] | None = None) -> Any:
+        data = None if payload is None else json.dumps(payload, ensure_ascii=False).encode()
+        headers = {"Accept": "application/json"}
+        if data is not None:
+            headers["Content-Type"] = "application/json"
+        request = urllib.request.Request(self.base_url + path, data=data, headers=headers, method=method)
+        try:
+            with self.opener.open(request, timeout=self.timeout) as response:
+                body = response.read()
+        except urllib.error.HTTPError as error:
+            with error:
+                detail = error.read().decode(errors="replace").strip()
+            raise APIError(f"FluidVoice API {method} {path} returned HTTP {error.code}: {detail}") from error
+        except (urllib.error.URLError, TimeoutError, OSError) as error:
+            raise APIError(
+                f"cannot reach FluidVoice's local API at {self.base_url}. "
+                "Start FluidVoice, enable Local API in FluidVoice settings, and try again. "
+                f"({error})"
+            ) from error
+        if not body:
+            return None
+        try:
+            return json.loads(body)
+        except json.JSONDecodeError as error:
+            raise APIError(f"FluidVoice API {method} {path} returned invalid JSON") from error
+
+    def read_dictionary(self) -> dict[str, Any]:
+        health = self.request("GET", "/v1/health")
+        if (
+            not isinstance(health, dict)
+            or health.get("status") != "ok"
+            or not isinstance(health.get("version"), str)
+            or not health["version"]
+        ):
+            raise APIError("FluidVoice health endpoint returned an unexpected response")
+        replacements = self.request("GET", "/v1/dictionary/replacements")
+        custom_words = self.request("GET", "/v1/dictionary/custom-words")
+        replacement_items = _validate_list_response(replacements, "replacements")
+        custom_word_items = _validate_list_response(custom_words, "custom-words")
+        _validate_api_replacements(replacement_items)
+        _validate_api_custom_words(custom_word_items)
+        try:
+            return normalize_document(
+                {
+                    "version": SCHEMA_VERSION,
+                    "replacements": replacement_items,
+                    "customWords": custom_word_items,
+                },
+                "FluidVoice live dictionary",
+            )
+        except SyncError as error:
+            raise APIError(f"FluidVoice dictionary response violated its API contract: {error}") from error
+
+    def write_replacements(self, entries: list[dict[str, Any]]) -> None:
+        response = self.request(
+            "POST", "/v1/dictionary/replacements", {"mode": "replace", "entries": entries}
+        )
+        items = _validate_list_response(response, "replacement update")
+        _validate_api_replacements(items)
+        try:
+            actual = normalize_document(
+                {"version": SCHEMA_VERSION, "replacements": items, "customWords": []},
+                "FluidVoice replacement update",
+            )["replacements"]
+        except SyncError as error:
+            raise APIError(f"FluidVoice replacement update violated its API contract: {error}") from error
+        if actual != entries:
+            raise APIError("FluidVoice did not preserve the merged replacement rules")
+
+    def write_custom_words(self, entries: list[dict[str, Any]]) -> None:
+        response = self.request(
+            "POST", "/v1/dictionary/custom-words", {"mode": "replace", "entries": entries}
+        )
+        items = _validate_list_response(response, "custom-word update")
+        _validate_api_custom_words(items)
+        try:
+            actual = normalize_document(
+                {"version": SCHEMA_VERSION, "replacements": [], "customWords": items},
+                "FluidVoice custom-word update",
+            )["customWords"]
+        except SyncError as error:
+            raise APIError(f"FluidVoice custom-word update violated its API contract: {error}") from error
+        if actual != entries:
+            raise APIError("FluidVoice did not preserve the merged custom vocabulary")
+
+
+def update_live_dictionary(
+    client: FluidVoiceAPI,
+    original: dict[str, Any],
+    merged: dict[str, Any],
+) -> None:
+    """Update both API collections, restoring the original state after any failed write."""
+    replacements_changed = original["replacements"] != merged["replacements"]
+    words_changed = original["customWords"] != merged["customWords"]
+    if not replacements_changed and not words_changed:
+        return
+
+    try:
+        if replacements_changed:
+            client.write_replacements(merged["replacements"])
+        if words_changed:
+            client.write_custom_words(merged["customWords"])
+    except APIError as update_error:
+        rollback_errors: list[str] = []
+        # A failed response can still follow a server-side mutation, so restore both
+        # collections rather than guessing which request took effect.
+        for name, restore in (
+            ("replacement rules", lambda: client.write_replacements(original["replacements"])),
+            ("custom vocabulary", lambda: client.write_custom_words(original["customWords"])),
+        ):
+            try:
+                restore()
+            except APIError as rollback_error:
+                rollback_errors.append(f"{name}: {rollback_error}")
+        if rollback_errors:
+            raise APIError(
+                f"dictionary update failed ({update_error}); automatic restoration also failed "
+                f"({'; '.join(rollback_errors)}). Open FluidVoice and rerun the sync before editing either copy"
+            ) from update_error
+        raise APIError(
+            f"dictionary update failed and the original live dictionary was restored: {update_error}"
+        ) from update_error
+
+
+def dictionary_paths() -> tuple[Path, Path]:
+    config_home = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+    state_home = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state"))
+    managed = Path(os.environ.get("FLUIDVOICE_DICTIONARY_FILE", config_home / "fluidvoice/dictionary.json"))
+    base = Path(
+        os.environ.get(
+            "FLUIDVOICE_DICTIONARY_STATE_FILE",
+            state_home / "fluidvoice-dictionary-sync/base.json",
+        )
+    )
+    return managed.expanduser(), base.expanduser()
+
+
+def _counts(document: dict[str, Any]) -> str:
+    return f"{len(document['replacements'])} replacement(s), {len(document['customWords'])} custom word(s)"
+
+
+def _print_conflicts(conflicts: list[str]) -> None:
+    print("Sync stopped: genuine dictionary conflicts need manual resolution.", file=sys.stderr)
+    for index, conflict in enumerate(conflicts, 1):
+        print(f"\n{index}. {conflict}", file=sys.stderr)
+    print(
+        "\nEdit the managed dictionary to the intended result, then run the sync again. "
+        "The managed artifact and FluidVoice were not changed.",
+        file=sys.stderr,
+    )
+
+
+def _is_empty(document: dict[str, Any]) -> bool:
+    return not document["replacements"] and not document["customWords"]
+
+
+def run(mode: str, api: FluidVoiceAPI | None = None, bootstrap_from: str | None = None) -> int:
+    managed_path, base_path = dictionary_paths()
+    base_exists = base_path.exists()
+    managed = read_document(managed_path, missing_ok=True, description="managed dictionary")
+    base = read_document(base_path, missing_ok=True, description="last-synchronized base")
+    client = api or FluidVoiceAPI(os.environ.get("FLUIDVOICE_API_URL"))
+    live = client.read_dictionary()
+
+    if bootstrap_from is not None and base_exists:
+        raise SyncError(
+            f"--bootstrap-from is only valid before the private base snapshot exists ({base_path})"
+        )
+    if not base_exists and managed != live and not _is_empty(managed) and not _is_empty(live):
+        if bootstrap_from == "managed":
+            merged, conflicts = managed, []
+        elif bootstrap_from == "live":
+            merged, conflicts = live, []
+        else:
+            print(
+                "Sync stopped: no private last-sync base exists, and the managed and live dictionaries "
+                "are both nonempty and different.",
+                file=sys.stderr,
+            )
+            print(
+                "Refusing to guess or combine them. Review both copies, then explicitly run either "
+                "--bootstrap-from managed (replace FluidVoice) or --bootstrap-from live "
+                "(replace the managed artifact).",
+                file=sys.stderr,
+            )
+            return 2
+    else:
+        merged, conflicts = merge_documents(base, managed, live)
+
+    if conflicts:
+        _print_conflicts(conflicts)
+        return 2
+    assert merged is not None
+
+    managed_changed = managed != merged or not managed_path.exists()
+    live_replacements_changed = live["replacements"] != merged["replacements"]
+    live_words_changed = live["customWords"] != merged["customWords"]
+    base_changed = base != merged or not base_path.exists()
+    live_changed = live_replacements_changed or live_words_changed
+
+    if mode == "status":
+        if managed == live and not base_changed:
+            print(f"In sync: {_counts(live)}.")
+            return 0
+        print(f"Diverged: managed artifact has {_counts(managed)}; FluidVoice has {_counts(live)}.")
+        if managed == live:
+            print("The dictionaries match; only the private base snapshot needs refreshing.")
+        else:
+            updates = []
+            if managed_changed:
+                updates.append("managed artifact")
+            if live_changed:
+                updates.append("FluidVoice")
+            print(f"A sync can merge cleanly and update {' and '.join(updates)} to {_counts(merged)}.")
+        return 1
+
+    if mode == "dry-run":
+        if not (managed_changed or live_changed or base_changed):
+            print(f"No changes: {_counts(merged)} already synchronized.")
+            return 0
+        updates = []
+        if managed_changed:
+            updates.append("managed artifact")
+        if live_changed:
+            updates.append("FluidVoice")
+        if base_changed:
+            updates.append("private base snapshot")
+        print(f"Would update {', '.join(updates)} with {_counts(merged)}.")
+        return 0
+
+    update_live_dictionary(client, live, merged)
+    if managed_changed:
+        write_document(managed_path, merged)
+    if base_changed:
+        write_document(base_path, merged)
+
+    if not (managed_changed or live_changed or base_changed):
+        print(f"No changes: {_counts(merged)} already synchronized.")
+    else:
+        updates = []
+        if managed_changed:
+            updates.append("managed artifact")
+        if live_changed:
+            updates.append("FluidVoice")
+        if base_changed:
+            updates.append("private base snapshot")
+        print(f"Synchronized {_counts(merged)}; updated {', '.join(updates)}.")
+        if managed_changed:
+            print(f"Managed artifact: {managed_path}")
+            print("Review it, then use your normal dotfiles add/commit workflow when ready.")
+    return 0
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Three-way merge FluidVoice replacement rules and custom vocabulary with "
+            "~/.config/fluidvoice/dictionary.json."
+        ),
+        epilog=(
+            "The private last-sync snapshot is the merge base: a deletion on one side propagates "
+            "when the other side is unchanged; delete-versus-modify is a conflict; independent "
+            "additions merge. On the first run, one empty side is a safe bootstrap. If both sides "
+            "are nonempty and differ, the command refuses to guess until --bootstrap-from is used."
+        ),
+    )
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument("--status", action="store_true", help="read-only divergence check (exit 1 when sync is needed)")
+    modes.add_argument("--dry-run", action="store_true", help="show the clean merge result without writing anything")
+    modes.add_argument(
+        "--bootstrap-from",
+        choices=("managed", "live"),
+        help="first sync only: explicitly choose the authoritative nonempty dictionary",
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
+    mode = "status" if args.status else "dry-run" if args.dry_run else "sync"
+    try:
+        return run(mode, bootstrap_from=args.bootstrap_from)
+    except SyncError as error:
+        print(f"fluidvoice-dictionary-sync: {error}", file=sys.stderr)
+        return 2
+    except KeyboardInterrupt:
+        print("fluidvoice-dictionary-sync: interrupted", file=sys.stderr)
+        return 130
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
