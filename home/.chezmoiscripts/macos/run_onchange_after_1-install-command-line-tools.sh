@@ -58,6 +58,7 @@ brew "openai/tools/tart" # macOS/Linux VMs on Apple Silicon for things-api regre
 brew "dnsmasq"
 brew "docker"
 brew "docker-buildx"
+brew "docker-credential-helper"
 brew "entr"
 brew "faac"
 brew "ffmpeg"

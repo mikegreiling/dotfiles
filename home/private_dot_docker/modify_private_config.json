@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# chezmoi modify script for ~/.docker/config.json
+#
+# Docker owns this file, including credential metadata and future fields. Keep
+# all live content and enforce only the stable defaults that belong in dotfiles.
+
+set -euo pipefail
+
+if ! command -v jq >/dev/null 2>&1; then
+	echo "Cannot manage Docker config: jq is required." >&2
+	exit 1
+fi
+
+input_file=$(mktemp "${TMPDIR:-/tmp}/docker-config.XXXXXX")
+trap 'rm -f "$input_file"' EXIT
+chmod 600 "$input_file"
+cat > "$input_file"
+
+if [[ ! -s "$input_file" ]]; then
+	printf '{}\n' > "$input_file"
+fi
+
+if ! jq -e 'type == "object"' "$input_file" >/dev/null 2>&1; then
+	echo "Cannot manage Docker config: input is not a valid JSON object." >&2
+	exit 1
+fi
+
+# Preserve exact formatting when no semantic change is needed. In particular,
+# this keeps credential-bearing sections out of an otherwise empty diff.
+if jq -e '.currentContext == "colima" and .credsStore == "osxkeychain"' "$input_file" >/dev/null; then
+	cat "$input_file"
+	exit 0
+fi
+
+jq '.currentContext = "colima" | .credsStore = "osxkeychain"' "$input_file"
