@@ -7,6 +7,7 @@ import io
 import json
 import os
 import socket
+import subprocess
 import sys
 import tempfile
 import threading
@@ -333,14 +334,42 @@ class APIFailureTests(unittest.TestCase):
             "/v1/dictionary/custom-words": (200, {"count": 0, "items": []}, 0),
         }
 
+    def preference_hint(self, result=None, error=None):
+        with mock.patch.object(sync.subprocess, "run", return_value=result, side_effect=error):
+            return sync._local_api_unreachable_hint()
+
+    def test_unreachable_hint_when_preference_is_false(self):
+        result = subprocess.CompletedProcess([], 0, stdout="0\n", stderr="")
+        self.assertIn("missing or false", self.preference_hint(result))
+
+    def test_unreachable_hint_when_preference_is_missing(self):
+        result = subprocess.CompletedProcess(
+            [],
+            1,
+            stdout="",
+            stderr="The domain/default pair of (com.FluidApp.app, LocalAPIEnabled) does not exist\n",
+        )
+        self.assertIn("missing or false", self.preference_hint(result))
+
+    def test_unreachable_hint_when_preference_is_true(self):
+        result = subprocess.CompletedProcess([], 0, stdout="1\n", stderr="")
+        hint = self.preference_hint(result)
+        self.assertIn("is true", hint)
+        self.assertIn("may need to be restarted", hint)
+
+    def test_unreachable_hint_when_preference_read_fails(self):
+        hint = self.preference_hint(error=OSError("defaults unavailable"))
+        self.assertIn("could not be read", hint)
+
     def test_app_not_running_is_conspicuous(self):
         probe = socket.socket()
         probe.bind(("127.0.0.1", 0))
         port = probe.getsockname()[1]
         probe.close()
         api = sync.FluidVoiceAPI(f"http://127.0.0.1:{port}", timeout=0.1)
-        with self.assertRaisesRegex(sync.APIError, "Start FluidVoice"):
-            api.read_dictionary()
+        with mock.patch.object(sync, "_local_api_preference_state", return_value="enabled"):
+            with self.assertRaisesRegex(sync.APIError, "LocalAPIEnabled is true"):
+                api.read_dictionary()
 
     def test_non_loopback_api_url_is_rejected(self):
         with self.assertRaisesRegex(sync.SyncError, "loopback"):

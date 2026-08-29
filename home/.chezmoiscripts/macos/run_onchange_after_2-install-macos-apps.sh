@@ -172,6 +172,19 @@ defaults write org.m0k.transmission BlocklistAutoUpdate -bool true
 defaults write org.m0k.transmission RandomPort -bool true
 
 ###############################################################################
+# FluidVoice                                                                  #
+###############################################################################
+
+# Enable FluidVoice's loopback-only local API before its first launch so the
+# dictionary synchronizer works immediately. Leave LocalAPIPort unset to use
+# FluidVoice's default port.
+defaults write com.FluidApp.app LocalAPIEnabled -bool true
+if [[ "$(defaults read com.FluidApp.app LocalAPIEnabled 2>/dev/null)" != "1" ]]; then
+	echo "Failed to enable FluidVoice's local API." >&2
+	exit 1
+fi
+
+###############################################################################
 # Other apps                                                                  #
 ###############################################################################
 

@@ -8,6 +8,7 @@ import json
 import math
 import os
 import plistlib
+import subprocess
 import sys
 import tempfile
 import urllib.error
@@ -30,6 +31,48 @@ class SyncError(Exception):
 
 class APIError(SyncError):
     """FluidVoice's local API is unavailable or returned an invalid response."""
+
+
+def _local_api_preference_state() -> str:
+    """Return enabled, disabled, or unknown without requiring privileges."""
+    try:
+        result = subprocess.run(
+            ["/usr/bin/defaults", "read", "com.FluidApp.app", "LocalAPIEnabled"],
+            capture_output=True,
+            text=True,
+            timeout=1,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return "unknown"
+
+    value = result.stdout.strip().lower()
+    if result.returncode == 0 and value in {"1", "true", "yes"}:
+        return "enabled"
+    if result.returncode == 0 and value in {"0", "false", "no"}:
+        return "disabled"
+    diagnostic = f"{result.stdout}\n{result.stderr}".lower()
+    if "does not exist" in diagnostic or "domain/default pair" in diagnostic:
+        return "disabled"
+    return "unknown"
+
+
+def _local_api_unreachable_hint() -> str:
+    state = _local_api_preference_state()
+    if state == "disabled":
+        return (
+            "LocalAPIEnabled is missing or false; apply the dotfiles preference (or enable Local API "
+            "in FluidVoice settings), then restart FluidVoice"
+        )
+    if state == "enabled":
+        return (
+            "LocalAPIEnabled is true; FluidVoice may not be running, may need to be restarted, "
+            "or its local API port may be unavailable"
+        )
+    return (
+        "LocalAPIEnabled could not be read; confirm the local API preference, restart FluidVoice, "
+        "and try again"
+    )
 
 
 def _validate_list_response(response: Any, endpoint: str) -> list[dict[str, Any]]:
@@ -411,7 +454,7 @@ class FluidVoiceAPI:
         except (urllib.error.URLError, TimeoutError, OSError) as error:
             raise APIError(
                 f"cannot reach FluidVoice's local API at {self.base_url}. "
-                "Start FluidVoice, enable Local API in FluidVoice settings, and try again. "
+                f"{_local_api_unreachable_hint()}. "
                 f"({error})"
             ) from error
         if not body:
