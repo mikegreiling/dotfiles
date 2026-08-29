@@ -130,6 +130,23 @@ Before ANY chezmoi operation that could modify files:
 3. Determine if local changes would be lost
 4. Choose appropriate action (`chezmoi add` vs `chezmoi apply`)
 
+### 7. Chezmoi Automation Must Be Headless
+
+All Chezmoi hooks and scripts must be able to complete without GUI interaction,
+privacy-permission dialogs, Keychain authorization prompts, or access to
+macOS-protected user folders such as `~/Desktop`, `~/Documents`, and
+`~/Downloads`.
+
+- Installing a credential helper and configuring an application to use it is
+  allowed; reading, writing, importing, or migrating credentials is not.
+- Authentication, credential migration, and other first-use actions must be
+  left to an explicit user command after `chezmoi apply` completes.
+- Generated state and diagnostic output must go under an appropriate
+  user-writable XDG directory, such as `~/.local/state`, rather than a
+  privacy-protected folder.
+- If an operation cannot be completed headlessly, the script must skip it and
+  print a concise manual follow-up instruction instead of failing the apply.
+
 ## Command Reference
 
 ### Safe Commands (read-only)

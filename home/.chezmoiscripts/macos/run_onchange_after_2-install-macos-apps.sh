@@ -96,22 +96,17 @@ cask "gcloud-cli" # Google Cloud SDK (gcloud/gsutil/bq); formerly the "google-cl
 cask "mike/pinned/cleanshot", trusted: true # local tap; trust so brew bundle loads it (Homebrew 6.0+ tap trust)
 BREWS
 
-# Save the list of installed packages to a Brewfile for inspection
-brew bundle dump --file=${HOME}/Downloads/Brewfile-$(hostname) --force
+# Save the list of installed packages to a Brewfile for inspection. The XDG
+# state directory is user-writable on a fresh macOS installation and does not
+# require Files & Folders permission for Downloads.
+BREWFILE_STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/homebrew"
+mkdir -p "$BREWFILE_STATE_DIR"
+brew bundle dump --file="$BREWFILE_STATE_DIR/Brewfile-$(hostname)" --force
 
 echo ""
-echo "Setting some apps to launch automatically at login..."
-osascript >/dev/null <<EOD
-tell application "System Events"
-	set desiredPaths to {"/Applications/1Password.app", "/Applications/CleanShot X.app", "/Applications/KeepingYouAwake.app", "/Applications/Little Snitch.app", "/Applications/MeetingBar.app", "/Applications/Multitouch.app", "/Applications/xbar.app"}
-	set existingPaths to path of every login item
-	repeat with desiredPath in desiredPaths
-		if existingPaths does not contain (desiredPath as text) then
-			make login item at end with properties {path:(desiredPath as text)}
-		end if
-	end repeat
-end tell
-EOD
+echo "Login items are not changed automatically because System Events can"
+echo "display an Automation permission dialog. Configure desired login items"
+echo "manually in System Settings > General > Login Items."
 
 echo ""
 echo "Configuring some app-specific settings..."

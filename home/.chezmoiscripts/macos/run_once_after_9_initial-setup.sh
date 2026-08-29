@@ -26,10 +26,12 @@ echo ""
 # - see if there is a reliably way to enable night shift programmatically
 #   see https://github.com/LukeChannings/dotfiles/blob/7cb3171b5354761c9aef7b6f1094019ef8701a17/install.macos#L411-L433
 
-echo "Adding a checklist to the Desktop for some manual steps to be performed post-installation..."
+echo "Writing a checklist for manual post-installation steps..."
 echo ""
 
-cat <<EOF > ~/Desktop/Post-Installation-Checklist.md
+CHECKLIST_STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/chezmoi"
+mkdir -p "$CHECKLIST_STATE_DIR"
+cat <<EOF > "$CHECKLIST_STATE_DIR/Post-Installation-Checklist.md"
 Post-Installation Checklist
 ===========================
 - [ ] Configure TouchID and Apple Watch unlock
@@ -67,20 +69,8 @@ Post-Installation Checklist
 - [ ] Configure Visual Studio Code to use the 'JetBrainsMono Nerd Font Mono' font
 EOF
 
-# https://git.herrbischoff.com/awesome-macos-command-line/about/#set-wallpaper
-read -p "Would you like to set the Desktop wallpaper? [y/N] " -n 1;
-echo "";
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-  wallpaper="$HOME/.config/wallpapers/timelapse-stars-jakub-novacek-landscape.jpg"
-  osascript -e "tell application \"Finder\" to set desktop picture to POSIX file \"$wallpaper\""
-fi;
-
-read -p "Would you like to remove everything from the Dock? [y/N] " -n 1;
-echo "";
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-  defaults write com.apple.dock persistent-apps -array
-  killall Dock
-fi;
+echo "Manual checklist: $CHECKLIST_STATE_DIR/Post-Installation-Checklist.md"
+echo "Desktop wallpaper and Dock contents are not changed automatically."
 
 echo "Remember, some apps and settings will require a restart to take effect."
 echo "If any issues were encountered during installation, be sure to update"

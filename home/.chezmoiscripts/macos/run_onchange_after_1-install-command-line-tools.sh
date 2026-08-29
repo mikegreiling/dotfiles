@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+
 echo ""
 echo "-----------------------------------------------------------"
 echo "  Installing command-line tools..."
@@ -15,6 +17,12 @@ while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 # Ensure we run our installs with XDG configured
 export XDG_CONFIG_HOME="$HOME/.config"
 
+# The Datadog tap moved from datadog-labs/pack to datadog/pack. Remove the
+# obsolete duplicate so Homebrew does not reject it as an untrusted tap.
+if brew tap | grep -qx "datadog-labs/pack"; then
+	brew untap datadog-labs/pack
+fi
+
 # Update homebrew and install required packages
 HOMEBREW_NO_ENV_HINTS=1 HOMEBREW_AUTO_UPDATE_SECS=3600 \
 brew bundle install \
@@ -22,8 +30,8 @@ brew bundle install \
 	--no-upgrade \
 	--file=/dev/stdin <<BREWS
 tap "homebrew/bundle"
-tap "datadog/pack" # pup CLI
-tap "atlassian/homebrew-acli" # acli
+tap "datadog/pack", trusted: { formula: "pup" } # pup CLI
+tap "atlassian/homebrew-acli", trusted: { formula: "acli" } # acli
 tap "openai/tools", trusted: true # tart & softnet (macOS/Linux VMs on Apple Silicon) — successor to the retired cirruslabs/cli tap
 
 # Install essentials
@@ -45,7 +53,6 @@ brew "zsh-fast-syntax-highlighting"
 brew "zsh-history-substring-search"
 
 # Install some useful command-line utilities
-brew "atlassian/homebrew-acli/acli", trusted: true # non-official tap; trust so brew bundle loads it (Homebrew 6.0+ tap trust)
 brew "ack"
 brew "age"
 brew "asdf"
@@ -105,6 +112,17 @@ brew "zopfli"
 brew "zoxide"
 BREWS
 
+# Atlassian republished the 1.3.30-stable archive without updating the
+# checksum in its Homebrew formula. Keep the last verified release installed
+# until the upstream tap is corrected. `brew version-install` extracts the
+# historical formula into a local versions tap and installs it through
+# Homebrew with its original, matching checksum.
+ACLI_VERSION="1.3.29-stable"
+if ! brew list --formula acli >/dev/null 2>&1 && \
+	! brew list --formula "acli@1.3.29" >/dev/null 2>&1; then
+	brew version-install atlassian/acli/acli "$ACLI_VERSION"
+fi
+
 BREW_PREFIX=$(brew --prefix)
 
 # Add brew-installed bash to the list of allowable shells
@@ -122,11 +140,15 @@ if ! fgrep -q "${BREW_PREFIX}/bin/zsh" /etc/shells; then
 fi;
 
 # Change shell to brew-installed zsh
-if [[ "$SHELL" != "${BREW_PREFIX}/bin/zsh" ]]; then
+if [[ "${SHELL:-}" != "${BREW_PREFIX}/bin/zsh" ]]; then
 	echo ""
 	echo "Changing default shell to zsh..."
 	chsh -s "${BREW_PREFIX}/bin/zsh";
 fi
 
-# Save the list of installed packages to a Brewfile for inspection
-brew bundle dump --file=${HOME}/Downloads/Brewfile-$(hostname) --force
+# Save the list of installed packages to a Brewfile for inspection. The XDG
+# state directory is user-writable on a fresh macOS installation and does not
+# require Files & Folders permission for Downloads.
+BREWFILE_STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/homebrew"
+mkdir -p "$BREWFILE_STATE_DIR"
+brew bundle dump --file="$BREWFILE_STATE_DIR/Brewfile-$(hostname)" --force

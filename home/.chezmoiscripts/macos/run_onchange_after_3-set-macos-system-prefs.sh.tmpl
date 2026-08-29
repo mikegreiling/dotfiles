@@ -63,20 +63,11 @@ if ! $process_has_full_disk_access; then
 	echo "You will need to restart the terminal and re-run 'chezmoi apply' after"
 	echo "doing this."
 	echo ""
-	echo "If you are running chezmoi for the first time, you should allow it to"
-	echo "complete before quitting the terminal to re-run this script."
+	echo "Settings requiring Full Disk Access will be skipped so this apply can"
+	echo "complete without interaction."
 	echo "--------------------------------------------------------------------------"
 	echo ""
-	read -p "Skip settings which require Full Disk Access? [y/N] " -n 1;
-	echo "";
-	if [[ $REPLY =~ ^[Yy]$ ]]; then
-		echo "Continuing to apply settings which do not require Full Disk Access..."
-	else
-		make_chezmoi_rerun_this_script
-		echo "Please enable Full Disk Access and re-run 'chezmoi apply'."
-		echo "Continuing on without applying macOS settings..."
-		exit 0
-	fi;
+	echo "Continuing with settings which do not require Full Disk Access..."
 fi;
 
 # Ask for the administrator password upfront
@@ -84,10 +75,6 @@ sudo -v -p 'Enter password for %p:'
 
 # Keep-alive: update existing `sudo` time stamp until this script has finished
 while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
-
-# Close any open System Preferences panes, to prevent them from overriding
-# settings we’re about to change
-osascript -e 'tell application "System Preferences" to quit'
 
 # Display commands in terminal as they are executed, just in case we run into
 # an issue and want to know what command was being executed at the time.
@@ -569,8 +556,10 @@ fi
 # https://ethanschoonover.com/solarized/
 theme_name="Catppuccin Mocha - JetBrains"
 
-if [[ $(defaults read -app "Terminal" "Default Window Settings") != "$theme_name" ]]; then
-	osascript <<EOD
+if [[ $(defaults read -app "Terminal" "Default Window Settings" 2>/dev/null) != "$theme_name" ]]; then
+	echo "Terminal theme import skipped to avoid automating Terminal.app."
+	echo "Import ~/.config/terminal/$theme_name.terminal manually if desired."
+	: <<'EOD'
 
 tell application "Terminal"
 
@@ -747,23 +736,6 @@ set +x
 
 echo ""
 echo "Finished configuring macOS system preferences."
-
-function killApps() {
-  for app in "cfprefsd" "Dock" "Finder" "Mail" "SystemUIServer" "WindowManager"; do
-    killall "${app}" > /dev/null 2>&1
-  done
-}
-
-# If we're running in an interactive shell, ask the user if they want to reload
-if [ -t 0 -a -t 1 ]; then
-	read -p "Would you like to automatically reload the effected apps? [y/N] " -n 1;
-	echo "";
-	if [[ $REPLY =~ ^[Yy]$ ]]; then
-		killApps;
-	fi;
-else
-	killApps;
-fi;
 
 echo "You may still need to log out and log back in before all settings take effect."
 
