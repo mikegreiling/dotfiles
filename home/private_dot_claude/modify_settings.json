@@ -103,7 +103,7 @@ desired=$(printf '%s' "$input" | jq --argjson baseline "$BASELINE_ALLOW" '
   # Enforced static keys — chezmoi owns these; Claude Code must not override them
   .env.HUSKY = "0" |
   .statusLine = {"type":"command","command":"npx -y ccstatusline@latest","padding":0} |
-  .permissions.defaultMode = "auto" |
+  .permissions.defaultMode = "bypassPermissions" |
   .permissions.deny = ["Bash(chezmoi cd:*)"] |
   .permissions.ask = ["Bash(chezmoi apply:*)"] |
   .skipDangerousModePermissionPrompt = true |
