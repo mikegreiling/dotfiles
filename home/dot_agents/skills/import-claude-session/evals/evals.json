@@ -1,5 +1,5 @@
 {
-  "skill_name": "harness-handoff",
+  "skill_name": "import-claude-session",
   "evals": [
     {
       "id": 1,
@@ -60,6 +60,16 @@
         "Only the current-head snapshot invokes Claude, using --resume with --fork-session in an isolated execution directory.",
         "Source transcript integrity and picker membership are verified, and the print-mode fork is absent from picker indexes.",
         "The current-head summary appears after all historical summaries."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Generate a handoff from our current conversation so another Codex session can pick up this work.",
+      "expected_output": "Does not invoke this skill or its script. Writes a continuation summary directly from the current conversation.",
+      "files": [],
+      "assertions": [
+        "No Claude Code transcript discovery, resume, fork, or compaction is performed.",
+        "The summary uses the current conversation as its source."
       ]
     }
   ]

@@ -1,32 +1,32 @@
 ---
-name: harness-handoff
-description: Export, inspect, or deeply summarize a Claude Code session or JSONL transcript without changing the source session. Use whenever the user asks to hand off, transfer, migrate, fork and compact, summarize for continuation, audit session size or history, inspect multiple compactions, build a lifetime timeline, or move a Claude Code conversation into Codex, Cursor, another Claude session, OpenCode, Pi, or any other agent harness.
+name: import-claude-session
+description: Import context from an existing Claude Code session or JSONL transcript into the receiving conversation, or inspect that source transcript's history and compactions. Use when the user identifies a Claude Code session to import, resume work from, or analyze. Do not use to generate a handoff or continuation summary from the current conversation.
 metadata:
-  version: "2.0.0"
+  version: "3.0.0"
   compatibility: "Requires Python 3.10+. Handoff and deep-dive modes require the Claude Code CLI; summary and extract are local-only."
 ---
 
-# Harness Handoff
+# Import Claude Session
 
-Turn a Claude Code transcript into a portable handoff, read-only lifetime assessment, or chronological deep dive. Claude Code is the source adapter; the destination is deliberately unspecified. Artifacts can be pasted, piped, attached, or supplied as context to any receiving harness.
+Bring context from a separate Claude Code session into the receiving conversation. Resolve the source session or JSONL transcript, then use the bundled script to extract or summarize its persisted history. This skill requires an external Claude Code source; it does not summarize the conversation in which it is invoked.
 
 The bundled script owns transcript discovery, source-session preservation, lifetime statistics, compaction-boundary pairing, non-interactive fork compaction, Claude-specific wrapper removal, and provenance. Use it instead of rebuilding those steps with ad hoc shell pipelines.
 
 ## Choose the operation
 
-### Handoff: compact the current session head
+### Import continuation context from the source session
 
-Use `handoff` when another harness needs a portable summary of the current state. It resumes the exact session by ID, forks it, compacts only the fork through `claude -p`, and exports the fork's generated summary. `create` remains a backward-compatible alias.
+Use `handoff` to obtain continuation context from the identified source Claude Code session. It resumes the exact session by ID, forks it, compacts only the fork through `claude -p`, and exports the fork's generated summary. `create` remains a backward-compatible alias.
 
 ```bash
-python3 ~/.agents/skills/harness-handoff/scripts/session-handoff.py handoff SESSION_ID_OR_TRANSCRIPT \
+python3 ~/.agents/skills/import-claude-session/scripts/import-claude-session.py handoff SESSION_ID_OR_TRANSCRIPT \
   --output /path/to/handoff.md
 ```
 
 The default compaction focus preserves the objective, requirements, decisions, reasoning, artifacts, file paths, commands, validation results, current state, unresolved questions, and next actions. Add task-specific focus without replacing those basics:
 
 ```bash
-python3 ~/.agents/skills/harness-handoff/scripts/session-handoff.py handoff SESSION_ID \
+python3 ~/.agents/skills/import-claude-session/scripts/import-claude-session.py handoff SESSION_ID \
   --instructions "Emphasize the backend dependencies and meeting decisions" \
   --destination "Codex" \
   --output /path/to/handoff.md
@@ -41,7 +41,7 @@ The source transcript's recorded working directory is provenance only. By defaul
 Use `summary` before a potentially huge deep dive or whenever the user wants session dates, transcript size, prompt/tool/file counts, compaction count, exact pre/post-compaction token metadata, or a compact timeline. This mode reads JSONL locally and never invokes Claude, resumes a session, or creates a fork.
 
 ```bash
-python3 ~/.agents/skills/harness-handoff/scripts/session-handoff.py summary SESSION_ID_OR_TRANSCRIPT \
+python3 ~/.agents/skills/import-claude-session/scripts/import-claude-session.py summary SESSION_ID_OR_TRANSCRIPT \
   --output /path/to/lifetime-summary.md
 ```
 
@@ -50,7 +50,7 @@ python3 ~/.agents/skills/harness-handoff/scripts/session-handoff.py summary SESS
 Use `deep-dive` for a chronological lifetime artifact. It extracts every persisted historical compaction summary from the source transcript, annotates each epoch with timeline and scale metadata, then uses the same isolated fork-only workflow as `handoff` to summarize the current head. It never compacts the source.
 
 ```bash
-python3 ~/.agents/skills/harness-handoff/scripts/session-handoff.py deep-dive SESSION_ID_OR_TRANSCRIPT \
+python3 ~/.agents/skills/import-claude-session/scripts/import-claude-session.py deep-dive SESSION_ID_OR_TRANSCRIPT \
   --destination Codex \
   --output /path/to/deep-dive.md
 ```
@@ -62,7 +62,7 @@ Deep dives can be large because summary text is intentionally retained. Use `sum
 Use `extract` when the transcript already contains the desired compact summary. This is entirely local and does not invoke Claude:
 
 ```bash
-python3 ~/.agents/skills/harness-handoff/scripts/session-handoff.py extract SESSION_ID_OR_TRANSCRIPT \
+python3 ~/.agents/skills/import-claude-session/scripts/import-claude-session.py extract SESSION_ID_OR_TRANSCRIPT \
   --output /path/to/handoff.md
 ```
 
@@ -107,10 +107,10 @@ If the source session is still running, explain that the fork reflects completed
 ## Script reference
 
 ```text
-session-handoff.py handoff SOURCE [options]
-session-handoff.py summary SOURCE [options]
-session-handoff.py deep-dive SOURCE [options]
-session-handoff.py extract SOURCE [options]
+import-claude-session.py handoff SOURCE [options]
+import-claude-session.py summary SOURCE [options]
+import-claude-session.py deep-dive SOURCE [options]
+import-claude-session.py extract SOURCE [options]
 ```
 
 Important options:
@@ -131,4 +131,4 @@ Important options:
 | `--dry-run` | Resolve and print the intended command without invoking Claude. |
 | `--max-file-paths N` | Deep-dive only: cap paths listed per category and epoch; `0` omits lists and a negative value lists all. |
 
-Run `python3 .../session-handoff.py --help` or the subcommand help for the complete interface.
+Run `python3 .../import-claude-session.py --help` or the subcommand help for the complete interface.

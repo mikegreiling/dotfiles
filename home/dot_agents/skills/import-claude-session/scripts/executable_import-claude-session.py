@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Export a Claude Code session as portable context for another agent harness."""
+"""Prepare context from an existing Claude Code session for import by another agent."""
 
 from __future__ import annotations
 
@@ -246,7 +246,7 @@ def compaction_working_directory(override: str | None) -> Iterator[Path]:
         yield path
         return
 
-    with tempfile.TemporaryDirectory(prefix="harness-handoff-") as directory:
+    with tempfile.TemporaryDirectory(prefix="import-claude-session-") as directory:
         yield Path(directory).resolve()
 
 
@@ -1353,7 +1353,7 @@ def add_fork_arguments(parser: argparse.ArgumentParser) -> None:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
-            "Export a Claude Code session or transcript as portable context for "
+            "Prepare an existing Claude Code session or transcript for import into "
             "another agent harness."
         )
     )
@@ -1368,7 +1368,7 @@ def build_parser() -> argparse.ArgumentParser:
     handoff = subparsers.add_parser(
         "handoff",
         aliases=("create",),
-        help="fork, compact, and export the current session head",
+        help="fork, compact, and extract the source session head",
     )
     add_common_arguments(handoff)
     add_fork_arguments(handoff)

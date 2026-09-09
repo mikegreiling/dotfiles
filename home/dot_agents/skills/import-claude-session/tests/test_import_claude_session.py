@@ -7,8 +7,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-SCRIPT = Path(__file__).parents[1] / "scripts" / "session-handoff.py"
-SPEC = importlib.util.spec_from_file_location("session_handoff", SCRIPT)
+SCRIPT = Path(__file__).parents[1] / "scripts" / "import-claude-session.py"
+SPEC = importlib.util.spec_from_file_location("import_claude_session", SCRIPT)
 assert SPEC and SPEC.loader
 MODULE = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = MODULE

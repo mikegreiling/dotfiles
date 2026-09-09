@@ -1,0 +1,3 @@
+# Replaced by import-claude-session; retire the old skill on existing machines.
+.claude/skills/harness-handoff
+.agents/skills/harness-handoff
