@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# ld-api — minimal LaunchDarkly REST v2 wrapper reusing ldcli's stored token.
+# Usage: ld-api [METHOD] PATH [extra curl args...]
+#   PATH is relative to https://app.launchdarkly.com/api/v2/  (e.g. "auditlog?spec=proj/default:env/*:flag/my-flag")
+#   METHOD defaults to GET. Intended for READ endpoints ldcli lacks (audit log); do writes via ldcli.
+set -euo pipefail
+
+cfg="${XDG_CONFIG_HOME:-$HOME/.config}/ldcli/config.yml"
+token="${LD_ACCESS_TOKEN:-}"
+if [[ -z "$token" ]]; then
+  [[ -r "$cfg" ]] || { echo "ld-api: no LD_ACCESS_TOKEN and $cfg not found — run 'ldcli login'" >&2; exit 1; }
+  token="$(awk '$1=="access-token:"{print $2}' "$cfg")"
+fi
+[[ -n "$token" ]] || { echo "ld-api: could not read access-token from $cfg" >&2; exit 1; }
+
+method="GET"
+if [[ $# -ge 2 && "$1" =~ ^(GET|POST|PUT|PATCH|DELETE)$ ]]; then method="$1"; shift; fi
+[[ $# -ge 1 ]] || { echo "usage: ld-api [METHOD] PATH [curl args...]" >&2; exit 2; }
+path="${1#/}"; shift
+
+curl -sS --fail-with-body -X "$method" \
+  -H "Authorization: $token" \
+  -H "Content-Type: application/json" \
+  "${LD_BASE_URI:-https://app.launchdarkly.com}/api/v2/${path}" "$@"
