@@ -141,4 +141,5 @@ GitLab's "Start a review / Submit review" flow is the **draft notes** API — `g
   ```
 
 - SHAs come from `GET …/merge_requests/<iid>/versions` (first entry: `base_commit_sha`/`head_commit_sha`/`start_commit_sha`); `new_line` for added lines only (omit `old_line`).
+- **Editing a positioned draft note drops its position.** `PUT …/draft_notes/<id>` with a new `note` (even as a JSON body) silently nulls `position` — the note would publish as a general comment. `line_code` on the single-GET still looks intact, so check the LIST endpoint's `position.new_path`. To change the text of an inline draft, `DELETE` it and re-`POST` with the full `position` hash (verified 2026-09-02 on ci-pipelines !1 / ci-tools !1). Editing a *published* note (`PUT …/notes/<id>` with `body`) keeps its position.
 - List/verify: `GET …/draft_notes` · delete one: `DELETE …/draft_notes/<id>` · never publish (`bulk_publish`) without Mike's explicit go-ahead — submitting the review is his action by default.
