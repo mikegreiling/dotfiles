@@ -1,11 +1,11 @@
 ---
 name: fastmail
-description: Read, search, organize, draft, and send Mike's Fastmail email, contacts, and calendar events via the mcporter CLI (Fastmail's official MCP server); create and edit contacts over CardDAV (scripts/carddav-contact) so Apple Contacts renders them correctly. Use whenever a task involves Mike's personal email, inbox, messages, mail folders, contacts, or personal (non-work) calendar.
+description: Read, search, organize, draft, and send Mike's Fastmail email, contacts, and calendar events via mcporter; use CardDAV for Apple-compatible contacts and Keychain-authenticated CalDAV for raw event times and alarms unavailable through MCP. Use whenever a task involves Mike's personal email, inbox, messages, mail folders, contacts, or personal (non-work) calendar.
 ---
 
 # Fastmail (via mcporter)
 
-Fastmail's official MCP server is registered as `fastmail` in the mcporter home registry (`~/.mcporter/mcporter.json`). mcporter is the ONLY integration point — never add Fastmail MCP configuration to any agent harness (no `claude mcp add`, no `.mcp.json`, no Codex `mcp_servers` entries).
+Fastmail's official MCP server is registered as `fastmail` in the mcporter home registry (`~/.mcporter/mcporter.json`). mcporter is the ONLY MCP integration point — never add Fastmail MCP configuration to any agent harness (no `claude mcp add`, no `.mcp.json`, no Codex `mcp_servers` entries). Direct CardDAV and CalDAV are the approved exceptions below, using their own scoped Keychain app passwords, not MCP tokens.
 
 ## Discover tools first
 
@@ -41,18 +41,30 @@ Credentials: a Contacts-scoped Fastmail app password in the login keychain, serv
 - `references/carddav-contacts.md` — load before hand-editing a vCard, hand-rolling curl against CardDAV, or deciding whether an MCP contact write is safe (verified failure modes, `--help`, endpoint, id mapping).
 - `references/carddav-credentials.md` — load on any 401 / missing-credential failure, or when setting the skill up on a new Mac (provenance, scope, re-mint runbook).
 
+## Calendars: CalDAV for raw times and event alarms
+
+Use `scripts/caldav-calendar` for read-only calendar discovery, bounded event queries, and individual event reads. It reads the macOS Keychain service `fastmail-caldav`, account `mike@greiling.me`; the dedicated app password is intended for Calendars (CalDAV) access. Read `references/caldav-credentials.md` before using CalDAV, setting it up on another Mac, or implementing calendar writes.
+
+- Verified live on 2026-08-29: calendar discovery, REPORT queries, and GET work. One Business event exposes `VALARM` with `ACTION:DISPLAY` and `TRIGGER:-PT15M` through both query and GET. This proves alarm reads work, not that all historical alarms survived.
+- The current MCP event tools have no explicit alarm fields. Do not claim a reminder was set merely because MCP created an event. Use CalDAV to inspect explicit alarms; default/client-specific notifications and delivery remain separate checks.
+- Verified with synthetic events on 2026-08-29: CalDAV creates DISPLAY/EMAIL alarms; changing, removing, restoring a DISPLAY alarm and overriding one recurring occurrence's time/alarm work. Stale ETags are rejected with HTTP 412. MCP description/time edits preserved the tested explicit relative alarm. An EMAIL reminder arrived one second after its scheduled trigger. Mike confirmed both Apple Calendar and Fastmail iPhone DISPLAY notifications at the scheduled minute in a coordinated retest. For short-notice device tests, confirm the event and alarm have synced before the trigger. Mike confirmed the earlier misses were late sync: those events did not appear in Apple Calendar until he manually refreshed after their alert times. The helper still has **no write commands**: implement authorized PUTs using the credential and preservation rules in the reference. Do not modify a real event just to test access.
+- Fastmail's bulk ICS export/import limitation is not a CalDAV limitation. Inspect an authenticated CalDAV resource for alarms rather than inferring their presence or absence from a bulk export.
+- Missing/denied Keychain access or HTTP 401/403: stop and ask Mike; do not search other secret stores, reuse the Contacts credential, or fall back to MCP OAuth.
+
 ## Calendar times across daylight-saving transitions
 
-Verified 2026-08-20: `search_events` can return a future timed event one hour off when the event is on the other side of a daylight-saving transition from the current date, even though its `timeZone` is correctly labeled. Two independent `America/Chicago` events after the November 2026 fall-back were returned one hour later than the same Fastmail events displayed in Apple Calendar. The observed error matches converting with the current UTC offset instead of the offset in effect on the event date.
+Verified 2026-08-29: Google Business ICS and Fastmail CalDAV agree exactly on all 469 expanded occurrences' UID, start/end instants, title, and all-day status. MCP returned 162 one hour late and 307 correctly. Controlled winter creation stored December 15, 2026 at 09:00 America/Chicago (15:00Z); Apple Calendar showed 09:00, but MCP returned 10:00 with America/Chicago. Summer/winter, both DST boundaries, and two fall-back 01:30 instants reproduce a **read representation defect**. Behavior is consistent with applying the current offset instead of the event-date offset; the server implementation has not been inspected.
 
 When a timed event is across a DST boundary in a zone that observes DST:
 
 - Treat the wall-clock portion of `start` as suspect; the `timeZone` label alone does not validate it.
-- Before reporting the time or using it in another system, compare it with a calendar client rendering of the same event when available. If the user refers to the visible event, inspect that screen before answering.
-- If the client is unavailable, disclose the raw integration time and the possible one-hour DST skew, and ask the user to confirm the displayed local time. Do not silently apply a correction based only on this observation.
+- Before reporting the time or using it in another system, compare with the raw CalDAV event and/or a calendar client rendering of the same event. Interpret TZID/VTIMEZONE using the event date, never today's UTC offset; preserve named-zone/local-time intent for recurring events and date-only values for all-day events. If the user refers to the visible event, inspect that screen before answering.
+- A resolved CalDAV instant plus event-date timezone is authoritative even without a UI session; do not substitute MCP's shifted clock reading. If neither raw CalDAV nor a client is available, disclose uncertainty and ask for confirmation. Do not silently apply a correction based only on this observation.
 - When the client and integration disagree by exactly the difference between the current and event-date UTC offsets, use the client-rendered local time for the user-facing answer and record that the connector response was skewed.
 
-This behavior has been demonstrated for `search_events` reads only. Do not assume that event creation or updates have the same defect; verify those operations separately.
+Creation and time updates were independently tested and stored the requested local time correctly. Pass MCP `start` as an offset-free local value (e.g. `2026-12-15T09:00:00`) with separate `timeZone: "America/Chicago"`. The tested offset-qualified start (`2026-12-16T09:00:00-06:00`) was rejected with `invalidProperties: start`. Separate `timeZone: "UTC"` with a UTC wall time also stored correctly but did NOT fix MCP readback. Never compensate by shifting a write one hour. Verify writes with CalDAV, not MCP readback alone.
+
+For recurring appointments preserve the local time AND named timezone: weekly 09:00 remained 09:00 across fall/spring, while UTC changed correctly. Keep all-day events date-only. Resolve nonexistent spring-forward and ambiguous fall-back times with Mike before writing. Search filtering used the correct stored time in the winter test even while returned `start` was shifted; do not move search windows merely to match the bad displayed value. Alarm edits require CalDAV; inspect recurrence masters and exceptions separately and preserve relative triggers when moving an appointment.
 
 ## Error handling
 

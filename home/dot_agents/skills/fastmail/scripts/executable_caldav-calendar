@@ -1,0 +1,148 @@
+#!/usr/bin/env python3
+"""Read-only Fastmail CalDAV access using the dedicated macOS Keychain item."""
+import argparse
+import base64
+import json
+import re
+import subprocess
+import sys
+import urllib.error
+import urllib.parse
+import urllib.request
+import xml.etree.ElementTree as ET
+
+ORIGIN = "https://caldav.fastmail.com"
+ACCOUNT = "mike@greiling.me"
+SERVICE = "fastmail-caldav"
+NS = {"d": "DAV:", "c": "urn:ietf:params:xml:ns:caldav"}
+
+
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def safe_url(href):
+    url = urllib.parse.urljoin(ORIGIN + "/", href)
+    parsed = urllib.parse.urlsplit(url)
+    if (parsed.scheme != "https" or parsed.netloc != "caldav.fastmail.com"
+            or parsed.fragment or parsed.query):
+        raise ValueError("Only direct HTTPS URLs on caldav.fastmail.com are allowed")
+    return url
+
+
+class Client:
+    def __init__(self):
+        result = subprocess.run(
+            ["security", "find-generic-password", "-s", SERVICE, "-a", ACCOUNT, "-w"],
+            capture_output=True, check=False, timeout=30)
+        if result.returncode or not result.stdout.rstrip(b"\r\n"):
+            raise ValueError("Keychain credential unavailable; ask Mike to unlock/add fastmail-caldav. No fallback credentials.")
+        password = result.stdout.rstrip(b"\r\n")
+        self.authorization = "Basic " + base64.b64encode(ACCOUNT.encode() + b":" + password).decode()
+        self.opener = urllib.request.build_opener(NoRedirect())
+
+    def request(self, method, href, body=None, depth=None):
+        if method not in {"GET", "PROPFIND", "REPORT"}:
+            raise ValueError("This helper is read-only")
+        headers = {"Authorization": self.authorization, "User-Agent": "FastmailSkill-CalDAV/1"}
+        if body is not None:
+            headers["Content-Type"] = "application/xml; charset=utf-8"
+        if depth is not None:
+            headers["Depth"] = str(depth)
+        req = urllib.request.Request(safe_url(href), data=body, headers=headers, method=method)
+        try:
+            with self.opener.open(req, timeout=30) as response:
+                data = response.read(20 * 1024 * 1024 + 1)
+                if len(data) > 20 * 1024 * 1024:
+                    raise ValueError("Response exceeds limit; narrow the request")
+                return data, response.headers.get("ETag")
+        except urllib.error.HTTPError as error:
+            if error.code in (401, 403):
+                raise ValueError(f"CalDAV HTTP {error.code}: stop and ask Mike to check credential/scope; no fallback") from None
+            raise ValueError(f"CalDAV HTTP {error.code}; no automatic redirect or retry") from None
+
+    def propfind(self, href, properties, depth=0):
+        root = ET.Element("{DAV:}propfind")
+        props = ET.SubElement(root, "{DAV:}prop")
+        for tag in properties:
+            ET.SubElement(props, tag)
+        data, _ = self.request("PROPFIND", href, ET.tostring(root), depth)
+        return list(successful_props(data))
+
+    def calendars(self):
+        root_props = self.propfind("/dav/", ["{DAV:}current-user-principal"])
+        principal = next((p.findtext("d:current-user-principal/d:href", namespaces=NS)
+                          for _, p in root_props if p.find("d:current-user-principal/d:href", NS) is not None), None)
+        if not principal:
+            raise ValueError("Server returned no current-user-principal")
+        principal_props = self.propfind(principal, ["{urn:ietf:params:xml:ns:caldav}calendar-home-set"])
+        homes = [node.text for _, p in principal_props for node in p.findall("c:calendar-home-set/d:href", NS)]
+        if not homes:
+            raise ValueError("Server returned no calendar-home-set")
+        calendars = []
+        for home in homes:
+            for href, props in self.propfind(home, ["{DAV:}displayname", "{DAV:}resourcetype"], 1):
+                if props.find("d:resourcetype/c:calendar", NS) is not None:
+                    calendars.append({"href": safe_url(href), "name": props.findtext("d:displayname", "", NS)})
+        return calendars
+
+
+def successful_props(data):
+    root = ET.fromstring(data)
+    for response in root.findall("d:response", NS):
+        href = response.findtext("d:href", "", NS)
+        for propstat in response.findall("d:propstat", NS):
+            status = propstat.findtext("d:status", "", NS).split()
+            if len(status) > 1 and status[1] == "200":
+                props = propstat.find("d:prop", NS)
+                if props is not None:
+                    yield href, props
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("list", help="Discover calendars, returning names and CalDAV URLs")
+    get = sub.add_parser("get", help="Read one event resource as JSON: href, etag, ical")
+    get.add_argument("href")
+    query = sub.add_parser("query", help="Read VEVENT resources overlapping a bounded UTC window; not expanded occurrences")
+    query.add_argument("href", help="Calendar URL from list")
+    query.add_argument("--after", required=True, help="UTC YYYYMMDDTHHMMSSZ")
+    query.add_argument("--before", required=True, help="UTC YYYYMMDDTHHMMSSZ")
+    args = parser.parse_args()
+    if args.command != "list":
+        safe_url(args.href)  # Validate before asking Keychain for the credential.
+    if args.command == "query":
+        for value in (args.after, args.before):
+            if not re.fullmatch(r"\d{8}T\d{6}Z", value):
+                parser.error("Dates must be UTC YYYYMMDDTHHMMSSZ")
+        if args.after >= args.before:
+            parser.error("after must precede before")
+    client = Client()
+    if args.command == "list":
+        output = client.calendars()
+    elif args.command == "get":
+        data, etag = client.request("GET", args.href)
+        output = {"href": safe_url(args.href), "etag": etag, "ical": data.decode("utf-8")}
+    else:
+        root = ET.Element("{urn:ietf:params:xml:ns:caldav}calendar-query")
+        props = ET.SubElement(root, "{DAV:}prop")
+        ET.SubElement(props, "{DAV:}getetag")
+        ET.SubElement(props, "{urn:ietf:params:xml:ns:caldav}calendar-data")
+        filt = ET.SubElement(root, "{urn:ietf:params:xml:ns:caldav}filter")
+        outer = ET.SubElement(filt, "{urn:ietf:params:xml:ns:caldav}comp-filter", name="VCALENDAR")
+        inner = ET.SubElement(outer, "{urn:ietf:params:xml:ns:caldav}comp-filter", name="VEVENT")
+        ET.SubElement(inner, "{urn:ietf:params:xml:ns:caldav}time-range", start=args.after, end=args.before)
+        data, _ = client.request("REPORT", args.href, ET.tostring(root), 1)
+        output = [{"href": safe_url(href), "etag": p.findtext("d:getetag", "", NS),
+                   "ical": p.findtext("c:calendar-data", "", NS)} for href, p in successful_props(data)]
+    print(json.dumps(output, ensure_ascii=False, indent=2))
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except (ValueError, ET.ParseError, urllib.error.URLError, TimeoutError, subprocess.TimeoutExpired) as error:
+        print(f"caldav-calendar: {error}", file=sys.stderr)
+        sys.exit(1)
