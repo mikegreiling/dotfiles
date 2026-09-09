@@ -94,10 +94,12 @@ BASELINE_ALLOW=$(cat <<'JSON'
 JSON
 )
 
-input=$(cat)
+# Read stdin verbatim, preserving any trailing newline(s) so a no-op pass-through
+# is byte-identical to the input.
+input=$(cat; printf x); input=${input%x}
 [[ -z "$input" ]] && input='{}'
 
-printf '%s' "$input" | jq --argjson baseline "$BASELINE_ALLOW" '
+desired=$(printf '%s' "$input" | jq --argjson baseline "$BASELINE_ALLOW" '
   # Enforced static keys — chezmoi owns these; Claude Code must not override them
   .env.HUSKY = "0" |
   .statusLine = {"type":"command","command":"npx -y ccstatusline@latest","padding":0} |
@@ -112,4 +114,16 @@ printf '%s' "$input" | jq --argjson baseline "$BASELINE_ALLOW" '
   # deduped and sorted. Claude Code appends to this list on "always allow";
   # the union ensures chezmoi can push new defaults without clobbering local grants.
   .permissions.allow = (($baseline + (.permissions.allow // [])) | unique)
-'
+')
+
+# Formatting resilience: other tools rewrite this file in their own JSON dialect
+# (Claude Code uses JSON.stringify style; ClaudeBar uses Apple Foundation's
+# JSONSerialization with sorted keys, `"key" : value` spacing and `\/` escapes).
+# If the live file is already semantically compliant, emit it untouched so
+# chezmoi sees no diff. Only re-serialize when a required key is actually
+# missing or wrong.
+if [[ "$(printf '%s' "$input" | jq -cS . 2>/dev/null)" == "$(printf '%s' "$desired" | jq -cS .)" ]]; then
+  printf '%s' "$input"
+else
+  printf '%s\n' "$desired"
+fi
