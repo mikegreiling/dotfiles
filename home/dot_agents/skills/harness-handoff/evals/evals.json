@@ -1,0 +1,66 @@
+{
+  "skill_name": "harness-handoff",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Take Claude Code session 11111111-2222-4333-8444-555555555555, fork and compact it without touching the original, and create a portable Markdown handoff for Codex.",
+      "expected_output": "Uses the bundled handoff operation, preserves the source session, and produces a Markdown artifact with source/fork provenance and sanitized handoff context.",
+      "files": [],
+      "assertions": [
+        "The source session ID remains distinct from the reported fork session ID.",
+        "The source transcript is unchanged or has only append-only concurrent activity.",
+        "The source picker membership is unchanged and the print-mode fork is not indexed.",
+        "The source-recorded working directory is informational and compaction uses an isolated temporary directory by default.",
+        "The output contains source and fork provenance plus a handoff-context section.",
+        "Claude-specific resume boilerplate is absent from the portable context."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "This transcript has already been compacted. Export its latest summary locally for Cursor; do not make another Claude API request.",
+      "expected_output": "Uses the bundled extract operation and emits a portable artifact without invoking Claude Code.",
+      "files": [],
+      "assertions": [
+        "The extract operation succeeds without running a Claude subprocess.",
+        "When several compactions exist, the artifact contains the latest summary.",
+        "The intended destination is recorded as Cursor."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I want to see exactly what command would be run to hand this hidden Claude session to another harness, but don't fork or spend any tokens yet.",
+      "expected_output": "Uses the create operation with --dry-run, resolves the transcript and cwd, and does not invoke compaction.",
+      "files": [],
+      "assertions": [
+        "The resolved command contains --resume, --fork-session, and /compact.",
+        "No new transcript is created.",
+        "The source transcript's recorded working directory is reported as informational but is not used as an execution requirement."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Before we spend tokens on a huge export, give me a read-only assessment of this long-running Claude session: dates, transcript size, prompt and tool counts, number of compactions, and the pre/post-token timeline.",
+      "expected_output": "Uses the bundled summary operation to generate a local lifetime report without invoking Claude or modifying the source.",
+      "files": [],
+      "assertions": [
+        "No Claude subprocess is invoked and no fork transcript is created.",
+        "The report includes session dates, transcript scale, filtered user-prompt and assistant-record counts, tool/file counts, and paired compaction count.",
+        "Each compaction is listed chronologically with exact token metadata when present.",
+        "The report explains that compaction remains in one transcript and does not mint a session ID."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Create a deep lifetime view of this many-month Claude Code session. Include every historical compact summary in order, annotate the work between compactions, and add a fresh summary of the current head without touching the original session.",
+      "expected_output": "Uses the bundled deep-dive operation to combine local historical summaries with a current-head summary generated only on an isolated hidden fork.",
+      "files": [],
+      "assertions": [
+        "Historical compact boundaries are paired to isCompactSummary records by UUID and emitted in transcript order.",
+        "Every epoch includes available timestamps, token metadata, prompt/assistant/tool counts, and explicit file read/change counts.",
+        "Only the current-head snapshot invokes Claude, using --resume with --fork-session in an isolated execution directory.",
+        "Source transcript integrity and picker membership are verified, and the print-mode fork is absent from picker indexes.",
+        "The current-head summary appears after all historical summaries."
+      ]
+    }
+  ]
+}

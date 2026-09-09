@@ -8,7 +8,7 @@ Skills fall into five management tiers. **Before editing any skill, identify its
 
 Authored by Mike/agents, tracked in the dotfiles repo (`~/.local/share/chezmoi`, source dir `home/dot_agents/skills/<name>/`). The matching `~/.claude/skills/<name>` symlink is also managed (`home/private_dot_claude/skills/symlink_<name>`).
 
-Currently: `atlassian-mcp-shim`, `bstock-demo-video`, `bstock-engineering`, `bstock-merge-requests`, `dotfiles-workflow`, `fastmail`, `slack`, `oss-checkout`, `prune-stale-node-modules`, `record-idea`.
+Currently: `atlassian-mcp-shim`, `bstock-demo-video`, `bstock-engineering`, `bstock-merge-requests`, `dotfiles-workflow`, `fastmail`, `harness-handoff`, `slack`, `oss-checkout`, `prune-stale-node-modules`, `record-idea`.
 
 Rules (see the `dotfiles-workflow` skill for the full chezmoi procedure):
 
