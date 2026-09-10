@@ -33,11 +33,15 @@ scenario. `npm run encode` trims + transcodes them to `.mp4` (+ a combined clip)
 5. **Subject record IDs** in `demo.config.ts` `records` (listings/orders/etc.).
    Auction listings expire — refresh with `npm run discover` and paste fresh IDs.
 6. **ffmpeg** (for `npm run encode`): `brew install ffmpeg`.
+7. **Google Chrome** installed. The project pins `channel: 'chrome'` — on a
+   B-Stock workstation the corporate network agent does not admit Playwright's
+   downloaded Chromium, which then cannot reach the VPN-routed dev network at
+   all (the mint hangs and no session cookie is ever set).
 
 ## Run
 ```sh
 npm ci
-npx playwright install chromium
+npx playwright install chromium   # for the harness; the run itself uses real Chrome
 # ensure VPN + the app at baseUrl + credentials (env or creds.json) are set
 npm test          # records .webm per scenario into test-results/
 npm run encode    # → videos/*.mp4 (+ combined.mp4)

@@ -24,6 +24,12 @@ export default defineConfig({
     launchOptions: {
       args: ['--disable-features=LocalNetworkAccessChecks'],
     },
+    // Playwright's BUNDLED Chromium cannot reach the VPN-routed dev network at
+    // all on this workstation — even a top-level navigation to the raw IP times
+    // out, while Node/curl on the same machine gets through. The corporate
+    // network agent only admits signed/approved binaries, and the downloaded
+    // Chromium is not one. Real Chrome is, so pin the channel. See pitfalls.md.
+    channel: 'chrome',
     storageState: '.auth/buyer.json',
     viewport: SIZE,
     actionTimeout: 30_000,
@@ -31,5 +37,10 @@ export default defineConfig({
     video: { mode: 'on', size: SIZE },
     trace: 'on',
   },
-  projects: [{ name: 'chromium', use: { browserName: 'chromium', viewport: SIZE } }],
+  projects: [
+    {
+      name: 'chromium',
+      use: { browserName: 'chromium', channel: 'chrome', viewport: SIZE },
+    },
+  ],
 })

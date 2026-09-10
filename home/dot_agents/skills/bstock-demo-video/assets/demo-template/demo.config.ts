@@ -22,6 +22,15 @@ export type Scenario = {
 export type DemoConfig = {
   env: 'dev' | 'qa' | 'staging' | 'localhost'
   baseUrl: string
+  /**
+   * Host to run the FusionAuth mint against, when it cannot be `baseUrl`.
+   * The dev FA client only has `http://localhost:3030/acct/login` registered for
+   * localhost; any other port comes back `invalid_redirect_uri`. Minting against
+   * the deployed dev host (`https://bstock-dev.com`) and transplanting the
+   * `bstock_*` cookies onto the local origin sidesteps that — cookies are not
+   * port-scoped. Omit it whenever the app really is on :3030. See pitfalls #31.
+   */
+  mintUrl?: string
   /** Where to land after login (any authenticated path is fine). */
   afterLogin?: string
   /** LaunchDarkly flag keys to force ON (kebab-case), or [] for none. */

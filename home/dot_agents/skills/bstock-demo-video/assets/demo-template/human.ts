@@ -112,9 +112,25 @@ export async function smoothScrollIntoView(page: Page, locator: Locator) {
   await page.waitForTimeout(750)
 }
 
-/** Scroll into view, ease the cursor to the element, then click at that point. */
+/**
+ * Scroll into view, ease the cursor to the element, then click at that point.
+ *
+ * NOT for items inside an open dropdown/menu/popover — use `clickInPlace`.
+ * The smooth `scrollIntoView` is still settling when the mouse arrives, so an
+ * anchored menu has drifted and the press lands on the row underneath (which
+ * the click-outside handler then reads as a dismiss).
+ */
 export async function hoverClick(page: Page, locator: Locator) {
   await smoothScrollIntoView(page, locator)
+  await clickInPlace(page, locator)
+}
+
+/**
+ * Click where the element already is: ease the cursor over and press, with no
+ * scrolling first. Use this for anything anchored to something else and already
+ * on screen — dropdown items, menu items, popovers, tooltips, floating panels.
+ */
+export async function clickInPlace(page: Page, locator: Locator) {
   const box = await locator.boundingBox()
   if (!box) {
     await locator.click()

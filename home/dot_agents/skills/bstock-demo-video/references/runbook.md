@@ -32,6 +32,36 @@ from `fe-scripts/src/api/accounts.ts` `login()`, BUGS-5218):
    `bstock_access_token`/`bstock_refresh_token`; then `context.storageState(...)`.
 Re-running globalSetup mints fresh each run, unattended.
 
+Three things the mint depends on, each of which broke it once — see pitfalls
+21–23 for the full symptoms:
+- **`channel: 'chrome'`.** The mint launches its own browser; the bundled
+  Chromium cannot reach the VPN-routed dev network at all on a B-Stock
+  workstation, so the code exchange hangs and no cookie is ever set.
+- **PKCE.** accounts-portal mints a pair on sign-in, keeps it in
+  `sessionStorage.oauth_challenge`, and verifies the echoed `state.csrf`. The
+  mint therefore generates the pair itself, puts `code_challenge`/`S256` on the
+  authorize request and `csrf` inside `state`, and seeds `sessionStorage` (via a
+  stubbed blank page on the origin) before loading the callback.
+- **Unescaping the scraped hidden inputs.** They arrive HTML-escaped; the
+  escaped `state` would otherwise overwrite the real one and lose the csrf.
+
+The exchange the callback page performs is one request —
+`GET {SERVICE_HOST_ACCOUNTS}/v1/people/login?code=<code>&redirectUri=<mintUrl>/acct/login&codeVerifier=<verifier>`
+— and its response is what becomes `bstock_access_token`/`bstock_refresh_token`.
+Since the mint now owns the verifier, that call can be replayed from Node and the
+tokens planted with `context.addCookies` instead of loading the callback. The
+browser path stays the default (it is what the portal actually does, so it
+survives portal changes); the server-side variant is the fallback if the callback
+page ever becomes undriveable.
+
+**`redirect_uri` must be registered, and on dev only `:3030` is.** The FA client
+accepts `http://localhost:3030/acct/login` and the deployed hosts; any other
+localhost port answers `invalid_redirect_uri`. If 3030 is busy, leave `baseUrl` on
+whatever port the app is on and set `demo.config.mintUrl` to
+`https://bstock-dev.com` — the mint runs against that origin and copies the
+`bstock_*` cookies onto `baseUrl`'s hostname (cookies are not port-scoped). See
+pitfall 31.
+
 Per-env FA client ids + hosts: see `fusionauth-client-ids.md`. The login identity
 (email + password) is resolved at runtime — env `BSTOCK_DEMO_EMAIL`/
 `BSTOCK_DEMO_PASSWORD` or git-ignored `demo/creds.json` `{"email","password"}` —
@@ -40,11 +70,31 @@ gets the pair from the user (a file they point to + which account, typed in, or
 already-exported env). Some features need the account to have a saved destination
 address (e.g. shipping quotes throw `destinationLocationId required`).
 
-## 2. Force LaunchDarkly flags (`ld-intercept.ts` → `forceFlags`)
-Most flags have **no in-app override**. Intercept the client SDK: rewrite
-`**/sdk/evalx/**` to set each (kebab-case) flag `{value:true,variation:1,…}` and
-`route.abort()` on `**clientstream.launchdarkly.com**` so the stream can't undo it.
-Only flips the gate — real backend data still flows.
+## 2. Force LaunchDarkly flags
+Three mechanisms, and **which one you need depends on where the flag is read**:
+
+- **Client reads** (`useFlag` in a `'use client'` component) — `forceFlags`
+  (`ld-intercept.ts`) rewrites `**/sdk/evalx/**` to set each kebab-case flag
+  `{value:true,variation:1,…}` and `route.abort()`s
+  `**clientstream.launchdarkly.com**` so the stream can't undo it.
+- **Server reads** (`getRequestLocals().evaluateFlag` in an App Router
+  page/layout/server component) — evalx interception **cannot reach these**;
+  they are evaluated by the node server SDK inside the dev server. Use fe-core's
+  URL flag override instead, which is honoured on both sides in non-prod: put
+  `?<flag-key>=true` on the URL for client reads, and send
+  `x-search-params: <flag-key>=true` as a request header for server reads
+  (`context.setExtraHTTPHeaders`). The header is normally set by
+  `contentSecurityPolicyMiddleware`, but home-portal's `src/proxy.ts`
+  short-circuits `/buy/*` before it in dev — see pitfall 24.
+- **SSR-bootstrapped SDKs** (cs-portal: `LDProvider … options.bootstrap` fed
+  from `pageProps.featureFlags`) — the client SDK never issues an evalx request
+  at all, so `forceFlags` is a silent no-op. Rewrite the SSR document instead:
+  `context.route` the document request and splice the key into the
+  `featureFlags":{` object in `__NEXT_DATA__`, dropping `content-length`. Recipe
+  in pitfall 30.
+
+None of them touches LaunchDarkly, and all only flip the gate — real backend data
+still flows. A flag that does not exist in LD yet overrides fine.
 
 ## 3. Find real test data (`discover.spec.ts`)
 Prefer real data over mocking. Replay the app's own search with an added
@@ -60,7 +110,9 @@ the ID manually.
 There is **no fixed shape**. General recipe: navigate → **tour the relevant
 region** → perform the change being demoed → `confirmOrClose`. Compose `human.ts`:
 - `installCursor` / `recenterCursor` (centered start) / `moveTo` / `hoverClick` /
-  `humanType`.
+  `clickInPlace` / `humanType`. `hoverClick` scrolls its target to centre first —
+  use `clickInPlace` for anything anchored and already on screen (dropdown/menu
+  items, popovers), or the click lands behind the moving menu (pitfall 33).
 - `tour(page, {region})` — pans a scroll region top→bottom with pauses. `region`
   omitted = the **window**; `'modal'` = the confirm-modal scroller; any CSS string
   = that scroll container (side panel, table, drawer). Use whatever the feature
@@ -83,9 +135,13 @@ The parcel example (`demo.spec.ts`) shows the modal case; copy + adapt for yours
 - Deliberate **pauses** (1.5–3s) at each meaningful state.
 
 ## 6. Post-processing (`encode.sh`)
-Trim the SSR/hydration white lead-in (negate + `blackdetect` → input-seek), then
-`libx264 -pix_fmt yuv420p -movflags +faststart`; concat per-scenario clips into
-`combined.mp4`. Eyeball the first output frame (mostly-white pages can over-trim).
+Trim the dead lead-in — WHITE (SSR/hydration) *or* BLACK (real Chrome's recorder
+emits pre-paint black frames), measured both ways with `blackdetect` and seeking
+past whichever runs longer — then `libx264 -pix_fmt yuv420p -movflags +faststart`;
+concat per-scenario clips into `combined.mp4`. Every ffmpeg call runs with
+`-nostdin` so it can't swallow the clip loop's stdin (pitfall 29). Eyeball the
+first output frame (`ffmpeg -ss 0 -i out.mp4 -frames:v 1 f0.png`) — mostly-white
+pages can over-trim.
 
 ## 7. Package & hand off
 - `encode.sh` → `videos/*.mp4`. `bundle.sh` → lean `…-bundle.zip` (excludes the
@@ -99,5 +155,8 @@ Trim the SSR/hydration white lead-in (negate + `blackdetect` → input-seek), th
   disposable/seeded record. Selecting options / the user's own choices is fine.
 - Don't mutate shared dev records others rely on.
 - Don't commit `demo/` or `@playwright/test` into the target repo's tracked tree.
+- `demo/` is git-excluded but **not** necessarily tsconfig-excluded: a repo whose
+  `include` is `**/*.ts` (home-portal) type-checks the scaffold too. Move it aside
+  before trusting `npm run type-check` output (pitfall 34).
 - See `pitfalls.md` for the first-try gotchas, and `setup-teardown.md` for the
   (future) resource-seeding extension point.

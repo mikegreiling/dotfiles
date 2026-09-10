@@ -16,24 +16,27 @@ const FACET: Record<string, unknown> = { transportMode: ['PARCEL'] }
 test('discover active candidates', async ({ page }) => {
   test.setTimeout(150_000)
 
-  let captured: { url: string; headers: Record<string, string>; body: string } | null =
-    null
+  // Collected via an array, not a `let x = null`: TypeScript does not track
+  // assignments made inside the event callback, so a nullable local would narrow
+  // to `never` after the guard below and every field read would fail type-check.
+  const seen: { url: string; headers: Record<string, string>; body: string }[] = []
   page.on('request', (req) => {
     if (
       req.url().includes('/all-listings/listings') &&
       req.method() === 'POST' &&
-      !captured
+      !seen.length
     ) {
-      captured = {
+      seen.push({
         url: req.url(),
         headers: req.headers(),
         body: req.postData() ?? '',
-      }
+      })
     }
   })
 
   await page.goto('/all-auctions', { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(8000)
+  const captured = seen[0]
   if (!captured) {
     // eslint-disable-next-line no-console
     console.log('[discover] never captured a search request — adjust the URL match')

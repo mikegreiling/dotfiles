@@ -19,8 +19,12 @@ usually just works.
    browser — mint server-side (global-setup). Bundled Chromium is flagged; even
    real Chrome is flaky and may be mid-update.
 
-4. **No in-app LD flag override.** Force flags via evalx interception + clientstream
-   abort (`forceFlags`). There is no query-param/localStorage toggle for most flags.
+4. **No in-app LD flag toggle — but fe-core does have a URL override.** There is
+   no localStorage switch and no dev UI for flipping arbitrary flags. Reach for,
+   in order: `forceFlags` (evalx interception + clientstream abort) for *client*
+   reads; fe-core's non-prod URL override for *server* reads (`?<flag-key>=true`
+   plus the `x-search-params` header — #24); an SSR-payload rewrite for portals
+   that bootstrap LD server-side (#30). Pick by **where the flag is read**.
 
 5. **Subject IDs go stale.** Auctions expire; Shippo rating is non-deterministic
    and caches zero-quotes. Re-run `discover.spec.ts` and refresh `demo.config`.
@@ -155,3 +159,169 @@ usually just works.
     page's clip. Produce one deliverable by concatenating main + popup with
     ffmpeg; trim the popup's white/black lead-in first (ffmpeg `blackdetect`
     finds the cut point).
+
+21. **The bundled Chromium cannot reach the VPN at all — use `channel: 'chrome'`.**
+    On a B-Stock workstation, Playwright's downloaded Chromium times out on
+    *every* request to the dev network — not just subresource XHR, but a
+    top-level navigation to the raw IP (`https://10.17.15.207/...`) — while
+    `curl` from the same shell gets a response. So it is **not** an LNA/CORS
+    policy (granting `local-network-access`, `--disable-features=
+    LocalNetworkAccessChecks`, even `--disable-web-security` all fail
+    identically); the corporate network agent simply doesn't admit the
+    unsigned downloaded binary. Real Chrome is admitted. The template now pins
+    `channel: 'chrome'` in **both** `playwright.config.ts` and
+    `global-setup.ts` (the mint launches its own browser — pinning only the
+    config leaves the mint broken). Symptom if you miss it: the callback page
+    renders but `bstock_access_token` is never set, because the token exchange
+    XHR silently hangs.
+
+22. **accounts-portal now uses PKCE — an out-of-band code is unusable.**
+    Sign-in mints a PKCE pair, stores it in `sessionStorage.oauth_challenge`,
+    and the callback (`OAuth2RedirectPage`) requires the echoed `state.csrf` to
+    match before exchanging the code with the stored `codeVerifier`. A
+    server-minted code has no pair in the tab, so the page logs
+    `login reauthorize {reason: lost-pair}` and restarts authorization —
+    straight into the Turnstile the mint exists to avoid. `global-setup.ts` now
+    mints the pair itself (`code_challenge`/`S256` + a `csrf` inside `state`)
+    and seeds `sessionStorage` before navigating to the callback, using a
+    `page.route`-stubbed blank page on the origin (loading a real
+    accounts-portal route would mint and store a pair of its own and clobber
+    the seeded one). Keep the shapes in sync with accounts-portal
+    `src/app/helpers/auth/oauthChallenge.ts`.
+
+23. **FusionAuth's hidden inputs come back HTML-escaped.** The scraped `state`
+    carries `&quot;` entities, and because the scraped values are spread *after*
+    our own params, that escaped copy replaces the real `state` and rides all
+    the way to the callback — where `parseStateObject`'s bare `JSON.parse`
+    returns null, so no csrf is found and the page reauthorizes. `global-setup`
+    now unescapes every hidden value and re-asserts `state`,
+    `code_challenge`, `code_challenge_method` afterwards.
+
+24. **App Router flags are read on the SERVER — `forceFlags` cannot reach them.**
+    `evalx` interception only patches the *client* SDK. A gate written as
+    `await getRequestLocals().evaluateFlag(FeatureFlags.X)` (page.tsx, layouts,
+    server components) is evaluated by `@launchdarkly/node-server-sdk` in the
+    dev server and is completely unaffected. Use fe-core's **URL flag override**
+    instead — it covers both sides and touches nothing in LaunchDarkly:
+    - client (`useFlag`) reads it from `useSearchParams()`, so `?my-flag=true`
+      on the URL is enough;
+    - server (`evaluateFlag`) reads it from the **`x-search-params` request
+      header**, which `contentSecurityPolicyMiddleware` normally sets.
+    **But** home-portal's `src/proxy.ts` short-circuits `/buy/*` (and `/acct`,
+    `/sell`, `/csportal`, …) with `NextResponse.next()` when
+    `NODE_ENV === 'development'`, *before* that middleware runs — so under
+    `npm run dev` the header never gets set and the override silently no-ops.
+    Send it yourself from the browser:
+    `await context.setExtraHTTPHeaders({ 'x-search-params': 'my-flag=true' })`.
+    Overrides are gated to non-prod by `flagOverridesEnabled()`. A flag that
+    doesn't exist in LD yet still overrides fine (the override is applied after
+    the `FLAG_NOT_FOUND` default).
+
+25. **`encode.sh` only trimmed a WHITE lead-in; real Chrome emits BLACK frames.**
+    The original detected white by negating before `blackdetect`, which is right
+    for a hydrating white page but leaves real Chrome's black pre-paint frames
+    in place — the mp4 then opens on a black screen. `encode.sh` now measures
+    both and seeks past whichever is longer. Always eyeball frame 0 after
+    encoding (`ffmpeg -ss 0 -i out.mp4 -frames:v 1 f0.png`).
+
+26. **`glab api ... -F file=@path` does NOT upload a file — use `--form`.**
+    `-F/--field` reads the file's *contents* into a string field, and
+    `POST projects/<id>/uploads` answers `HTTP 400`. `--form "file=@<path>"`
+    sends real multipart and returns the `markdown` field to paste. Separately,
+    `--method PUT ... --input body.json` needs an explicit
+    `-H "Content-Type: application/json"` or GitLab replies `HTTP 415 The
+    provided content-type '' is not supported` (nothing is written, so it is
+    safe to retry).
+
+27. **Assert on the navigation request, not `page.url()`, for external handoffs.**
+    A feature that hands the top window to FusionAuth (`window.location.assign`)
+    will usually *not* end on the URL it built: with no FusionAuth SSO cookie in
+    an automation profile, `/account/two-factor/` bounces to
+    `/oauth2/authorize` and then the hosted login. Capture the intended URL with
+    a `page.on('request', …)` filter on `req.isNavigationRequest()` and assert
+    on that; let the final landing be whatever it is (and screenshot it, since
+    "we stopped at the login page" is itself the evidence).
+
+28. **`bundle.sh` writes the zip to the REPO ROOT, which is not git-excluded.**
+    `OUT="$ROOT/../<name>-bundle.zip"` lands next to `demo/`, and the scaffold
+    only excludes `demo/` — so the zip shows up in `git status`. Move it out
+    (e.g. to the deliverables folder) as soon as it is built.
+
+29. **ffmpeg eats the `while read` loop's stdin — only clip 1 encodes.**
+    `encode.sh` pipes the `find` results into a `while IFS= read -r webm` loop
+    and calls ffmpeg inside it; ffmpeg reads stdin for its interactive keys and
+    consumes the rest of the list, so iteration 2 gets a truncated (or empty)
+    source path and the encode fails or writes garbage. **Every** ffmpeg
+    invocation in a read loop needs `-nostdin` (the template now passes it on
+    the detect, encode, and concat calls). Symptom: `videos/` has `01-*.mp4`
+    and nothing else, with a "WARNING: encode failed" for a path that looks
+    chopped.
+
+30. **cs-portal bootstraps LD from the SSR payload — `forceFlags` is a no-op.**
+    cs-portal renders `LDProvider … options.bootstrap` seeded from
+    `pageProps.featureFlags`, which `gsspMiddleware` evaluates **server-side**.
+    With a bootstrap in hand the client SDK never issues the `evalx` request
+    that `forceFlags` intercepts, so the page's initial (and, with the stream
+    aborted, only) flag set is whatever the server sent. Force it by rewriting
+    the SSR document instead:
+
+    ```ts
+    await context.route('**/csportal/**', async (route) => {
+      if (route.request().resourceType() !== 'document') return route.fallback()
+      const response = await route.fetch()
+      const html = await response.text()
+      const marker = 'featureFlags":{'
+      if (!html.includes(marker)) return route.fulfill({ response })
+      return route.fulfill({
+        response,
+        body: html.replace(marker, `${marker}"${FLAG}":true,`),
+        // length changed; drop it and let the browser work it out
+        headers: { ...response.headers(), 'content-length': undefined as unknown as string },
+      })
+    })
+    await context.route('**clientstream.launchdarkly.com**', (r) => r.abort())
+    ```
+
+    Inserting a key works even for a flag that does not exist in LD yet, and
+    nothing is written to LaunchDarkly. Same document-rewrite shape as the
+    `stampParcelMode` trick in #14/#16 — check any portal's flag plumbing before
+    assuming evalx interception reaches it.
+
+31. **Only `localhost:3030` is a registered redirect_uri on dev.** The dev
+    FusionAuth client's sole localhost redirect is
+    `http://localhost:3030/acct/login`; a mint against `:3031` answers
+    `invalid_redirect_uri` (verified 2026-09-10). When 3030 is taken (another
+    agent, another portal), don't fight for the port — run the app wherever, set
+    `demo.config.mintUrl = 'https://bstock-dev.com'` (always registered), and
+    `global-setup` mints there and transplants the `bstock_*` cookies onto
+    `baseUrl`'s hostname with `context.addCookies`. Cookies are not port-scoped,
+    so the local server accepts the token verbatim. Everything origin-sensitive
+    in the mint (redirect_uri, callback host match, the origin the PKCE pair is
+    seeded on) keys on `mintUrl`, not `baseUrl`.
+
+32. **Mocked routes need `cache-control: no-store`.** A `route.fulfill` response
+    with no cache headers is cacheable, and Chromium will replay a stale list
+    read after a mutation — the table looks unchanged and the demo appears
+    broken. Always send `headers: { 'cache-control': 'no-store' }` from a
+    stubbed JSON route. Related: a page whose first paint comes from an SSR
+    prefetch never issues the request your stub is waiting on — drive one
+    client-side refetch (toggle a sort, change a filter) to make the stub bite.
+
+33. **`hoverClick` is wrong for dropdown/menu items.** It smooth-`scrollIntoView`s
+    its target before reading the bounding box; an anchored menu is still gliding
+    when the mouse arrives, so the press lands on the row underneath and the
+    click-outside handler closes the menu — silently, with nothing to assert on.
+    Use `clickInPlace` (same eased cursor, no scroll) for anything already on
+    screen and anchored: menu items, popovers, tooltips, floating panels. Opening
+    the menu itself is fine with `hoverClick`; treat a dropdown open as flaky and
+    re-open (up to ~3 tries) until the item is visible.
+
+34. **A repo's `npm run type-check` may compile `demo/`.** home-portal's
+    `tsconfig.json` includes `**/*.ts` and excludes only `common-ci` +
+    `node_modules`, so the scaffolded `demo/` (and its `@playwright/test`
+    imports) lands in the repo's type-check; cs-portal's include is scoped to
+    `src` and does not. Before trusting a type-check result, confirm which case
+    you are in and move `demo/` aside (or add it to `exclude` locally, reverting
+    before commit) — otherwise you will chase errors that are not in the change
+    under review. The template itself type-checks clean under
+    `strict` + `noUncheckedIndexedAccess`; keep it that way when editing it.

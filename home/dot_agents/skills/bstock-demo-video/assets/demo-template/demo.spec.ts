@@ -20,7 +20,12 @@ import {
 // confirmOrClose. Keep non-deterministic IDs in demo.config `records`.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const R = demo.records
+/** Read a subject id from demo.config `records`, failing loudly if it is unset. */
+const R = (key: string): string => {
+  const value = demo.records[key]
+  if (!value) throw new Error(`[demo] demo.config records.${key} is not set`)
+  return value
+}
 const beat = (page: Page, ms = 1500) => page.waitForTimeout(ms)
 const scn = (name: string) => demo.scenarios.find((s) => s.name === name)
 
@@ -45,7 +50,7 @@ async function openBidModal(page: Page, listingId: string) {
 
 test('01-view-and-select-parcel-rates', async ({ page }) => {
   test.setTimeout(200_000)
-  await openBidModal(page, R.rates)
+  await openBidModal(page, R('rates'))
 
   const rateList = page.locator('[data-testid="parcel-rate-list"]')
   await rateList.waitFor({ state: 'visible', timeout: 40_000 })
@@ -83,7 +88,7 @@ test('01-view-and-select-parcel-rates', async ({ page }) => {
 
 test('02-no-rates-blocks-payment', async ({ page }) => {
   test.setTimeout(200_000)
-  await openBidModal(page, R.noRates)
+  await openBidModal(page, R('noRates'))
 
   const banner = page.locator('[data-testid="parcel-no-rates-banner"]')
   await banner.waitFor({ state: 'visible', timeout: 40_000 })
