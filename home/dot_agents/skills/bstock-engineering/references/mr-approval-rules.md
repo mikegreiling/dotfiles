@@ -34,7 +34,7 @@ Legend: ✓ = checked out under `bstock-projects/`. "req" = approvals required.
 | svc/auction | 582 | ✓ | any-member (2) + SMEs (1 of: mary, alexandra, michael.ilchuk, yury, al). *Default approvers optional.* |
 | svc/bridge | 607 | ✓ | any-member (2) |
 | svc/contract | 759 | ✓ | any-member (2) *(was 1 in this cache; re-verified live 2026-09-23)* |
-| svc/crosslisting | 887 | ✓ | any-member (1) + Lead (1 of: damien, al, joseph.spandrusyszyn, mike.greiling, serhii.ovcharenko) |
+| svc/crosslisting | 887 | ✓ | any-member (2) *(cache previously said any-member 1 + Lead rule incl. damien; live approval_state on !235 2026-09-23 shows a single All Members rule = 2, no Lead rule)* |
 | svc/dead-letter | 831 | ✓ | any-member (2). Code-owners: `*` → @three-mp team *(optional)* |
 | svc/dispute | 504 | ✓ | Code Review (2 of: mary, alvarobstock, alex.garcia, david.chan, acker, ary, igor, volodymyr, al, justinjames, umesh, joshua.mozley, parvinder, kai, ashiash, anthony.lombardo, paul). *No any-member req.* |
 | svc/docserv | 565 | ✓ | any-member (2) + SMEs (1 of: mary, alexandra, michael.ilchuk, yury, al, cole, michael, kai). *Default approvers optional.* |
