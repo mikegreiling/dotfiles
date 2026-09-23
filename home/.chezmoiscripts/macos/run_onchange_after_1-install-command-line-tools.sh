@@ -59,7 +59,6 @@ brew "asdf"
 brew "atomicparsley"
 brew "bat"
 brew "chezmoi"
-cask "codex" # OpenAI Codex CLI — binary cask; installs /opt/homebrew/bin/codex (this cask IS the CLI, there is no GUI app or formula)
 brew "colima"
 brew "openai/tools/tart" # macOS/Linux VMs on Apple Silicon for things-api regression testing (softnet comes as a dependency)
 brew "dnsmasq"

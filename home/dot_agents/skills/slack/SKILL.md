@@ -19,6 +19,14 @@ Tool names match the Slack MCP server's own (`slack_search_public`, `slack_read_
 
 ## Call a tool
 
+Draft recipe (verified 2026-09-23 — the text parameter is `message`, not `text`; `text` fails with `initialization_failed: Missing value for parameter \`message\``):
+
+```bash
+mcporter call slack.slack_send_message_draft --args "$(python3 -c 'import json,sys;print(json.dumps({"channel_id":sys.argv[1],"message":sys.argv[2]}))' C04225G5QCS "$TEXT")" --output json --no-oauth
+```
+
+Slack mrkdwn links are `<url|label>`; check the response for `draft_id` (absent = nothing written).
+
 ```bash
 mcporter call slack.<tool_name> --args '<json>' --output json --no-oauth
 ```
