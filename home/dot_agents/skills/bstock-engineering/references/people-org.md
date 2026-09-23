@@ -195,6 +195,9 @@ Stable cross-system IDs. GitLab = `gitlab.bstock.io` usernames. "—" = verified
 | Joe Spandrusyszyn | Principal Software Engineer (FE) | `U049J4ALL69` | joseph.spandrusyszyn@bstock.com | America/New_York | `joseph.spandrusyszyn` (332) | `63659c17b7b39379d722512a` |
 | Paul Robertson ("Homer") | Staff Software Engineer (FE), AI tooling lead | `U065LP1M6UX` | paul@bstock.com | America/Chicago | `paul` (419) | `712020:b9d94b10-920e-4d35-915b-9994724c9934` |
 | Joe Ellis (Joseph) | Senior Software Engineer (BE), Foundations | `UDQ1PD1H6` | joe.ellis@bstock.com | America/New_York | `joe.ellis` (43) | `70121:46cb1856-1239-4833-b2b8-599729de54e8` |
+| Acker Apple | SWE (BE, Payments) — payments-methods SME approver, Foundations (ex-Mula) | `U01DMD45AKV` | acker@bstock.com | America/New_York | `acker` (124) | |
+| Ary Baldioceda | SWE (BE) — payments-methods SME approver, Foundations (ex-Mula) | `U01LY77JWAZ` | ary@bstock.com | | `ary` (154) | |
+| Igor Shkulipa | SWE (BE, contractor) — payments-methods SME approver; order-process NestJS 11/config work (GLOB-5083) | `U01MQ6BVA7L` | igor@bstock.com | | `igor` (156) | |
 | Cy Kong (Cyrus) — **DEPARTED 2026-08-25** | (was) React Engineer / epic lead, Foundations | `UJBMM6K4N` | cyrus@bstock.com | America/Chicago | `Cy-Kong` (48) | `5cb8e545b01aec0e591d6c55` |
 | Alex Garcia (Pingboard: Javier Garcia Godinez) | Software Engineering Lead, Logistics & Finance | `U013Y1Y4G5C` | alex.garcia@bstock.com | America/Chicago | `alex.garcia` (100) | `5ec7f4036c50620c1cb0fc61` |
 | Helen Foutch | Software Engineer (FE/full-stack), Buyer pod | `U99JLJBDZ` | helen@bstock.com | America/Chicago | `helen` (16) | `5afb0999d1d9445cd3a60343` |
@@ -274,6 +277,8 @@ Format: what they do → when to reach out → surfaces (DM channel IDs are stab
 **Helen Foutch — Software Engineer (FE/full-stack), high-velocity.** Under Mary; ex-Zero. fe-core + home-portal daily; owns big features end-to-end (Auction Close Schedule "TV Guide", GLOB-4495); design-system implementation with Fred. Alvaro held her and Paul up as the velocity exemplars (>40 pts). Surfaces: DM `D07A1MVM1EZ` (light), design-system group DM `C0B98AJA3GX` (with Fred + Alyssa Shum).
 
 **Alexandra Ash — Senior SWE (Shipments)** — authored the Buyer Pod Tech Support Procedures and the LD flag process; owns flag-removal tickets; buyer-pod support rotation (with Mike Ruth, Yury, Eric Chu, Mike Feldman, Patrick Fisher, Jorge). **Mike Feldman, Yury Herlovich, Eric Chu, Bryan Lopez, Cole Allan** — Mary's engineers (see org chart above).
+
+**Michael Ilchuk — contractor SWE, Buyer pod** (not in the Pingboard export). GitLab `michael.ilchuk` (78). Owns epic GLOB-5246 (npm `min-release-age` + `min-release-age-exclude[]=@b-stock/*` rollout across three-mp repos, from the 2026-09-01 guild meeting). Snapshot 2026-09-10: epic Open, detailed per-repo checklist written, no MRs opened yet. Not to be confused with the other Mikes/Michaels (see disambiguation note above).
 
 ### DevOps / Data / QA / Release / IT / Architecture
 

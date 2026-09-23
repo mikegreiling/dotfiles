@@ -93,6 +93,7 @@ Legend: ✓ = checked out under `bstock-projects/`. "req" = approvals required.
 | fe/fe-scripts | 544 | ✓ | any-member (1) |
 | fe/home-portal | 768 | ✓ | any-member (2) |
 | fe/seller-portal | 508 | ✓ | any-member (2) |
+| fe/cops-portal | 848 | ✓ | any-member (2) — two `*` code-owner rules exist but are `required: 0` (verified 2026-09-23) |
 | fe/dsk | 41 | ✗ | any-member (0) *(MR-level override sampled; project default may differ)* |
 | fe/sunrise | 61 | ✗ | any-member (1) *(MR-level override sampled; project default may differ)* |
 
