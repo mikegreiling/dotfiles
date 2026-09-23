@@ -188,6 +188,8 @@ To draft to a set of people who may or may not already have a group chat, treat 
 |---------|-----|------|---------|
 | `#fe-guild` | `C04225G5QCS` | public | All frontend engineers. ~99% of posts solicit review of GitLab MRs. Post here to request FE review when an MR is ready-for-review. |
 | `#foundation-pod` | `C09G5BQDEJD` | public | Mike's cross-functional pod (FE + BE engineers, managers, PMs, possibly UX). Corresponds to Jira `FP` project. Team-specific posts and pod-scoped review requests. |
+| `#team-buyer-pod` | `C031VRCPALR` | Buyer pod business + review requests for Buyer-owned services (location, notification, saved-search…). Public, 2022-era, near-org-wide membership. Verified 2026-09-23. |
+| `#team-seller-pod` | `C0417FTS0MC` | Seller pod business + review requests for Seller-owned services (ingestion, listing…). Public, 2022-era, near-org-wide membership. Verified 2026-09-23. |
 | `#bstock-campfire` | `C09V4EF0F3J` | private | Team ↔ Campfire Analytics (external contractor managing GTM, user-tracking telemetry, marketing analytics). Mike is the engineering liaison for most of these efforts. |
 | `#tech-availability` | `C01BMD7UN1H` | public | Post when stepping away from the computer — appointments, urgent interruptions, short absences — so people know you're unavailable. |
 
@@ -197,7 +199,7 @@ When an MR reaches ready-for-review (pipeline green, AI review cleared), a short
 
 **House format** (from Mike's #fe-guild history — mirror it):
 - Casual lowercase opener naming the repo + one clause on what it does: `home-portal MR for review — adds X to Y:` / `quick MR for review:` / `fe-core MR for review: updating A and addressing B:`
-- The bare MR URL on its own line (no markdown label needed).
+- The MR as a clickable `[repo !iid](url)` link (per Mike 2026-09-22: never a bare URL appended to the line).
 - Multiple MRs: opener like `got a few MRs for review:` then a numbered/bulleted list, each entry `repo !iid — TICKET one-line summary <link>`.
 - Optional closing status line, e.g. `one human approval needed (AI reviewer already approved)`.
 - No @here/@channel, no greetings, no sign-off. Context that helps a reviewer say yes (copy already signed off, screenshots in the MR) earns one parenthetical, not a paragraph.
