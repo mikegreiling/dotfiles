@@ -39,28 +39,28 @@ Legend: ✓ = checked out under `bstock-projects/`. "req" = approvals required.
 | svc/dispute | 504 | ✓ | Code Review (2 of: mary, alvarobstock, alex.garcia, david.chan, acker, ary, igor, volodymyr, al, justinjames, umesh, joshua.mozley, parvinder, kai, ashiash, anthony.lombardo, paul). *No any-member req.* |
 | svc/docserv | 565 | ✓ | any-member (2) + SMEs (1 of: mary, alexandra, michael.ilchuk, yury, al, cole, michael, kai). *Default approvers optional.* |
 | svc/erp | 605 | ✓ | Code Review (2 of: alvarobstock, joe.ellis, alex.garcia, david.chan, acker, igor, volodymyr, al, justinjames, umesh, joshua.mozley, parvinder, kai, ashiash, paul). *No any-member req.* |
-| svc/ingestion-nestjs | 661 | ✓ | any-member (2) + Team TBD Minimal Approvers (1 of: michael.ruth, al, justinjames, umesh, calvin, joseph.spandrusyszyn, waldemar) |
+| svc/ingestion-nestjs | 661 | ✓ | any-member (2) + Team TBD Minimal Approvers (1 of: michael.ruth, al, justinjames, umesh, calvin, joseph.spandrusyszyn, waldemar *(departed 2026-09-18)*) |
 | svc/integration | 770 | ✓ | any-member (1) |
 | svc/listing | 628 | ✓ | any-member (2) + Team TBD Minimal Approvers (1 of: michael.ruth, al, justinjames, umesh, calvin, amit, joseph.spandrusyszyn) |
 | svc/location | 546 | ✓ | any-member (2) + SMEs (1 of: mary, alvarobstock, alexandra, michael.ilchuk, yury, al, umesh, cole, michael). Code-owners: `*` → @three-mp team *(optional)* |
 | svc/notification | 576 | ✓ | Default approvers (2 of ≈ entire three-mp team). *No any-member req.* |
 | svc/offering | 735 | ✓ | any-member (2) |
 | svc/order | 515 | ✓ | any-member (2) + code review (2 of: mary, alvarobstock, alexandra, joe.ellis, alex.garcia, david.chan, acker, ary, igor, volodymyr, al, justinjames, umesh, joshua.mozley, parvinder, kai, ashiash, anthony.lombardo, paul). *Has a code_owner `*`→three-mp rule but no CODEOWNERS file at standard paths.* |
-| svc/order-process | 722 | ✓ | code review (2 of: mary, alvarobstock, joe.ellis, alex.garcia, david.chan, acker, ary, igor, volodymyr, al, umesh, joshua.mozley, kai, ashiash, paul, waldemar). *No any-member req.* |
+| svc/order-process | 722 | ✓ | code review (2 of: mary, alvarobstock, joe.ellis, alex.garcia, david.chan, acker, ary, igor, volodymyr, al, umesh, joshua.mozley, kai, ashiash, paul, waldemar *(departed 2026-09-18)*). *No any-member req.* |
 | svc/payments/methods | 520 | ✓ | any-member (1) + SME (1 of: acker, ary, igor) |
 | svc/payments/payments-shared | 563 | ✓ | any-member (0) — **no required approval** |
 | svc/payments/transactions | 519 | ✓ | any-member (2) |
 | svc/pdf-gen | 626 | ✓ | any-member (2). *Default approvers optional.* |
 | svc/risk | 802 | ✓ | any-member (2) |
 | svc/saved-search | 798 | ✓ | any-member (2) + SMEs (1 of: mary, alexandra, michael.ilchuk, yury, al, cole, michael) |
-| svc/search | 603 | ✓ | any-member (2) + SMEs (1 of: yury, joshua.mozley, kai, Cy-Kong, andrii.prasolov, michael.ilchuk, alexandra, cole, mary, al, calvin, michael, david.chan) |
+| svc/search | 603 | ✓ | any-member (2) + SMEs (1 of: yury, joshua.mozley, kai, Cy-Kong *(departed 2026-08-25, RIF)*, andrii.prasolov, michael.ilchuk, alexandra, cole, mary, al, calvin, michael, david.chan) |
 | svc/shipment | 524 | ✓ | Default approvers (2 of: mary, alvarobstock, joe.ellis, alex.garcia, yury, volodymyr, al, justinjames). *No any-member req.* |
 | svc/tms | 516 | ✓ | any-member (2) |
 | svc/3mp-att-aomp-orders | 892 | ✗ | no approval rules defined (sampled MR had none) |
 | svc/review | 583 | ✗ | any-member (2). *Default approvers optional.* |
 | svc/seller-migration | 625 | ✗ | any-member (2) |
 | svc/subscription | 577 | ✗ | Code Review (2 of: acker, ary, al, justinjames, umesh, joshua.mozley, parvinder, anmol, nihit). *No any-member req.* |
-| svc/tax | 923 | ✗ | Default approvers (2 of: mary, alexandra, Cy-Kong, michael.ilchuk, david.chan, andrii.prasolov, orest, acker, yury, ary, al, joshua.mozley, calvin, cole, michael, parvinder, anmol, nihit, kai). *No any-member req.* |
+| svc/tax | 923 | ✗ | Default approvers (2 of: mary, alexandra, Cy-Kong *(departed 2026-08-25, RIF)*, michael.ilchuk, david.chan, andrii.prasolov, orest, acker, yury, ary, al, joshua.mozley, calvin, cole, michael, parvinder, anmol, nihit, kai). *No any-member req.* |
 | svc/watchlist | 561 | ✗ | any-member (2) + SMEs (1 of: mary, alexandra, michael.ilchuk, yury, al, justinjames, michael, joseph.spandrusyszyn) |
 
 ### common/
@@ -75,7 +75,7 @@ Legend: ✓ = checked out under `bstock-projects/`. "req" = approvals required.
 | common/logging | 529 | ✓ | Code Review (2 of: mary, alexandra, mykhailo.talimonchuk, michael.ilchuk, acker, yury, al, justinjames, umesh, joshua.mozley, calvin, cole, michael, kai). *No any-member req.* |
 | common/skeleton-nestjs | 514 | ✓ | any-member (2) + SMEs (1 of: mary, alvarobstock, alexandra, michael.ilchuk, yury, ~~ryan.jenkins~~ blocked, cole, michael) |
 | common/dev-deps | 569 | ✗ | code review (1 of ≈ entire three-mp team). *No any-member req.* |
-| common/nestjs-utils | 532 | ✗ | Required Approval Rule (1 of: mary, alvarobstock, mykhailo.talimonchuk, david.chan, acker, al, justinjames, parvinder, olga, anthony.lombardo, gavin.grooms, daria.kazhybay + common group). *No any-member req.* |
+| common/nestjs-utils | 532 | ✗ | Required Approval Rule (1 of: mary, alvarobstock, mykhailo.talimonchuk, david.chan, acker, al, justinjames, parvinder, olga, anthony.lombardo, gavin.grooms *(departed 2026-08-25, RIF)*, daria.kazhybay + common group). *No any-member req.* |
 | common/qa-assistant | 897 | ✗ | any-member (2). *"current release?" rule optional.* |
 | common/ci-libs | 820 | ✗ | undetermined (no MRs yet) |
 | common/ci-pipelines | 819 | ✗ | undetermined (no MRs yet) |
@@ -87,7 +87,7 @@ Legend: ✓ = checked out under `bstock-projects/`. "req" = approvals required.
 |---------|----|----|-------------------|
 | fe/accounts-portal | 400 | ✓ | any-member (2) |
 | fe/cms-portal | 891 | ✓ | any-member (2) |
-| fe/crosslister | 888 | ✓ | any-member (1) + Lead (1 of: damien, al, joseph.spandrusyszyn, serhii.ovcharenko) |
+| fe/crosslister | 888 | ✓ | any-member (2) *(live `approval_rules` 2026-09-24: a single "All Members" rule = 2; the old Lead rule incl. damien is gone)* |
 | fe/cs-portal | 721 | ✓ | any-member (2) |
 | fe/fe-core | 506 | ✓ | any-member (2) |
 | fe/fe-scripts | 544 | ✓ | any-member (1) |
@@ -121,15 +121,15 @@ Only these repos have a `CODEOWNERS` file:
 | tim.tate | Tim Tate | 23 |
 | alexandra | Alexandra Ash | 42 |
 | joe.ellis | Joe Ellis | 43 |
-| Cy-Kong | Cy Kong | 48 |
+| Cy-Kong | Cy Kong | 48 | *(departed in the 2026-08-25 RIF — never list as an approver)* |
 | michael.ruth | Michael Ruth | 52 |
 | mykhailo.talimonchuk | Mykhailo Talimonchuk | 76 |
 | michael.ilchuk | Michael Ilchuk | 78 |
 | connor | Connor Finley | 87 |
-| nate.patel | Nate Patel | 97 |
+| nate.patel | Nate Patel | 97 | *(departed 2026-09-30 — never list as an approver)* |
 | alex.garcia | Alex Garcia | 100 |
 | david.chan | David Chan | 117 |
-| damien | Damien Jones | 118 |
+| damien | Damien Jones | 118 | *(departed in the 2026-08-25 RIF — never list as an approver)* |
 | anh | Anh Nguyen | 119 |
 | andrii.prasolov | Andrii Prasolov | 121 |
 | orest | Orest Stetsiak | 123 |
@@ -166,9 +166,9 @@ Only these repos have a `CODEOWNERS` file:
 | patrick | Patrick Fisher | 434 |
 | patrick.spracklen | Patrick Spracklen | 435 |
 | echu | Eric Chu | 444 |
-| gavin.grooms | Gavin Grooms | 449 |
-| waldemar | Waldek Dziubek | 450 |
-| shivam.bandral | Shivam Bandral | 472 |
+| gavin.grooms | Gavin Grooms | 449 | *(departed in the 2026-08-25 RIF — never list as an approver)* |
+| waldemar | Waldek Dziubek | 450 | *(departed 2026-09-18 — never list as an approver)* |
+| shivam.bandral | Shivam Bandral | 472 | *(departed 2026-09-01 — never list as an approver)* |
 | jorge | Jorge Castillo | 487 |
 | lana.kukharchyk | Lana Kukharchyk | 514 |
 | gavin.lang | Gavin Lang | 559 |
