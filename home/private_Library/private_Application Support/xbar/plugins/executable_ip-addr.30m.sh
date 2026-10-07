@@ -6,7 +6,48 @@ if [ "$1" = "copy" ]; then
     echo -n "$2" | pbcopy
 fi
 
-ACTIVE_ADAPTER=$(route get resolver1.opendns.com 2> /dev/null | grep "interface: " | sed "s/[^:]*: \(.*\)/\1/")
+IPV4_RE='^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$'
+
+# Resolve the public IP, trying the fastest method first and falling back to
+# HTTPS. Many public wifi networks (captive portals, hotel/restaurant APs,
+# Cisco Umbrella-style filtering) block outbound DNS to anything but a few
+# well-known resolvers, which kills the direct-to-authoritative DNS trick.
+# Plain HTTPS to port 443 is almost never blocked.
+#
+# NOTE: do NOT fall back to "dig whoami.akamai.net" via the system resolver --
+# that returns the recursive resolver's egress address (e.g. a Google IP when
+# 8.8.8.8 is configured), not ours.
+get_public_ip() {
+    local ip
+
+    # 1. Direct DNS query to Akamai's authoritative server (~20ms when it works)
+    ip=$(dig whoami.akamai.net. @ns1-1.akamaitech.net. +time=1 +tries=1 +short 2> /dev/null)
+    if [[ $ip =~ $IPV4_RE ]]; then
+        echo "$ip"
+        return 0
+    fi
+
+    # 2. HTTPS fallbacks, in order
+    local url
+    for url in \
+        https://api.ipify.org \
+        https://checkip.amazonaws.com \
+        https://icanhazip.com \
+        https://ifconfig.me/ip
+    do
+        ip=$(curl -4 -fsS --max-time 3 "$url" 2> /dev/null | tr -d '[:space:]')
+        if [[ $ip =~ $IPV4_RE ]]; then
+            echo "$ip"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+# Use the default route rather than resolving a hostname, so adapter detection
+# doesn't itself depend on DNS working.
+ACTIVE_ADAPTER=$(route -n get default 2> /dev/null | awk '/interface:/ {print $2}')
 
 if [ -z "$ACTIVE_ADAPTER" ]
 then
@@ -15,9 +56,8 @@ then
     echo "no connection"
 else
     LOCAL_IP=$(ipconfig getifaddr "$ACTIVE_ADAPTER")
-    # PUBLIC_IP=$(dig -4 TXT +short o-o.myaddr.l.google.com @ns1.google.com | sed 's|"||g' | xargs | cut -f1 -d" " 2> /dev/null)
-    PUBLIC_IP=$(dig whoami.akamai.net. @ns1-1.akamaitech.net. +time=2 +tries=1 +short 2> /dev/null)
-    if [[ ! $PUBLIC_IP =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]
+    PUBLIC_IP=$(get_public_ip)
+    if [ -z "$PUBLIC_IP" ]
     then
         echo "⚡︎ ?.?.?.?"
         echo "---"
