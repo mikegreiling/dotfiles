@@ -109,6 +109,31 @@ Product work is divided into three **pods** (the Jira `GLOB` Pod field has exact
 **Jira project prefixes map to pods**: `FP` = Payment and Foundations stories/tasks/bugs · `BP` = Buyer pod · `SP` = Seller pod · `GLOB` = epics for all pods (Pod custom field distinguishes) · `SPR` = legacy Team Sprinters (historical). Non-pod projects: `BUGS` (cross-pod bug intake), `PS` (Platform Support), `DEVOPS`, `QA`, `DET` (Data Engineering), `UXD` (design), `XLTR` (CrossListr). A person's recent FP/BP/SP assignment history is the fastest way to place them in a pod.
 
 
+## Engineering headcount (snapshot 2026-10-08)
+
+Back-pocket numbers for "how big is engineering?". Method: Pingboard employee export (2026-07-24, 62 in Ken Shum's org) adjusted for departures/joins verified via Slack `deleted` flags, plus contractors/vendors counted from GitLab MR authorship in the trailing 90 days (they are absent from Pingboard). Company-wide Pingboard was **239 employees** on 2026-07-24; ~25 employee deactivations since (two RIFs + attrition) and few known hires put it at roughly **215** now (±5; hires outside engineering are not tracked here).
+
+| Bucket | End of May 2026 | Now (2026-10-08) | Who changed |
+|---|---|---|---|
+| Engineering managers/directors (manage people who write code: Ken, Al, Mary, Alvaro, Justin, James Han, Sohil) | 7 | 7 | — |
+| Other org leaders in Ken's tree (Parvinder, Aziz, Jay Hormes, Yang, Jeremy) | 5 | 4 | −Jay Hormes (RIF 08-25) |
+| Software engineers, employees (product code) | 23 | 20 | −Cy Kong, −Bryan Lopez (RIF 08-25), −Waldek (resigned 09-18) |
+| Software engineers, contractors (active MR authors) | 16 | 14 | −Shivam Bandral (09-01), −Nate Patel (09-30); roster: Volodymyr Kelembet, Igor Shkulipa, Michael Ilchuk, Mykhailo Talimonchuk, Andrii Prasolov, Josh Mozley, Umesh Balasubramaniam, Ashish Tulsankar, Calvin La, Kyryl Oliinyk (since 2026-02), Serhii Ovcharenko (2026-02), Danylo Dzheniuk (2026-03), Kateryna Konovalova (2026-05), Oleksandr Skibinskyi (2026-05) |
+| Enterprise Architect | 1 | 0 | −Damien Jones (RIF 08-25) |
+| QA employees (under Sohil) | 4 | 3 | −Gavin Grooms (RIF 08-25) |
+| QA contractors/vendor with GitLab activity (Anthony Lombardo + Evizi: Vinh Tran, Lam Nguyen Tung, Thanh Nguyen) | 4 | 4 | — (Evizi may field more testers without GitLab activity) |
+| DevOps/SRE/IT employees (David Chan, Orest, Jon Paul → Francky) | 3 | 3 | −Jon Paul Hutchins (RIF 10-06), +Francky Jabson (~09-17) |
+| DevOps contractors (Nihit Jain, Anmol Anand — India hours; little GitLab activity in 2026) | 2 | 2 | — |
+| Data engineering/science (write code: Mark Ma, Gavin Lang, Louies Tam, Harish Verlekar, Patrick Spracklen) | 5 | 5 | — |
+| Data analysts (Kyle Magner, Stanley Ho, Sriram Sridhar, Arran Wass-Little, Swara Gandhi, Malachy McGovern) | 6 | 6 | — |
+| Product/UX ICs (Sarah Xu, Fred Leung, Alyssa Shum, Anushka Jain, Amara Mir, Geethika Kilaru, + Austin Jones) | 6 | 7 | +Austin Jones (Sr PM Payments, ~2026-07-02) |
+| Technical PM / release manager | 1 | 0 | −Susan Oakes (RIF 08-25) |
+| **Employees in Ken's org** | **61** | **55** | 8 out, 2 in |
+| **Contractors/vendors in Ken's org** | **22** | **20** | 2 out |
+| **Total engineering org** | **83** | **75** | **net −8 (−10%)** |
+
+Hand-wavy answers: "about 75 people in engineering, 55 employees plus about 20 contractors"; "about 35 engineers actually writing product code (20 employees + 14 contractors), plus 5 data folks who code"; "7 engineering managers". Already gone before May 25 (so not in the deltas): Ryan Jenkins, Daehee Kim, Terry Zhang, Santosh Chaudhari, Elias Amador. Amit Negi's GitLab is deactivated (last event 2026-02) and Sachin Jagtap has no GitLab account — neither counted as active engineering contractors even though their Slack accounts live on. Jacob Ziegler (`jziegler`) is Campfire Analytics, external — not counted.
+
 ## 2026-08-25 reduction in workforce (RIF)
 
 Ken Shum announced a "reduction in workforce" in a meeting on 2026-08-25, framed around AI adoption. **No Slack announcement was ever posted**; the roster below was verified by Slack `deleted` flags (all deactivated 11:35–12:36 CDT) and GitLab `blocked` states. 6 of ~62 engineering-org employees (~10%); no contractors/vendor accounts were cut.
@@ -159,16 +184,16 @@ Individual exits, not part of either RIF as far as known (dates = Slack deactiva
 Old team names still appear in Slack history, Confluence, and muscle memory. Full rosters from the Confluence Engineering page (snapshot Jun 30 2025; roles as listed then):
 
 - **Sprinters** (lead **Alvaro Ferreira**) → **Foundation pod** (confirmed: `#team-sprinters` topic says "Relocated to #foundation-pod"). Members: James Han (Sr. EM), Alex Garcia (Sr SWE BE), Cy Kong (SWE FE), Joe Ellis (Sr SWE BE), Volodymyr Kelembet (Sr SWE BE), Mike Greiling (Staff SWE FE), Connor Finley (Lead Integration Engineer). SME: bridge, data migration, DSK, FusionAuth/SSO, Magento, shipment/logistics, ENT microservices, finance, registration, search/Algolia. **James Han's sub-team within Sprinters**: Connor Finley, Tim Tate (BE Lead), Mike Talimonchuk (contractor) — SME: ENT integrations, Sunrise, ENT Magento, 3MP contracts. The "Sprinters standup" name survives for Alvaro's directs' Tuesday standup.
-- **Mula** (aka "Moolah", lead **Justin James**) → **Foundation pod** (confirmed: `#team-mulax` topic redirect). Members: Josh Mozley (contractor), Elias Amador, Acker Apple, Paul Robertson (Staff SWE), Patrick Fisher, Kai DiRamio, Ary Baldioceda. SME: Accounts Portal, disputes, GitLab pipelines, Datadog, feature flags, payments-*, pdfgen, shared `@bstock/*` libs.
+- **Mula** (aka "Moolah", lead **Justin James**) → **Foundation pod** (confirmed: `#team-mulax` topic redirect). Members: Josh Mozley (contractor), ~~Elias Amador~~ (departed before 2026-05), Acker Apple, Paul Robertson (Staff SWE), Patrick Fisher, Kai DiRamio, Ary Baldioceda. SME: Accounts Portal, disputes, GitLab pipelines, Datadog, feature flags, payments-*, pdfgen, shared `@bstock/*` libs.
 - **Zero** (lead **Mary Gutierrez**) → **Buyer pod** (confirmed 2026-07-24: last-90d `BP` assignees are almost exactly the ex-Zero roster — Cole, Ilchuk, Feldman, Andrii, Alexandra, Helen — plus James Han's crew). Members: Alexandra Ash, Andrii Prasolov (FE contractor), Cole Allan, Helen Foutch, Michael Ilchuk (BE contractor), Mike Feldman, Eric Chu, **Ryan Jenkins (Principal SWE FE — departed)**, Yury Herlovich. SME: Account Portal, auth/logging libs, buyer migration, docserv, freight-forwarding UI, notification, onboarding, search, Strapi, shipment, tax exemption, TMS.
-- **TBD** (lead **Al Veitas**) → **Seller pod** (confirmed 2026-07-24: last-90d `SP` assignees are the ex-TBD roster — Calvin La, Umesh, Connor, Mike Ruth, ~~Shivam~~, Joe S). Members: Mike Ruth (BE Lead), Santosh (FE contractor), Umesh Balasubramaniam (BE contractor), ~~Waldek Dziubek~~ (departed 2026-09-18), Joe Spandrusyszyn (Sr Staff SWE FE), ~~Shivam~~ (FE contractor; departed 2026-09-01), Calvin La. SME: ingestion, inventory-lotting, listings, orders, seller migration.
+- **TBD** (lead **Al Veitas**) → **Seller pod** (confirmed 2026-07-24: last-90d `SP` assignees are the ex-TBD roster — Calvin La, Umesh, Connor, Mike Ruth, ~~Shivam~~, Joe S). Members: Mike Ruth (BE Lead), ~~Santosh Chaudhari (Sr FE contractor)~~ (departed before 2026-05; Slack deactivated), Umesh Balasubramaniam (BE contractor), ~~Waldek Dziubek~~ (departed 2026-09-18), Joe Spandrusyszyn (Sr Staff SWE FE), ~~Shivam~~ (FE contractor; departed 2026-09-01), Calvin La. SME: ingestion, inventory-lotting, listings, orders, seller migration.
 - Non-pod teams unchanged through the transition: **Architecture** (Damien), **Data Engineering** (then Daehee Kim), **DevOps** (Parvinder), **PjM** (Susan).
 
 Timeline markers: pod channels `#foundation-pod` created 2025-09-17 (by Yang Luan); Sprinters dissolved early Oct 2025; an org-wide channel-renaming wave hit 2026-06-03 (Orest archived all `#team-*-prod-errors` channels in one hour). Note `#team-buyer-pod`/`#team-seller-pod` date to 2022 and have near-org-wide membership — channel membership is NOT a reliable pod roster; use the tables above.
 
 ### Platform / non-pod functions
 
-- **DevOps** — Parvinder Bhasin; David Chan, Orest Stetsiak, Terry Zhang (Solutions Eng, Platform Support), ~~Jon Paul Hutchins~~ (IT; **RIF 2026-10-06**), **Francky Jabson** (IT Administrator since ~2026-09-17), contractors Nihit Jain + Anmol Anand (India hours). PoC for GitLab/Datadog/GCP/MongoDB/Cloudflare/prod support.
+- **DevOps** — Parvinder Bhasin; David Chan, Orest Stetsiak, ~~Terry Zhang (Solutions Eng, Platform Support)~~ (departed before 2026-05; Slack deactivated), ~~Jon Paul Hutchins~~ (IT; **RIF 2026-10-06**), **Francky Jabson** (IT Administrator since ~2026-09-17), contractors Nihit Jain + Anmol Anand (India hours). PoC for GitLab/Datadog/GCP/MongoDB/Cloudflare/prod support.
 - **Data Engineering & Analytics** — Aziz Vahora (Sr Director) with Patrick Spracklen and the Analytics org formerly under Jay (Jeroen) Hormes (****RIF 2026-08-25****; analysts' new reporting line unconfirmed): Kyle Magner (the data-export person Yang pulls in), Stanley Ho, Sriram Sridhar, Arran Wass-Little, Swara Gandhi, Malachy McGovern. Plus Ken's direct Data Analytics group: Mark Ma, Louies Tam, Gavin Lang, Harish Verlekar.
 - **Architecture** — ~~Damien Jones, Enterprise Architect~~ (**RIF 2026-08-25**); role eliminated → architecture/data-model decisions go to tech leads **Al Veitas + Alvaro**.
 - **Release/Program Management** — ~~Susan Oakes, Technical Project Manager (official) / "Senior Release Manager & PM" (Slack)~~ (**RIF 2026-08-25**) → **owner TBD**; route to **Sohil Sethi + Justin James** (Sohil expected to absorb, unconfirmed).
@@ -193,7 +218,7 @@ QA reports through **Sohil Sethi (Manager, QA Engineering — Asia/Kolkata, IST)
 
 Evizi (Vietnam) runs much of the hands-on regression/story QA; internal QA (Lana, Olga, Anthony/automation) coordinates *with* them. Vietnamese national holidays (Hung Kings Day, Reunification Day, Labor Day, Tet…) take the whole vendor offline — Sohil announces these.
 
-**Other notable non-US timezones** (for async expectations): Parvinder — Asia/Kolkata; ~~Shivam Bandral~~ (departed 2026-09-01), Ashish Tulsankar, Amit Negi, Sachin Jagtap — Asia/Kolkata (contractors); ~~Nate Patel~~ (**departed 2026-09-30**; `U07AC1M1WUX`, nate.patel@bstock.com) — Asia/Kolkata (FE engineer, Buyer-pod/wp-react work alongside Helen Foutch — auction cards, search-results pages; not in the 2026-07 Pingboard export, likely contractor; observed 2026-07-28); Volodymyr Kelembet (`U01P9BBHKBN`), Michael Ilchuk (`U010CB1S533`) — Europe/Helsinki; Igor Shkulipa (`U01MQ6BVA7L`), Mykhailo Talimonchuk (`URFLQKZ6V`), Andrii Prasolov (`U01DWA7ES3W`) — Asia/Jerusalem (Israel-based, despite Slavic names); Yury Herlovich (`U01EMLYNK5Z`) — America/Denver (US-based despite the name); Helen Holyk, Joe Dube — Europe/Amsterdam.
+**Other notable non-US timezones** (for async expectations): Parvinder — Asia/Kolkata; ~~Shivam Bandral~~ (departed 2026-09-01), Ashish Tulsankar — Asia/Kolkata (contractor); Amit Negi (GitLab deactivated, last activity 2026-02) and Sachin Jagtap (no GitLab) — Asia/Kolkata, Slack still active but not engineering-active as of 2026-10-08; ~~Nate Patel~~ (**departed 2026-09-30**; `U07AC1M1WUX`, nate.patel@bstock.com) — Asia/Kolkata (FE engineer, Buyer-pod/wp-react work alongside Helen Foutch — auction cards, search-results pages; not in the 2026-07 Pingboard export, likely contractor; observed 2026-07-28); Volodymyr Kelembet (`U01P9BBHKBN`), Michael Ilchuk (`U010CB1S533`) — Europe/Helsinki; Igor Shkulipa (`U01MQ6BVA7L`), Mykhailo Talimonchuk (`URFLQKZ6V`), Andrii Prasolov (`U01DWA7ES3W`) — Asia/Jerusalem (Israel-based, despite Slavic names); Yury Herlovich (`U01EMLYNK5Z`) — America/Denver (US-based despite the name); Helen Holyk, Joe Dube — Europe/Amsterdam.
 
 ### CrossListr team (vendor-style, no Slack channel)
 
