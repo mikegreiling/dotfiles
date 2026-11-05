@@ -18,7 +18,7 @@ When a feature branch with a semantic version prefix (`MAJOR:`, `MINOR:`, `PATCH
 
 The `bump_version` job runs in the "version" stage after lint, test, and build jobs pass. It uses `semantic-release` to:
 
-1. Update `package.json` and `package-lock.json` version numbers
+1. Update the `package.json` version (and `package-lock.json` in npm repos; pnpm repos have no version in their lockfile)
 2. Update `CHANGELOG.md` — in new-style repos it injects the entry extracted from the MR description; in old-style repos it replaces `{VERSION_DATE}` tokens with the actual version and date
 3. Create a commit with message: `chore(release): X.Y.Z`
 4. Create and push a new git tag for the release

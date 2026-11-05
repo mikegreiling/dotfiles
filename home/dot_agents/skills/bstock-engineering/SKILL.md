@@ -149,8 +149,8 @@ acli jira workitem view FP-123 --fields "summary,status,created,updated,descript
 ## Working Rules
 
 - Always `cd` into project directories — never use `git -C /path` or similar flag-based approaches
-- Run `npm ci` after creating new branches or when encountering unexplained failures that could be caused by outdated or missing dependencies
-- **NEVER run build commands** (`npm run build`, `npm run build:prod`) — CI/CD handles builds
+- Run the repo's install after creating new branches or when encountering unexplained failures that could be caused by outdated or missing dependencies: `pnpm install` when the repo has a `pnpm-lock.yaml` (the frontend repos are migrating to pnpm 12 under FP-1830; npm is refused there with `EBADDEVENGINES`), otherwise `npm ci`
+- **NEVER run build commands** (`npm run build`, `pnpm run build`, `next build`, `vite build`) — CI/CD handles builds
 
 ## Project Memory Files (AGENTS.md / CLAUDE.md)
 
