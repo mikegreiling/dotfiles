@@ -42,3 +42,9 @@ fi
 if [[ -d "${ASDF_DATA_DIR:-$HOME/.asdf}/shims" ]]; then
     export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
 fi
+
+# Private exports for every shell, including non-interactive ones (agents, IDE tasks).
+# ~/.config/exports also sources this file for interactive shells.
+if [[ -r "${XDG_CONFIG_HOME:-$HOME/.config}/private_exports" ]]; then
+    source "${XDG_CONFIG_HOME:-$HOME/.config}/private_exports"
+fi
